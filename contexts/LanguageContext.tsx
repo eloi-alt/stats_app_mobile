@@ -1,0 +1,220 @@
+'use client'
+
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+
+type Language = 'en' | 'fr' | 'es'
+
+interface Translations {
+  [key: string]: {
+    en: string
+    fr: string
+    es: string
+  }
+}
+
+const translations: Translations = {
+  // Greetings
+  'goodMorning': { en: 'Good morning', fr: 'Bonjour', es: 'Buenos días' },
+  'goodAfternoon': { en: 'Good afternoon', fr: 'Bon après-midi', es: 'Buenas tardes' },
+  'goodEvening': { en: 'Good evening', fr: 'Bonsoir', es: 'Buenas noches' },
+
+  // Navigation
+  'health': { en: 'Health', fr: 'Santé', es: 'Salud' },
+  'trueCircle': { en: 'TrueCircle', fr: 'TrueCircle', es: 'TrueCircle' },
+  'home': { en: 'Home', fr: 'Accueil', es: 'Inicio' },
+  'world': { en: 'World', fr: 'Monde', es: 'Mundo' },
+  'career': { en: 'Career', fr: 'Carrière', es: 'Carrera' },
+
+  // Sections
+  'yourDomains': { en: 'Your domains', fr: 'Vos domaines', es: 'Tus dominios' },
+  'metrics': { en: 'Metrics', fr: 'Métriques', es: 'Métricas' },
+  'innerCircle': { en: 'Inner Circle', fr: 'Mon cercle proche', es: 'Círculo íntimo' },
+  'ranking': { en: 'Ranking', fr: 'Classement', es: 'Clasificación' },
+  'connections': { en: 'Connections', fr: 'Connexions', es: 'Conexiones' },
+  'balance': { en: 'Balance', fr: 'Équilibre', es: 'Equilibrio' },
+  'growth': { en: 'Growth', fr: 'Croissance', es: 'Crecimiento' },
+  'exploration': { en: 'Exploration', fr: 'Exploration', es: 'Exploración' },
+
+  // Profile
+  'memberSince': { en: 'Member since', fr: 'Membre depuis', es: 'Miembro desde' },
+  'globalScore': { en: 'Global score', fr: 'Score global', es: 'Puntuación global' },
+  'countries': { en: 'Countries', fr: 'Pays', es: 'Países' },
+  'achievements': { en: 'Achievements', fr: 'Réalisations', es: 'Logros' },
+  'settings': { en: 'Settings', fr: 'Paramètres', es: 'Configuración' },
+  'signOut': { en: 'Sign out', fr: 'Se déconnecter', es: 'Cerrar sesión' },
+  'shareProfile': { en: 'Share Profile', fr: 'Partager le profil', es: 'Compartir perfil' },
+  'scanToView': { en: 'Scan to view profile', fr: 'Scanner pour voir le profil', es: 'Escanear para ver perfil' },
+  'tapToAddBio': { en: 'Tap to add a bio', fr: 'Appuyez pour ajouter une bio', es: 'Toca para añadir bio' },
+
+  // Settings
+  'notifications': { en: 'Notifications', fr: 'Notifications', es: 'Notificaciones' },
+  'privacy': { en: 'Privacy', fr: 'Confidentialité', es: 'Privacidad' },
+  'language': { en: 'Language', fr: 'Langue', es: 'Idioma' },
+  'appearance': { en: 'Appearance', fr: 'Apparence', es: 'Apariencia' },
+  'theme': { en: 'Theme', fr: 'Thème', es: 'Tema' },
+  'light': { en: 'Light', fr: 'Clair', es: 'Claro' },
+  'dark': { en: 'Dark', fr: 'Sombre', es: 'Oscuro' },
+  'verification': { en: 'Verification', fr: 'Vérification', es: 'Verificación' },
+
+  // Privacy options
+  'public': { en: 'Public', fr: 'Public', es: 'Público' },
+  'friends': { en: 'Friends', fr: 'Amis', es: 'Amigos' },
+  'private': { en: 'Private', fr: 'Privé', es: 'Privado' },
+  'publicStats': { en: 'Public Stats', fr: 'Stats publiques', es: 'Estadísticas públicas' },
+  'privateStats': { en: 'Private Stats', fr: 'Stats privées', es: 'Estadísticas privadas' },
+
+  // UI Controls
+  'save': { en: 'Save', fr: 'Enregistrer', es: 'Guardar' },
+  'cancel': { en: 'Cancel', fr: 'Annuler', es: 'Cancelar' },
+  'close': { en: 'Close', fr: 'Fermer', es: 'Cerrar' },
+  'add': { en: 'Add', fr: 'Ajouter', es: 'Añadir' },
+  'edit': { en: 'Edit', fr: 'Modifier', es: 'Editar' },
+  'back': { en: 'Back', fr: 'Retour', es: 'Volver' },
+  'plan': { en: 'Plan', fr: 'Planifier', es: 'Planificar' },
+
+  // Health / Physio
+  'sleep': { en: 'Sleep', fr: 'Sommeil', es: 'Sueño' },
+  'weight': { en: 'Weight', fr: 'Poids', es: 'Peso' },
+  'water': { en: 'Water', fr: 'Eau', es: 'Agua' },
+  'workout': { en: 'Workout', fr: 'Entraînement', es: 'Entrenamiento' },
+  'activity': { en: 'Activity', fr: 'Activité', es: 'Actividad' },
+  'steps': { en: 'Steps', fr: 'Pas', es: 'Pasos' },
+  'lastActivity': { en: 'Last activity', fr: 'Dernière activité', es: 'Última actividad' },
+  'bodyComposition': { en: 'Body composition', fr: 'Composition corporelle', es: 'Composición corporal' },
+  'bodyFat': { en: 'Body fat', fr: 'Masse grasse', es: 'Grasa corporal' },
+  'muscleMass': { en: 'Muscle mass', fr: 'Masse musculaire', es: 'Masa muscular' },
+  'vo2Max': { en: 'VO2 Max', fr: 'VO2 Max', es: 'VO2 Máx' },
+  'restingHR': { en: 'Resting HR', fr: 'FC au repos', es: 'Frecuencia cardíaca' },
+  'readMore': { en: 'Tap to read more...', fr: 'Appuyez pour en savoir plus...', es: 'Toca para leer más...' },
+  'saved': { en: 'Saved!', fr: 'Enregistré !', es: '¡Guardado!' },
+
+  // World / Map
+  'trips': { en: 'Trips', fr: 'Voyages', es: 'Viajes' },
+  'km2025': { en: 'km 2025', fr: 'km 2025', es: 'km 2025' },
+  'visitedCountries': { en: 'Visited Countries', fr: 'Pays visités', es: 'Países visitados' },
+  'addNewTrip': { en: 'Add New Trip', fr: 'Ajouter un voyage', es: 'Añadir viaje' },
+  'destination': { en: 'Destination', fr: 'Destination', es: 'Destino' },
+  'start': { en: 'Start', fr: 'Début', es: 'Inicio' },
+  'end': { en: 'End', fr: 'Fin', es: 'Fin' },
+  'purpose': { en: 'Purpose', fr: 'Objectif', es: 'Propósito' },
+  'leisure': { en: 'Leisure', fr: 'Loisirs', es: 'Ocio' },
+  'work': { en: 'Work', fr: 'Travail', es: 'Trabajo' },
+  'family': { en: 'Family', fr: 'Famille', es: 'Familia' },
+  'adventure': { en: 'Adventure', fr: 'Aventure', es: 'Aventura' },
+  'whereGoing': { en: 'Where are you going?', fr: 'Où allez-vous ?', es: '¿A dónde vas?' },
+  'tripAdded': { en: 'Trip added!', fr: 'Voyage ajouté !', es: '¡Viaje añadido!' },
+
+  // Career / Pro
+  'currentPosition': { en: 'Current Position', fr: 'Poste actuel', es: 'Cargo actual' },
+  'skills': { en: 'Skills', fr: 'Compétences', es: 'Habilidades' },
+  'skillsIdentified': { en: 'skills identified', fr: 'compétences identifiées', es: 'habilidades identificadas' },
+  'careerProjection': { en: 'Career Projection', fr: 'Projection de carrière', es: 'Proyección de carrera' },
+  'goal': { en: 'Goal', fr: 'Objectif', es: 'Meta' },
+  'missingSkill': { en: 'To develop', fr: 'À développer', es: 'Por desarrollar' },
+  'proAchievements': { en: 'Pro achievements', fr: 'Réalisations pro', es: 'Logros pro' },
+  'financialOverview': { en: 'Financial Overview', fr: 'Aperçu financier', es: 'Resumen financiero' },
+  'netWorth': { en: 'Net Worth', fr: 'Patrimoine net', es: 'Patrimonio neto' },
+  'incomeYear': { en: 'Income/year', fr: 'Revenus/an', es: 'Ingresos/año' },
+  'addSkill': { en: 'Add a skill', fr: 'Ajouter une compétence', es: 'Añadir habilidad' },
+
+  // Social
+  'national': { en: 'National', fr: 'National', es: 'Nacional' },
+  'interactions': { en: 'Interactions', fr: 'Interactions', es: 'Interacciones' },
+  'lastContact': { en: 'Last contact', fr: 'Dernier contact', es: 'Último contacto' },
+  'message': { en: 'Message', fr: 'Message', es: 'Mensaje' },
+  'call': { en: 'Call', fr: 'Appel', es: 'Llamar' },
+  'remind': { en: 'Remind', fr: 'Rappel', es: 'Recordar' },
+
+  // Other
+  'week': { en: 'Week', fr: 'Semaine', es: 'Semana' },
+  'harmony': { en: 'HARMONY', fr: 'HARMONIE', es: 'ARMONÍA' },
+  'best': { en: 'Best', fr: 'Meilleur', es: 'Mejor' },
+  'tracked': { en: 'Tracked', fr: 'Suivis', es: 'Seguidos' },
+  'toImprove': { en: 'To improve', fr: 'À améliorer', es: 'Por mejorar' },
+  'you': { en: 'You', fr: 'Vous', es: 'Tú' },
+  'ago': { en: 'ago', fr: 'il y a', es: 'hace' },
+  'noActivity': { en: 'No activity', fr: 'Aucune activité', es: 'Sin actividad' },
+  'perso': { en: 'Perso', fr: 'Perso', es: 'Perso' },
+  'amis': { en: 'Friends', fr: 'Amis', es: 'Amigos' },
+  'careerGoal': { en: 'Career Goal', fr: 'Objectif de carrière', es: 'Meta de carrera' },
+  'probability': { en: 'Probability', fr: 'Probabilité', es: 'Probabilidad' },
+  'toDevelop': { en: 'To develop', fr: 'À développer', es: 'Por desarrollar' },
+  'skillAdded': { en: 'Skill assessment started', fr: 'Évaluation des compétences démarrée', es: 'Evaluación de habilidades iniciada' },
+  'noActivityAmis': { en: 'No activity from friends', fr: 'Aucune activité des amis', es: 'Sin actividad de amigos' },
+  'noActivityPerso': { en: 'No personal activity', fr: 'Aucune activité personnelle', es: 'Sin actividad personal' },
+  'yourStats': { en: 'Your stats', fr: 'Vos stats', es: 'Tus estadísticas' },
+  'overallHarmony': { en: 'Overall Harmony', fr: 'Harmonie globale', es: 'Armonía global' },
+  'activityBubble': { en: 'Activity Bubble', fr: 'Bulle d\'activité', es: 'Burbuja de actividad' },
+  'aiHealthAnalysis': { en: 'Based on your recent activity patterns, your body composition shows excellent balance. Your VO2 Max indicates strong cardiovascular health, and your resting heart rate is within optimal range. Continue maintaining your current activity level and sleep schedule for sustained performance.', fr: 'D\'après vos habitudes d\'activité récentes, votre composition corporelle présente un excellent équilibre. Votre VO2 Max indique une bonne santé cardiovasculaire et votre fréquence cardiaque au repos se situe dans une plage optimale. Continuez à maintenir votre niveau d\'activité actuel et votre horaire de sommeil pour une performance durable.', es: 'Basándose en sus patrones recientes de actividad, su composición corporal muestra un excelente equilibrio. Su VO2 Máx indica una fuerte salud cardiovascular, y su frecuencia cardíaca en reposo está dentro del rango óptimo. Continúe manteniendo su nivel de actividad actual y su horario de sueño para un rendimiento sostenido.' },
+  'intensityIntense': { en: 'Intense', fr: 'Intense', es: 'Intenso' },
+  'intensityModerate': { en: 'Moderate', fr: 'Modéré', es: 'Moderado' },
+  'intensityLight': { en: 'Light', fr: 'Léger', es: 'Ligero' },
+  'intensityExtreme': { en: 'Extreme', fr: 'Extrême', es: 'Extremo' },
+  'tapToSetGoal': { en: 'Tap to set goal', fr: 'Appuyez pour définir un objectif', es: 'Toca para fijar meta' },
+  'bedtime': { en: 'Bedtime', fr: 'Heure du coucher', es: 'Hora de dormir' },
+  'wakeTime': { en: 'Wake time', fr: 'Heure de réveil', es: 'Hora de despertar' },
+  'quality': { en: 'Quality', fr: 'Qualité', es: 'Calidad' },
+  'excellent': { en: 'Excellent', fr: 'Excellent', es: 'Excelente' },
+  'good': { en: 'Good', fr: 'Bon', es: 'Bueno' },
+  'average': { en: 'Average', fr: 'Moyen', es: 'Promedio' },
+  'poor': { en: 'Poor', fr: 'Mauvais', es: 'Pobre' },
+  'running': { en: 'Running', fr: 'Course', es: 'Correr' },
+  'gym': { en: 'Gym', fr: 'Musculation', es: 'Gimnasio' },
+  'yoga': { en: 'Yoga', fr: 'Yoga', es: 'Yoga' },
+  'cycling': { en: 'Cycling', fr: 'Cyclisme', es: 'Ciclismo' },
+  'swimming': { en: 'Swimming', fr: 'Natation', es: 'Natación' },
+  'hiit': { en: 'HIIT', fr: 'HIIT', es: 'HIIT' },
+  'durationMin': { en: 'Duration (min)', fr: 'Durée (min)', es: 'Duración (min)' },
+  'currentBodyFat': { en: 'Current body fat', fr: 'Masse grasse actuelle', es: 'Grasa corporal actual' },
+  'composition': { en: 'Composition', fr: 'Composition', es: 'Composición' },
+  'weightKg': { en: 'Weight (kg)', fr: 'Poids (kg)', es: 'Peso (kg)' },
+  'amountL': { en: 'Amount (L)', fr: 'Quantité (L)', es: 'Cantidad (L)' },
+  'setGoal': { en: 'Set Goal', fr: 'Définir un objectif', es: 'Fijar meta' },
+  'ofGoal': { en: 'of goal', fr: 'de l\'objectif', es: 'de la meta' },
+  'targetGoal': { en: 'Target Goal', fr: 'Objectif cible', es: 'Meta objetivo' },
+  'current': { en: 'Current', fr: 'Actuel', es: 'Actual' },
+  'keep': { en: 'Keep', fr: 'Garder', es: 'Mantener' },
+}
+
+interface LanguageContextType {
+  language: Language
+  setLanguage: (lang: Language) => void
+  t: (key: string) => string
+}
+
+const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
+
+export function LanguageProvider({ children }: { children: ReactNode }) {
+  const [language, setLanguageState] = useState<Language>('en')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('app_language') as Language
+    if (saved && ['en', 'fr', 'es'].includes(saved)) {
+      setLanguageState(saved)
+    }
+  }, [])
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang)
+    localStorage.setItem('app_language', lang)
+  }
+
+  const t = (key: string): string => {
+    return translations[key]?.[language] || translations[key]?.en || key
+  }
+
+  return (
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+      {children}
+    </LanguageContext.Provider>
+  )
+}
+
+export function useLanguage() {
+  const context = useContext(LanguageContext)
+  if (context === undefined) {
+    throw new Error('useLanguage must be used within a LanguageProvider')
+  }
+  return context
+}
+

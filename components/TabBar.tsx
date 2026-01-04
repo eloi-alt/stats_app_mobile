@@ -7,80 +7,60 @@ interface TabBarProps {
 
 export default function TabBar({ activeTab, onTabChange }: TabBarProps) {
   const tabs = [
-    { id: 'view-physio', icon: 'fa-heart-pulse' },
-    { id: 'view-social', icon: 'fa-circle-nodes' },
-    { id: 'view-home', icon: 'fa-house' },
-    { id: 'view-map', icon: 'fa-earth-americas' },
-    { id: 'view-pro', icon: 'fa-briefcase' },
+    { id: 'view-physio', icon: 'fa-heart-pulse', label: 'Health' },
+    { id: 'view-social', icon: 'fa-users', label: 'TrueCircle' },
+    { id: 'view-home', icon: 'fa-house', label: 'Home' },
+    { id: 'view-map', icon: 'fa-globe', label: 'World' },
+    { id: 'view-pro', icon: 'fa-briefcase', label: 'Career' },
   ]
 
   return (
     <nav
-      className="absolute bottom-[35px] left-[25px] right-[25px] h-20 rounded-[45px] flex justify-around items-center z-[9000] relative overflow-hidden"
+      className="fixed bottom-0 left-0 right-0 h-[80px] rounded-t-[32px] flex justify-around items-center z-[9000] backdrop-blur-xl"
       style={{
-        background: 'rgba(30, 30, 30, 0.4)',
-        backdropFilter: 'blur(80px) saturate(180%)',
-        WebkitBackdropFilter: 'blur(80px) saturate(180%)',
-        border: '1px solid rgba(255, 255, 255, 0.15)',
-        boxShadow: `
-          0 8px 32px rgba(0, 0, 0, 0.3),
-          inset 0 1px 0 rgba(255, 255, 255, 0.2),
-          inset 0 -1px 0 rgba(0, 0, 0, 0.2)
-        `,
+        paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+        paddingTop: '12px',
+        background: 'var(--bg-card)',
+        borderTop: '1px solid var(--border-light)',
+        boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.08)',
       }}
     >
-      {/* Gradient overlay pour effet liquid glass */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            linear-gradient(180deg, 
-              rgba(255, 255, 255, 0.1) 0%, 
-              transparent 50%, 
-              rgba(0, 0, 0, 0.1) 100%
-            )
-          `,
-        }}
-      />
-      {tabs.map((tab) => (
-        <button
-          key={tab.id}
-          className={`text-[18px] w-[50px] h-[50px] flex items-center justify-center rounded-full transition-all duration-300 relative z-10 ${
-            activeTab === tab.id
-              ? 'text-white -translate-y-1'
-              : 'text-gray-500'
-          }`}
-          onClick={() => onTabChange(tab.id)}
-          style={
-            activeTab === tab.id
-              ? {
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  boxShadow: `
-                    0 4px 16px rgba(10, 132, 255, 0.3),
-                    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-                    0 0 0 1px rgba(255, 255, 255, 0.1)
-                  `,
-                }
-              : {}
-          }
-        >
-          <i
-            className={`fa-solid ${tab.icon} transition-all duration-300 ${
-              activeTab === tab.id ? 'scale-110 text-accent-blue' : ''
-            }`}
-            style={
-              activeTab === tab.id
-                ? {
-                    filter: 'drop-shadow(0 0 8px rgba(10, 132, 255, 0.6))',
-                  }
-                : {}
-            }
-          />
-        </button>
-      ))}
+      {tabs.map((tab) => {
+        const isActive = activeTab === tab.id
+
+        return (
+          <button
+            key={tab.id}
+            className="flex flex-col items-center justify-center transition-all duration-300 relative"
+            onClick={() => onTabChange(tab.id)}
+            style={{
+              width: '44px',
+              height: '44px',
+            }}
+            aria-label={tab.label}
+            aria-current={isActive ? 'page' : undefined}
+          >
+            <div
+              className="flex items-center justify-center"
+              style={{
+                width: '40px',
+                height: '40px',
+              }}
+            >
+              <i
+                className={`fa-solid ${tab.icon}`}
+                style={{
+                  fontSize: isActive ? '24px' : '18px',
+                  color: isActive ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                  opacity: isActive ? 1 : 0.7,
+                  transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transform: isActive ? 'scale(1.2)' : 'scale(1)',
+                }}
+              />
+            </div>
+          </button>
+        )
+      })}
     </nav>
   )
 }
-

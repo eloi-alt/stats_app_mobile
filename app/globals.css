@@ -1,0 +1,667 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================================================
+   STATS - THEME SPIRITUEL & DARK MODE COMPLET
+   Basé sur iOS Human Interface Guidelines 2025
+   ============================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
+
+/* ============================================================================
+   1. PALETTE PRIMITIVE (Les ingrédients bruts)
+   ============================================================================ */
+
+:root {
+  /* Core Colors */
+  --palette-white: #ffffff;
+  --palette-black: #000000;
+
+  /* Gray Scale - iOS System Grays */
+  --palette-gray-50: #fafaf8;
+  --palette-gray-100: #f5f5f2;
+  --palette-gray-200: #f2f2f7;
+  --palette-gray-300: #e5e5ea;
+  --palette-gray-400: #d1d1d6;
+  --palette-gray-500: #c7c7cc;
+  --palette-gray-600: #8e8e93;
+  --palette-gray-700: #636366;
+  --palette-gray-800: #48484a;
+  --palette-gray-850: #3a3a3c;
+  --palette-gray-900: #2c2c2e;
+  --palette-gray-950: #1c1c1e;
+
+  /* iOS System Colors - Light */
+  --ios-blue-light: #007aff;
+  --ios-green-light: #34c759;
+  --ios-red-light: #ff3b30;
+  --ios-orange-light: #ff9500;
+  --ios-yellow-light: #ffcc00;
+  --ios-teal-light: #5ac8fa;
+  --ios-purple-light: #af52de;
+  --ios-pink-light: #ff2d55;
+
+  /* iOS System Colors - Dark (légèrement ajustées pour contraste) */
+  --ios-blue-dark: #0a84ff;
+  --ios-green-dark: #30d158;
+  --ios-red-dark: #ff453a;
+  --ios-orange-dark: #ff9f0a;
+  --ios-yellow-dark: #ffd60a;
+  --ios-teal-dark: #64d2ff;
+  --ios-purple-dark: #bf5af2;
+  --ios-pink-dark: #ff375f;
+}
+
+/* ============================================================================
+   2. THEME TOKENS - LIGHT MODE (Default)
+   ============================================================================ */
+
+:root {
+  /* Backgrounds */
+  --bg-primary: #FAFAF8;
+  --bg-secondary: #F5F5F2;
+  --bg-tertiary: #FFFFFF;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-elevated: #FFFFFF;
+  --bg-input: #FFFFFF;
+  --bg-overlay: rgba(0, 0, 0, 0.4);
+
+  /* Text Colors - iOS Label Colors */
+  --text-primary: #2D2D2D;
+  --text-secondary: rgba(60, 60, 67, 0.6);
+  --text-tertiary: rgba(60, 60, 67, 0.3);
+  --text-muted: rgba(60, 60, 67, 0.18);
+  --text-inverse: #FFFFFF;
+
+  /* Borders & Separators */
+  --border-light: rgba(0, 0, 0, 0.06);
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --separator-color: rgba(60, 60, 67, 0.29);
+
+  /* Action Colors */
+  --action-color: var(--ios-blue-light);
+  --error-color: var(--ios-red-light);
+  --success-color: var(--ios-green-light);
+  --warning-color: var(--ios-orange-light);
+
+  /* Accent Colors - Spiritual Palette */
+  --accent-gold: #C9A962;
+  --accent-sage: #8BA888;
+  --accent-rose: #D4A5A5;
+  --accent-sky: #8BB3D4;
+  --accent-lavender: #B8A8D4;
+  --accent-sand: #D4C4A8;
+
+  /* Interactive States */
+  --hover-overlay: rgba(0, 0, 0, 0.04);
+  --active-overlay: rgba(0, 0, 0, 0.08);
+  --focus-ring: rgba(0, 122, 255, 0.4);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.12);
+
+  /* Blur Effects */
+  --blur-standard: blur(20px);
+  --blur-strong: blur(40px);
+
+  /* Phone Dimensions */
+  --phone-width: 400px;
+  --phone-height: 850px;
+}
+
+/* ============================================================================
+   3. THEME TOKENS - DARK MODE
+   ============================================================================ */
+
+html[data-theme="dark"],
+body.dark-mode {
+  /* Backgrounds - OLED Black + Elevated Grays */
+  --bg-primary: #000000;
+  --bg-secondary: #1c1c1e;
+  --bg-tertiary: #2c2c2e;
+  --bg-card: rgba(28, 28, 30, 0.9);
+  --bg-elevated: #2c2c2e;
+  --bg-input: #2c2c2e;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+
+  /* Text Colors - iOS Dark Label Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: rgba(235, 235, 245, 0.6);
+  --text-tertiary: rgba(235, 235, 245, 0.3);
+  --text-muted: rgba(235, 235, 245, 0.18);
+  --text-inverse: #000000;
+
+  /* Borders & Separators - Plus visibles en dark */
+  --border-light: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --separator-color: rgba(84, 84, 88, 0.65);
+
+  /* Action Colors - iOS Dark System Colors */
+  --action-color: var(--ios-blue-dark);
+  --error-color: var(--ios-red-dark);
+  --success-color: var(--ios-green-dark);
+  --warning-color: var(--ios-orange-dark);
+
+  /* Accent Colors - Légèrement ajustées pour dark mode */
+  --accent-gold: #d4b872;
+  --accent-sage: #9ab897;
+  --accent-rose: #e0b5b5;
+  --accent-sky: #9cc3e4;
+  --accent-lavender: #c8b8e4;
+  --accent-sand: #e4d4b8;
+
+  /* Interactive States */
+  --hover-overlay: rgba(255, 255, 255, 0.08);
+  --active-overlay: rgba(255, 255, 255, 0.12);
+  --focus-ring: rgba(10, 132, 255, 0.5);
+
+  /* Shadows - Minimal en dark mode, bordures préférées */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ============================================================================
+   4. CONFIGURATION DE BASE & RESET
+   ============================================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+
+  position: relative;
+}
+
+.app-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+/* ============================================================================
+   5. SMOOTH THEME TRANSITIONS
+   ============================================================================ */
+
+/* Éléments qui transitionnent avec le thème */
+body,
+.glass,
+.apple-glass,
+.content,
+.view,
+.bar-bg,
+nav,
+button,
+input,
+select,
+textarea,
+[class*="rounded-"],
+[class*="bg-"] {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Désactiver les transitions pendant le changement de thème initial */
+body.no-transitions,
+body.no-transitions * {
+  transition: none !important;
+}
+
+/* ============================================================================
+   6. SECTIONS DE VUE
+   ============================================================================ */
+
+.view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 0;
+  overflow: visible;
+  display: flex;
+  flex-direction: column;
+
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+
+  will-change: transform;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* ============================================================================
+   7. ZONE DE CONTENU (CONTENT)
+   ============================================================================ */
+
+.content {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+
+  padding: 10px 20px 100px 20px;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 0px));
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch !important;
+
+  scroll-behavior: auto !important;
+
+  will-change: scroll-position;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+
+  background: transparent;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.content::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.content {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.content>* {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  left: auto !important;
+  right: auto !important;
+  max-height: none !important;
+}
+
+.content .emulsion-sphere-wrapper {
+  overflow: visible !important;
+}
+
+.emulsion-sphere-wrapper canvas {
+  overflow: visible !important;
+}
+
+.w-screen {
+  width: 100% !important;
+}
+
+.w-full {
+  width: 100% !important;
+}
+
+/* ============================================================================
+   8. GLASS EFFECTS
+   ============================================================================ */
+
+.glass {
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  padding: 20px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow-md);
+}
+
+/* Dark mode glass avec micro-bordure pour l'élévation */
+body.dark-mode .glass,
+html[data-theme="dark"] .glass {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  box-shadow: none;
+}
+
+/* Apple Liquid Glass Effect */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(30px) saturate(180%);
+  -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .apple-glass,
+html[data-theme="dark"] .apple-glass {
+  background: rgba(30, 30, 30, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   9. LIQUID BLOB ANIMATION
+   ============================================================================ */
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  33% {
+    transform: translate3d(30px, -30px, 0) scale(1.1);
+  }
+
+  66% {
+    transform: translate3d(-20px, 20px, 0) scale(0.9);
+  }
+}
+
+.liquid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  -webkit-filter: blur(80px);
+  opacity: 0.5;
+  will-change: transform;
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+}
+
+/* Dark mode: blobs plus subtils */
+body.dark-mode .liquid-blob,
+html[data-theme="dark"] .liquid-blob {
+  opacity: 0.25;
+  filter: blur(100px);
+  -webkit-filter: blur(100px);
+}
+
+/* ============================================================================
+   10. NAVBAR STYLES
+   ============================================================================ */
+
+.navbar-glass.navbar-minimized .navbar-content {
+  height: 6px;
+  padding: 0 5px;
+}
+
+.navbar-glass.navbar-minimized .navbar-title {
+  opacity: 0;
+  transform: scale(0.8);
+  pointer-events: none;
+}
+
+.navbar-glass.navbar-minimized .navbar-subtitle {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+}
+
+.navbar-glass.navbar-minimized .navbar-title-text {
+  opacity: 0;
+  font-size: 0;
+}
+
+.navbar-glass.navbar-minimized .navbar-avatar {
+  opacity: 0.3;
+  transform: scale(0.6);
+}
+
+.navbar-glass.navbar-minimized .navbar-avatar img {
+  width: 4px;
+  height: 4px;
+}
+
+.navbar-content,
+.navbar-title,
+.navbar-subtitle,
+.navbar-title-text,
+.navbar-avatar {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================================
+   11. TYPOGRAPHY
+   ============================================================================ */
+
+h1,
+h2,
+h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-weight: 400;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.text-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  font-weight: 600;
+}
+
+/* Dark mode typography adjustment - légèrement plus fin pour éviter l'irradiation */
+body.dark-mode h1,
+body.dark-mode h2,
+body.dark-mode h3,
+html[data-theme="dark"] h1,
+html[data-theme="dark"] h2,
+html[data-theme="dark"] h3 {
+  font-weight: 300;
+}
+
+/* ============================================================================
+   12. PROGRESS BARS
+   ============================================================================ */
+
+.bar-bg {
+  background: var(--hover-overlay);
+  height: 6px;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 10px;
+}
+
+/* ============================================================================
+   13. GLOBE CONTAINER
+   ============================================================================ */
+
+.globe-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ============================================================================
+   14. AVATAR FADE EFFECT
+   ============================================================================ */
+
+.avatar-fade {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar-fade::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: radial-gradient(circle, transparent 70%, var(--bg-primary) 85%, var(--bg-primary) 100%);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.avatar-fade img {
+  position: relative;
+  z-index: 1;
+  box-shadow:
+    0 0 0 1px var(--border-light),
+    0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .avatar-fade img,
+html[data-theme="dark"] .avatar-fade img {
+  box-shadow:
+    0 0 0 1px var(--border-light),
+    0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================================================
+   15. ANIMATIONS
+   ============================================================================ */
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+  opacity: 0;
+}
+
+/* ============================================================================
+   16. SAFE AREA PADDING
+   ============================================================================ */
+
+.pb-safe {
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* ============================================================================
+   17. FORM ELEMENTS - DARK MODE SUPPORT
+   ============================================================================ */
+
+input,
+select,
+textarea {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-light);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Focus states */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--action-color);
+  box-shadow: 0 0 0 3px var(--focus-ring);
+}
+
+/* ============================================================================
+   18. BUTTON STATES - DARK MODE
+   ============================================================================ */
+
+button {
+  color: var(--text-primary);
+}
+
+button:hover {
+  background: var(--hover-overlay);
+}
+
+button:active {
+  background: var(--active-overlay);
+}
+
+/* ============================================================================
+   19. SCROLLBAR STYLING (for non-iOS)
+   ============================================================================ */
+
+@media (hover: hover) {
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+  }
+}
