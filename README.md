@@ -70,16 +70,46 @@ The application is divided into 5 core modules, each representing a pillar of th
 
 ---
 
+## Gesture Navigation System
+
+STATS implements a **modern gesture-based navigation system** that enhances the native mobile experience:
+
+### Core Gestures
+- **TabBar Swipe Navigation**
+  - Swipe **right** on the bottom TabBar → Next tab (Health → Social → Home → World → Career)
+  - Swipe **left** on the bottom TabBar → Previous tab
+  - Isolated to TabBar only to avoid conflicts with 3D sphere interactions
+
+- **ViewSheet Overlays** (Profile & Settings)
+  - Swipe **down** from handle to dismiss
+  - Full-screen overlay with smooth spring animations
+  - Drag handle indicates interactivity
+
+- **Modal Swipe-to-Close**
+  - All modals support swipe-down gesture to dismiss
+  - Only allows drag when content is scrolled to top
+
+- **Contact Swipe Actions**
+  - Swipe **left** on contact → Reveal Message & Remind actions
+  - Swipe **right** on contact → Reveal Call action
+  - iOS-style reveal animations with color-coded buttons
+
+### Implementation Notes
+- Built with `framer-motion` for smooth, physics-based animations
+- Touch-optimized with `touchAction: 'pan-y'` to prevent horizontal scroll conflicts
+- Threshold-based detection (velocity + offset) for reliable gesture recognition
+
+---
+
 ## Technical Architecture (Prototype)
 
 ### Directory Structure
 ```
 /components
-  /Views         # Full-screen page controllers (Home, Map, Social, Pro)
+  /Views         # Full-screen page controllers (Home, Map, Social, Pro, Profile, Settings)
   /Modals        # Sheet overlays (Detail views, Editors)
-  /Cards         # Reusable widgets (StatCard, PhysioCard)
-  /UI            # Atomic design elements (Buttons, Headers)
-  /UI            # Atomic design elements (Buttons, Headers)
+  /Cards         # Reusable widgets (StatCard, PhysioCard, ComparisonCard)
+  /UI            # Atomic design elements (Buttons, Headers, ViewSheet, SwipeableCard)
   /Visualizations # Three.js/Canvas complex renderings
 /contexts        # React Context providers (Theme, Language)
 /data

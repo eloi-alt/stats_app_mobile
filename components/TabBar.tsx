@@ -1,31 +1,66 @@
 'use client'
 
+import { useRef } from 'react'
+import { motion, PanInfo } from 'framer-motion'
+
 interface TabBarProps {
   activeTab: string
   onTabChange: (tabId: string) => void
 }
 
+const TABS = [
+  { id: 'view-physio', icon: 'fa-heart-pulse', label: 'Health' },
+  { id: 'view-social', icon: 'fa-users', label: 'TrueCircle' },
+  { id: 'view-home', icon: 'fa-house', label: 'Home' },
+  { id: 'view-map', icon: 'fa-globe', label: 'World' },
+  { id: 'view-pro', icon: 'fa-briefcase', label: 'Career' },
+]
+
 export default function TabBar({ activeTab, onTabChange }: TabBarProps) {
-  const tabs = [
-    { id: 'view-physio', icon: 'fa-heart-pulse', label: 'Health' },
-    { id: 'view-social', icon: 'fa-users', label: 'TrueCircle' },
-    { id: 'view-home', icon: 'fa-house', label: 'Home' },
-    { id: 'view-map', icon: 'fa-globe', label: 'World' },
-    { id: 'view-pro', icon: 'fa-briefcase', label: 'Career' },
-  ]
+  const tabBarRef = useRef<HTMLElement>(null)
+
+  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const velocity = info.velocity.x
+    const offset = info.offset.x
+    const threshold = 30
+
+    const currentIndex = TABS.findIndex((t) => t.id === activeTab)
+
+    // Swipe right (positive) -> next tab
+    if (velocity > 200 || offset > threshold) {
+      if (currentIndex < TABS.length - 1) {
+        onTabChange(TABS[currentIndex + 1].id)
+      }
+      return
+    }
+
+    // Swipe left (negative) -> previous tab
+    if (velocity < -200 || offset < -threshold) {
+      if (currentIndex > 0) {
+        onTabChange(TABS[currentIndex - 1].id)
+      }
+      return
+    }
+  }
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 h-[80px] rounded-t-[32px] flex justify-around items-center z-[9000] backdrop-blur-xl"
+    <motion.nav
+      ref={tabBarRef}
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.1}
+      onDragEnd={handleDragEnd}
+      className="fixed bottom-0 left-0 right-0 h-[80px] rounded-t-[32px] flex justify-around items-center z-[9000] backdrop-blur-xl cursor-grab active:cursor-grabbing"
       style={{
         paddingBottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
         paddingTop: '12px',
         background: 'var(--bg-card)',
         borderTop: '1px solid var(--border-light)',
         boxShadow: '0 -4px 30px rgba(0, 0, 0, 0.08)',
+        touchAction: 'pan-y',
       }}
     >
-      {tabs.map((tab) => {
+      {TABS.map((tab) => {
         const isActive = activeTab === tab.id
 
         return (
@@ -61,6 +96,6 @@ export default function TabBar({ activeTab, onTabChange }: TabBarProps) {
           </button>
         )
       })}
-    </nav>
+    </motion.nav>
   )
 }

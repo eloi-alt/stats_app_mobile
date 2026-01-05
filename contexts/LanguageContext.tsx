@@ -174,6 +174,55 @@ const translations: Translations = {
   'targetGoal': { en: 'Target Goal', fr: 'Objectif cible', es: 'Meta objetivo' },
   'current': { en: 'Current', fr: 'Actuel', es: 'Actual' },
   'keep': { en: 'Keep', fr: 'Garder', es: 'Mantener' },
+
+  // Profile View
+  'profile': { en: 'Profile', fr: 'Profil', es: 'Perfil' },
+  'performanceByModule': { en: 'Performance by Module', fr: 'Performance par Module', es: 'Rendimiento por Módulo' },
+  'saveMyData': { en: 'Save my data', fr: 'Sauvegarder mes données', es: 'Guardar mis datos' },
+  'share': { en: 'Share', fr: 'Partager', es: 'Compartir' },
+  'editProfile': { en: 'Edit Profile', fr: 'Modifier le profil', es: 'Editar perfil' },
+
+  // Settings View
+  'general': { en: 'General', fr: 'Général', es: 'General' },
+  'account': { en: 'Account', fr: 'Compte', es: 'Cuenta' },
+  'about': { en: 'About', fr: 'À propos', es: 'Acerca de' },
+  'dataStorage': { en: 'Data & Storage', fr: 'Données & Stockage', es: 'Datos y Almacenamiento' },
+  'manageData': { en: 'Manage your data', fr: 'Gérer vos données', es: 'Gestionar tus datos' },
+  'version': { en: 'Version', fr: 'Version', es: 'Versión' },
+  'madeWith': { en: 'Made with', fr: 'Fait avec', es: 'Hecho con' },
+  'system': { en: 'Auto', fr: 'Auto', es: 'Auto' },
+
+  // Harmony Module
+  'alignmentScore': { en: 'Alignment Score', fr: 'Score d\'Alignement', es: 'Puntuación de Alineación' },
+  'evolution': { en: 'Evolution', fr: 'Évolution', es: 'Evolución' },
+  'objectives': { en: 'Objectives', fr: 'Objectifs', es: 'Objetivos' },
+  'aiGuide': { en: 'AI Guide', fr: 'Guide IA', es: 'Guía IA' },
+  'weekLabel': { en: 'Week', fr: 'Semaine', es: 'Semana' },
+  'monthLabel': { en: 'Month', fr: 'Mois', es: 'Mes' },
+  'yearLabel': { en: 'Year', fr: 'Année', es: 'Año' },
+  'priority': { en: 'Priority', fr: 'Prioritaire', es: 'Prioritario' },
+  'inProgress': { en: 'In Progress', fr: 'En cours', es: 'En curso' },
+  'toPlan': { en: 'To Plan', fr: 'À planifier', es: 'Por planificar' },
+  'analyzeTrends': { en: 'Analyze trends', fr: 'Analyser tendances', es: 'Analizar tendencias' },
+  'adjustObjectives': { en: 'Adjust objectives', fr: 'Ajuster objectifs', es: 'Ajustar objetivos' },
+  'whatIsHarmony': { en: 'What is Harmony?', fr: 'Qu\'est-ce que Harmony ?', es: '¿Qué es Harmony?' },
+  'harmonyExplanation': { en: 'The Harmony score measures your life alignment: how much your daily actions bring you closer to your personal goals.', fr: 'Le score Harmony mesure ton alignement de vie : à quel point tes actions quotidiennes te rapprochent de tes objectifs personnels.', es: 'La puntuación Harmony mide tu alineación de vida: cuánto tus acciones diarias te acercan a tus metas personales.' },
+  'trendAnalysis': { en: 'Trend Analysis', fr: 'Analyse des Tendances', es: 'Análisis de Tendencias' },
+  'recommendations': { en: 'Recommendations', fr: 'Recommandations', es: 'Recomendaciones' },
+  'fullReport': { en: 'Full Report', fr: 'Rapport Complet', es: 'Informe Completo' },
+  'dimensionAnalysis': { en: 'Dimension Analysis', fr: 'Analyse par Dimension', es: 'Análisis por Dimensión' },
+  'lifeBalance': { en: 'Life Balance', fr: 'Équilibre de Vie', es: 'Equilibrio de Vida' },
+  'monthlyFocus': { en: 'Monthly Focus', fr: 'Focus du Mois', es: 'Enfoque del Mes' },
+  'longTermVision': { en: 'Long-term Vision', fr: 'Vision Long Terme', es: 'Visión a Largo Plazo' },
+  'strengths': { en: 'Strengths', fr: 'Points forts', es: 'Puntos fuertes' },
+  'toImproveLabel': { en: 'To improve', fr: 'À améliorer', es: 'A mejorar' },
+
+  // Dimensions
+  'healthDimension': { en: 'Health', fr: 'Santé', es: 'Salud' },
+  'financeDimension': { en: 'Finance', fr: 'Finance', es: 'Finanzas' },
+  'socialDimension': { en: 'Social', fr: 'Social', es: 'Social' },
+  'careerDimension': { en: 'Career', fr: 'Carrière', es: 'Carrera' },
+  'worldDimension': { en: 'World', fr: 'Monde', es: 'Mundo' },
 }
 
 interface LanguageContextType {

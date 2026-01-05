@@ -35,6 +35,12 @@ export default function SocialSphere3D({ contacts, userAvatar, onClick }: Social
     const baseRadius = 110 // Same as testmobile
     const PHOTO_ZOOM_THRESHOLD = 2.5 // Show photos above this zoom
 
+    // Detect dark mode for proper line colors
+    const isDarkMode = () => {
+      return document.documentElement.getAttribute('data-theme') === 'dark' ||
+        document.body.classList.contains('dark-mode')
+    }
+
     // ============================================
     // STATE (mirrors testmobile.html exactly)
     // ============================================
@@ -269,24 +275,30 @@ export default function SocialSphere3D({ contacts, userAvatar, onClick }: Social
           )
           // Connection threshold: baseRadius * 2.5 for Rank 1
           if (d < baseRadius * 2.5) {
-            // Rank 1 connections - solid lines without random flickering
+            // Rank 1 connections - solid lines, color adapts to theme
+            const dark = isDarkMode()
             ctx.beginPath()
             ctx.moveTo(p1.x, p1.y)
             ctx.lineTo(p2.x, p2.y)
-            ctx.strokeStyle = `rgba(0,0,0,${0.15 * Math.min(p1.scale, p2.scale)})`
-            ctx.lineWidth = 1
+            ctx.strokeStyle = dark
+              ? `rgba(255,255,255,${0.2 * Math.min(p1.scale, p2.scale)})`
+              : `rgba(0,0,0,${0.15 * Math.min(p1.scale, p2.scale)})`
+            ctx.lineWidth = dark ? 1.5 : 1
             ctx.stroke()
           }
         })
       })
 
       // Draw center to node connections (from testmobile.html)
+      const dark = isDarkMode()
       projected.forEach(p => {
         ctx.beginPath()
         ctx.moveTo(centerProj.x, centerProj.y)
         ctx.lineTo(p.x, p.y)
-        ctx.strokeStyle = `rgba(0,0,0,${0.1 * p.scale})`
-        ctx.lineWidth = 0.5
+        ctx.strokeStyle = dark
+          ? `rgba(255,255,255,${0.15 * p.scale})`
+          : `rgba(0,0,0,${0.1 * p.scale})`
+        ctx.lineWidth = dark ? 0.8 : 0.5
         ctx.stroke()
       })
 
@@ -295,9 +307,11 @@ export default function SocialSphere3D({ contacts, userAvatar, onClick }: Social
 
       // Determine if we should show photos
       const showPhotos = zoomLevel >= PHOTO_ZOOM_THRESHOLD
+      const darkForNodes = isDarkMode()
 
       // Draw Center Node (User) - from testmobile.html
       let cR = (5 * scale) * centerProj.scale;
+      const centerColor = darkForNodes ? '#FFFFFF' : '#000000'
       if (showPhotos) {
         // Draw center with user photo
         const centerImg = userAvatar ? loadImage(userAvatar, 'user_center') : null;
@@ -306,11 +320,11 @@ export default function SocialSphere3D({ contacts, userAvatar, onClick }: Social
           drawLiquidBubble(ctx, centerProj.x, centerProj.y, photoR, centerImg);
         } else {
           ctx.beginPath(); ctx.arc(centerProj.x, centerProj.y, cR * 1.3, 0, Math.PI * 2);
-          ctx.fillStyle = '#000'; ctx.fill();
+          ctx.fillStyle = centerColor; ctx.fill();
         }
       } else {
         ctx.beginPath(); ctx.arc(centerProj.x, centerProj.y, cR, 0, Math.PI * 2);
-        ctx.fillStyle = '#000'; ctx.fill();
+        ctx.fillStyle = centerColor; ctx.fill();
       }
 
       // Draw nodes
@@ -325,17 +339,23 @@ export default function SocialSphere3D({ contacts, userAvatar, onClick }: Social
           if (img && img.complete) {
             drawLiquidBubble(ctx, p.x, p.y, photoR, img)
           } else {
-            // Fallback to colored circle while loading
+            // Fallback to colored circle while loading - brighter in dark mode
+            const nodeColor = darkForNodes
+              ? { r: 180, g: 200, b: 175 }  // Brighter sage for dark mode
+              : p.node.color
             ctx.beginPath()
             ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
-            ctx.fillStyle = `rgba(${p.node.color.r},${p.node.color.g},${p.node.color.b},${p.scale})`
+            ctx.fillStyle = `rgba(${nodeColor.r},${nodeColor.g},${nodeColor.b},${p.scale})`
             ctx.fill()
           }
         } else {
-          // Normal mode - colored dots
+          // Normal mode - colored dots - brighter in dark mode
+          const nodeColor = darkForNodes
+            ? { r: 180, g: 200, b: 175 }  // Brighter for visibility
+            : p.node.color
           ctx.beginPath()
           ctx.arc(p.x, p.y, r, 0, Math.PI * 2)
-          ctx.fillStyle = `rgba(${p.node.color.r},${p.node.color.g},${p.node.color.b},${p.scale})`
+          ctx.fillStyle = `rgba(${nodeColor.r},${nodeColor.g},${nodeColor.b},${p.scale})`
           ctx.fill()
         }
       })
@@ -517,21 +537,6 @@ export default function SocialSphere3D({ contacts, userAvatar, onClick }: Social
         className="block w-full h-full"
         style={{ touchAction: 'none' }}
       />
-
-      {/* Bouton "Lancer TrueCircle" - smaller */}
-      <button
-        onClick={() => window.location.href = "/testmobile.html"}
-        className="absolute top-3 right-3 px-2.5 py-1 rounded-xl flex items-center gap-1.5 transition-all active:scale-95 hover:brightness-110 shadow-md"
-        style={{
-          background: 'rgba(25, 25, 25, 0.8)',
-          backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          zIndex: 100
-        }}
-      >
-        <span className="text-[9px] font-semibold text-white/95 tracking-wide">TC</span>
-        <i className="fa-solid fa-arrow-right-from-bracket text-[7px] text-white/60" />
-      </button>
 
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </div>

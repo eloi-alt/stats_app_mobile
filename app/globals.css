@@ -108,6 +108,11 @@
   --blur-standard: blur(20px);
   --blur-strong: blur(40px);
 
+  /* Glass Backgrounds */
+  --glass-bg: rgba(0, 0, 0, 0.03);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --blur-overlay-bg: rgba(255, 255, 255, 0.7);
+
   /* Phone Dimensions */
   --phone-width: 400px;
   --phone-height: 850px;
@@ -164,6 +169,11 @@ body.dark-mode {
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.6);
+
+  /* Glass Backgrounds - Dark mode */
+  --glass-bg: rgba(255, 255, 255, 0.06);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --blur-overlay-bg: rgba(0, 0, 0, 0.7);
 }
 
 /* ============================================================================

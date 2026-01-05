@@ -5,6 +5,7 @@ import Navbar from '../Navbar'
 import SocialSphere3D from '../SocialSphere3D'
 import ComparisonCard from '../Cards/ComparisonCard'
 import BottomSheet from '../UI/BottomSheet'
+import SwipeableCard from '../UI/SwipeableCard'
 import RankingDetailModal from '../Modals/RankingDetailModal'
 import CompareWithFriendModal from '../Modals/CompareWithFriendModal'
 import { Contact, ThomasMorel } from '@/data/mockData'
@@ -110,10 +111,29 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
             }))
           }
         />
+
+        {/* TC Button - Opens full TrueCircle visualization */}
+        <button
+          onClick={() => {
+            window.location.href = '/testmobile.html'
+          }}
+          className="absolute bottom-4 right-4 w-12 h-12 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-95 hover:scale-105"
+          style={{
+            background: 'var(--glass-bg)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid var(--glass-border)',
+            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
+          }}
+          title="Ouvrir TrueCircle complet"
+          aria-label="Ouvrir TrueCircle complet"
+        >
+          <i className="fa-solid fa-circle-nodes" style={{ fontSize: '18px', color: 'var(--text-primary)' }}></i>
+        </button>
       </div>
 
       {/* Tab selector */}
-      <div className="flex p-1 rounded-2xl mb-5" style={{ background: 'rgba(0, 0, 0, 0.03)' }}>
+      <div className="flex p-1 rounded-2xl mb-5" style={{ background: 'var(--glass-bg)' }}>
         {[
           { key: 'friends', label: t('friends') },
           { key: 'country', label: t('national') },
@@ -123,9 +143,9 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
             key={key}
             className={`flex-1 text-center py-2.5 text-[11px] font-medium tracking-wide rounded-xl transition-all duration-300 cursor-pointer ${comparisonType === key ? 'shadow-sm' : ''}`}
             style={{
-              background: comparisonType === key ? 'white' : 'transparent',
+              background: comparisonType === key ? 'var(--bg-primary)' : 'transparent',
               color: comparisonType === key ? 'var(--text-primary)' : 'var(--text-muted)',
-              boxShadow: comparisonType === key ? '0 2px 8px rgba(0,0,0,0.04)' : 'none',
+              boxShadow: comparisonType === key ? '0 2px 8px var(--shadow-color, rgba(0,0,0,0.04))' : 'none',
             }}
             onClick={() => setComparisonType(key as any)}
           >
@@ -250,60 +270,54 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
           }}
         >
           {contacts.map((contact, index) => (
-            <div
+            <SwipeableCard
               key={contact.id}
-              className="p-4 flex items-center gap-4 transition-colors cursor-pointer hover:bg-black/[0.02]"
-              style={{ borderBottom: index < contacts.length - 1 ? '1px solid var(--border-light)' : 'none' }}
-              onClick={() => handleContactClick(contact)}
+              leftActions={contact.phone ? [
+                {
+                  icon: 'fa-phone',
+                  color: 'white',
+                  bgColor: 'var(--accent-sage)',
+                  label: t('call'),
+                  onClick: () => window.location.href = `tel:${contact.phone!.replace(/\s/g, '')}`,
+                },
+              ] : []}
+              rightActions={[
+                {
+                  icon: 'fa-message',
+                  color: 'white',
+                  bgColor: 'var(--accent-sky)',
+                  label: t('message'),
+                  onClick: () => contact.phone && (window.location.href = `sms:${contact.phone.replace(/\s/g, '')}`),
+                },
+                {
+                  icon: 'fa-bell',
+                  color: 'white',
+                  bgColor: 'var(--accent-gold)',
+                  label: t('remind'),
+                  onClick: () => handleAction(t('remind'), contact.name),
+                },
+              ]}
             >
-              <div className="avatar-fade" style={{ width: '44px', height: '44px' }}>
-                <img src={contact.avatar} className="w-full h-full rounded-full object-cover" alt={contact.name} />
-              </div>
-              <div className="flex-1">
-                <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{contact.name}</div>
-                <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
-                  {contact.role} • <span style={{ color: contact.lastContactColor.includes('red') ? 'var(--accent-rose)' : 'var(--accent-gold)' }}>{contact.lastContact}</span>
+              <div
+                className="p-4 flex items-center gap-4 transition-colors cursor-pointer"
+                style={{
+                  background: 'var(--bg-primary)',
+                  borderBottom: index < contacts.length - 1 ? '1px solid var(--border-light)' : 'none',
+                }}
+                onClick={() => handleContactClick(contact)}
+              >
+                <div className="avatar-fade" style={{ width: '44px', height: '44px' }}>
+                  <img src={contact.avatar} className="w-full h-full rounded-full object-cover" alt={contact.name} />
                 </div>
-                {contact.phone && (
-                  <a
-                    href={`tel:${contact.phone}`}
-                    className="text-xs mt-1 block"
-                    style={{ color: 'var(--accent-sky)' }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <i className="fa-solid fa-phone mr-1" />{contact.phone}
-                  </a>
-                )}
+                <div className="flex-1">
+                  <div className="font-medium text-sm" style={{ color: 'var(--text-primary)' }}>{contact.name}</div>
+                  <div className="text-xs mt-0.5" style={{ color: 'var(--text-tertiary)' }}>
+                    {contact.role} • <span style={{ color: contact.lastContactColor.includes('red') ? 'var(--accent-rose)' : 'var(--accent-gold)' }}>{contact.lastContact}</span>
+                  </div>
+                </div>
+                <i className="fa-solid fa-chevron-right text-xs" style={{ color: 'var(--text-muted)' }} />
               </div>
-              <div className="flex gap-2">
-                {contact.phone && (
-                  <>
-                    <a
-                      href={`sms:${contact.phone.replace(/\s/g, '')}`}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors active:scale-95"
-                      style={{ background: 'rgba(165, 196, 212, 0.1)', color: 'var(--accent-sky)' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAction(t('message'), contact.name)
-                      }}
-                    >
-                      <i className="fa-solid fa-message text-sm" />
-                    </a>
-                    <a
-                      href={`tel:${contact.phone.replace(/\s/g, '')}`}
-                      className="w-9 h-9 rounded-xl flex items-center justify-center transition-colors active:scale-95"
-                      style={{ background: 'rgba(139, 168, 136, 0.1)', color: 'var(--accent-sage)' }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleAction(t('call'), contact.name)
-                      }}
-                    >
-                      <i className="fa-solid fa-phone text-sm" />
-                    </a>
-                  </>
-                )}
-              </div>
-            </div>
+            </SwipeableCard>
           ))}
         </div>
       </div>
@@ -391,13 +405,13 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                   {t('privateStats')}
                 </div>
                 <div className="grid grid-cols-2 gap-3 mb-5 relative">
-                  <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
+                  <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{ background: 'var(--glass-bg)' }}>
                     <div
                       className="absolute inset-0 flex items-center justify-center"
                       style={{
                         backdropFilter: 'blur(8px)',
                         WebkitBackdropFilter: 'blur(8px)',
-                        background: 'rgba(255, 255, 255, 0.7)',
+                        background: 'var(--blur-overlay-bg, rgba(255, 255, 255, 0.7))',
                       }}
                     >
                       <div className="text-lg font-light" style={{ color: 'var(--text-muted)' }}>•••</div>
@@ -459,7 +473,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
               </>
             )}
 
-            <div className="flex justify-around py-4 rounded-2xl mb-5" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
+            <div className="flex justify-around py-4 rounded-2xl mb-5" style={{ background: 'var(--glass-bg)' }}>
               <div className="text-center">
                 <div className="text-lg font-light text-display" style={{ color: 'var(--text-primary)' }}>{selectedContact.fullContact?.interactionCount || 0}</div>
                 <div className="text-[9px] uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{t('interactions')}</div>

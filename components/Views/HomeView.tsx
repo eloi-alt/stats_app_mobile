@@ -284,8 +284,8 @@ export default function HomeView({
         </div>
       </div>
 
-      {/* Spacer to push 'Your Domains' below the fold - large enough to require scrolling */}
-      <div style={{ height: 'calc(100vh - 600px)', minHeight: '150px' }} />
+      {/* Spacer to push 'Your Domains' just below the fold */}
+      <div style={{ height: '60px' }} />
 
       {/* Section title */}
       <div className="flex items-center gap-3 mb-5 px-1">

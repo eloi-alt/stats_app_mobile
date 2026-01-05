@@ -1291,6 +1291,163 @@ export const ThomasMorel: UserProfile = {
     },
     recommendations: [],
   },
+
+  // ==========================================================================
+  // MODULE F : HARMONY (Alignement & Guide IA)
+  // ==========================================================================
+  harmony: {
+    // Objectifs personnels par dimension
+    objectives: [
+      // === Santé ===
+      {
+        id: 'obj_health_1',
+        dimension: 'health',
+        title: 'Atteindre 75kg',
+        description: 'Objectif de poids optimal pour ma taille',
+        target: 75,
+        current: 78,
+        unit: 'kg',
+        priority: 'high',
+        deadline: '2026-06-01',
+      },
+      {
+        id: 'obj_health_2',
+        dimension: 'health',
+        title: '8h de sommeil par nuit',
+        description: 'Moyenne de sommeil sur 7 jours',
+        target: 8,
+        current: 7.2,
+        unit: 'h',
+        priority: 'medium',
+        deadline: null,
+      },
+      {
+        id: 'obj_health_3',
+        dimension: 'health',
+        title: '300 min activité/semaine',
+        description: 'OMS recommande 150-300 min',
+        target: 300,
+        current: 285,
+        unit: 'min',
+        priority: 'medium',
+        deadline: null,
+      },
+
+      // === Finance ===
+      {
+        id: 'obj_finance_1',
+        dimension: 'finance',
+        title: '500k€ patrimoine net',
+        description: 'Objectif de patrimoine à 5 ans',
+        target: 500000,
+        current: 497450,
+        unit: '€',
+        priority: 'high',
+        deadline: '2030-01-01',
+      },
+      {
+        id: 'obj_finance_2',
+        dimension: 'finance',
+        title: '40% taux d\'épargne',
+        description: 'Pourcentage du revenu épargné',
+        target: 40,
+        current: 35,
+        unit: '%',
+        priority: 'medium',
+        deadline: null,
+      },
+
+      // === Social ===
+      {
+        id: 'obj_social_1',
+        dimension: 'social',
+        title: '10 proches (Rang 1)',
+        description: 'Cercle intime équilibré',
+        target: 10,
+        current: 7,
+        unit: 'personnes',
+        priority: 'high',
+        deadline: null,
+      },
+      {
+        id: 'obj_social_2',
+        dimension: 'social',
+        title: 'Contact famille hebdomadaire',
+        description: 'Appel/visite famille chaque semaine',
+        target: 1,
+        current: 0.5,
+        unit: 'fois/semaine',
+        priority: 'medium',
+        deadline: null,
+      },
+
+      // === Carrière ===
+      {
+        id: 'obj_career_1',
+        dimension: 'career',
+        title: 'Lancer ma startup',
+        description: 'Créer une entreprise SaaS B2B',
+        target: 100,
+        current: 35,
+        unit: '%',
+        priority: 'high',
+        deadline: '2027-01-01',
+      },
+      {
+        id: 'obj_career_2',
+        dimension: 'career',
+        title: 'Japonais niveau N3',
+        description: 'JLPT N3 certification',
+        target: 100,
+        current: 40,
+        unit: '%',
+        priority: 'low',
+        deadline: '2026-12-01',
+      },
+
+      // === Monde / Exploration ===
+      {
+        id: 'obj_world_1',
+        dimension: 'world',
+        title: 'Visiter 30 pays',
+        description: 'Explorer le monde',
+        target: 30,
+        current: 14,
+        unit: 'pays',
+        priority: 'medium',
+        deadline: '2035-01-01',
+      },
+      {
+        id: 'obj_world_2',
+        dimension: 'world',
+        title: 'Voir les pyramides',
+        description: 'Bucket list - Égypte',
+        target: 100,
+        current: 10,
+        unit: '%',
+        priority: 'low',
+        deadline: '2026-03-01',
+      },
+    ],
+
+    // Poids de chaque dimension dans le score global
+    dimensionWeights: {
+      health: 0.25,
+      finance: 0.20,
+      social: 0.20,
+      career: 0.20,
+      world: 0.15,
+    },
+
+    // Score d'alignement actuel (calculé)
+    currentScore: 67,
+
+    // Dernière mise à jour
+    lastUpdated: '2026-01-04',
+
+    // Insight IA (mock pour MVP)
+    aiInsight: 'Ton alignement global est bon, mais ton cercle social mérite attention. Tu as 7 proches sur 10 visés. Concentre-toi sur renforcer 2-3 relations existantes plutôt que d\'en créer de nouvelles. Côté finance, tu es à 99.5% de ton objectif patrimoine - excellent travail !',
+  },
 };
 
 // ============================================================================
