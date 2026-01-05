@@ -88,7 +88,7 @@ const LiquidBlob: React.FC<LiquidBlobProps> = ({
     ...props
 }) => {
     const meshRef = useRef<THREE.Mesh>(null!);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line
     const materialRef = useRef<any>(null);
     const [hovered, setHovered] = useState(false);
     const pointerDownPos = useRef<{ x: number; y: number } | null>(null);

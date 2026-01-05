@@ -125,8 +125,8 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
             border: '1px solid var(--glass-border)',
             boxShadow: '0 4px 24px rgba(0, 0, 0, 0.08)',
           }}
-          title="Ouvrir TrueCircle complet"
-          aria-label="Ouvrir TrueCircle complet"
+          title={t('openTrueCircle')}
+          aria-label={t('openTrueCircle')}
         >
           <i className="fa-solid fa-circle-nodes" style={{ fontSize: '18px', color: 'var(--text-primary)' }}></i>
         </button>
@@ -161,13 +161,13 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         <ComparisonCard
           icon="fa-solid fa-coins"
           iconColor="var(--accent-gold)"
-          label="Finance"
+          label={t('financeDimension')}
           value={currentData.fi.text}
           myProgress={75}
           otherProgress={currentData.fi.width}
           myColor="var(--accent-gold)"
           onClick={() => setSelectedRanking({
-            category: 'Finance',
+            category: t('financeDimension'),
             icon: 'fa-solid fa-coins',
             iconColor: 'var(--accent-gold)',
             userValue: 75,
@@ -178,13 +178,13 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         <ComparisonCard
           icon="fa-solid fa-person-running"
           iconColor="var(--accent-sage)"
-          label="Sport"
+          label={t('sport')}
           value={currentData.sp.text}
           myProgress={90}
           otherProgress={currentData.sp.width}
           myColor="var(--accent-sage)"
           onClick={() => setSelectedRanking({
-            category: 'Sport',
+            category: t('sport'),
             icon: 'fa-solid fa-person-running',
             iconColor: 'var(--accent-sage)',
             userValue: 90,
@@ -195,13 +195,13 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         <ComparisonCard
           icon="fa-solid fa-moon"
           iconColor="var(--accent-sky)"
-          label="Sleep"
+          label={t('sleep')}
           value={currentData.sl.text}
           myProgress={80}
           otherProgress={currentData.sl.width}
           myColor="var(--accent-sky)"
           onClick={() => setSelectedRanking({
-            category: 'Sleep',
+            category: t('sleep'),
             icon: 'fa-solid fa-moon',
             iconColor: 'var(--accent-sky)',
             userValue: 80,
@@ -212,35 +212,35 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         <ComparisonCard
           icon="fa-solid fa-globe"
           iconColor="var(--accent-lavender)"
-          label="Exploration"
-          value="12 countries"
+          label={t('exploration')}
+          value={`12 ${t('countriesLabel')}`}
           myProgress={85}
           otherProgress={72}
           myColor="var(--accent-lavender)"
           onClick={() => setSelectedRanking({
-            category: 'Exploration',
+            category: t('exploration'),
             icon: 'fa-solid fa-globe',
             iconColor: 'var(--accent-lavender)',
             userValue: 85,
             comparisonValue: 72,
-            displayValue: '12 countries',
+            displayValue: `12 ${t('countriesLabel')}`,
           })}
         />
         <ComparisonCard
           icon="fa-solid fa-link"
           iconColor="var(--accent-rose)"
-          label="Connection"
-          value="Level 8"
+          label={t('connection')}
+          value={`${t('level')} 8`}
           myProgress={80}
           otherProgress={65}
           myColor="var(--accent-rose)"
           onClick={() => setSelectedRanking({
-            category: 'Connection',
+            category: t('connection'),
             icon: 'fa-solid fa-link',
             iconColor: 'var(--accent-rose)',
             userValue: 80,
             comparisonValue: 65,
-            displayValue: 'Level 8',
+            displayValue: `${t('level')} 8`,
           })}
         />
       </div>
@@ -419,7 +419,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                     <div className="text-xl font-light text-display opacity-0" style={{ color: 'var(--accent-gold)' }}>
                       {selectedContact.fullContact.privateStats.monthlyIncome}€
                     </div>
-                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>Monthly</div>
+                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>{t('monthly')}</div>
                   </div>
                   <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
                     <div
@@ -435,7 +435,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                     <div className="text-xl font-light text-display opacity-0" style={{ color: 'var(--accent-sage)' }}>
                       {selectedContact.fullContact.privateStats.savingsRate}%
                     </div>
-                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>Savings</div>
+                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>{t('savings')}</div>
                   </div>
                   <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
                     <div
@@ -451,7 +451,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                     <div className="text-xl font-light text-display opacity-0" style={{ color: 'var(--accent-rose)' }}>
                       {selectedContact.fullContact.privateStats.currentWeight}kg
                     </div>
-                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>Weight</div>
+                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>{t('weight')}</div>
                   </div>
                   <div className="rounded-2xl p-4 text-center relative overflow-hidden" style={{ background: 'rgba(0, 0, 0, 0.02)' }}>
                     <div
@@ -467,7 +467,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                     <div className="text-xl font-light text-display opacity-0" style={{ color: 'var(--accent-gold)' }}>
                       {selectedContact.fullContact.privateStats.weeklyActivity}min
                     </div>
-                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>Activity</div>
+                    <div className="text-[9px] uppercase tracking-wider mt-1 opacity-0" style={{ color: 'var(--text-muted)' }}>{t('activity')}</div>
                   </div>
                 </div>
               </>
@@ -533,7 +533,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                   }}
                 >
                   <i className="fa-solid fa-scale-balanced" style={{ color: 'var(--accent-lavender)' }} />
-                  <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>Compare</span>
+                  <span className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{t('compare')}</span>
                 </button>
               </div>
             )}

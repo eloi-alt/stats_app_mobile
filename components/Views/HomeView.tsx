@@ -43,12 +43,12 @@ interface HomeViewProps {
 }
 
 // Module colors in spiritual palette
-const moduleColors: Record<string, { primary: string; light: string; name: string }> = {
-  'A': { primary: '#8BA888', light: 'rgba(139, 168, 136, 0.1)', name: 'Health' },
-  'B': { primary: '#A5C4D4', light: 'rgba(165, 196, 212, 0.1)', name: 'World' },
-  'C': { primary: '#C9A962', light: 'rgba(201, 169, 98, 0.1)', name: 'Finance' },
-  'D': { primary: '#B8A5D4', light: 'rgba(184, 165, 212, 0.1)', name: 'Achievements' },
-  'E': { primary: '#D4A5A5', light: 'rgba(212, 165, 165, 0.1)', name: 'Circle' },
+const moduleColors: Record<string, { primary: string; light: string; nameKey: string }> = {
+  'A': { primary: '#8BA888', light: 'rgba(139, 168, 136, 0.1)', nameKey: 'moduleHealth' },
+  'B': { primary: '#A5C4D4', light: 'rgba(165, 196, 212, 0.1)', nameKey: 'moduleWorld' },
+  'C': { primary: '#C9A962', light: 'rgba(201, 169, 98, 0.1)', nameKey: 'moduleFinance' },
+  'D': { primary: '#B8A5D4', light: 'rgba(184, 165, 212, 0.1)', nameKey: 'moduleAchievements' },
+  'E': { primary: '#D4A5A5', light: 'rgba(212, 165, 165, 0.1)', nameKey: 'moduleCircle' },
 }
 
 // Pull-to-refresh threshold in pixels
@@ -225,7 +225,7 @@ export default function HomeView({
             transition: 'color 0.2s ease'
           }}
         >
-          {pullDistance >= PULL_THRESHOLD ? 'Release to refresh' : 'Pull to refresh'}
+          {pullDistance >= PULL_THRESHOLD ? t('releaseToRefresh') : t('pullToRefresh')}
         </div>
       )}
 
@@ -242,7 +242,7 @@ export default function HomeView({
             {stats.topModule.percentage}%
           </div>
           <div className="text-[10px] tracking-wide uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            {moduleColors[stats.topModule.id]?.name || stats.topModule.title}
+            {t(moduleColors[stats.topModule.id]?.nameKey) || stats.topModule.title}
           </div>
           <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
             {t('best')}
@@ -276,7 +276,7 @@ export default function HomeView({
             {stats.lowModule.percentage}%
           </div>
           <div className="text-[10px] tracking-wide uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            {moduleColors[stats.lowModule.id]?.name || stats.lowModule.title}
+            {t(moduleColors[stats.lowModule.id]?.nameKey) || stats.lowModule.title}
           </div>
           <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
             {t('toImprove')}
@@ -355,7 +355,7 @@ export default function HomeView({
                   className="text-sm font-medium mb-3"
                   style={{ color: 'var(--text-primary)' }}
                 >
-                  {colors.name}
+                  {t(colors.nameKey)}
                 </h3>
 
                 {/* Graphique principal - Plus grand et visible */}
@@ -388,7 +388,7 @@ export default function HomeView({
                 <div className="flex items-center justify-between mt-2 text-[9px]" style={{ color: 'var(--text-tertiary)' }}>
                   <span>{t('friends')}: {averages.friends}%</span>
                   <span>•</span>
-                  <span>Global: {averages.worldwide}%</span>
+                  <span>{t('global')}: {averages.worldwide}%</span>
                 </div>
               </div>
             </div>

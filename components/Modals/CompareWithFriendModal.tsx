@@ -57,21 +57,21 @@ export default function CompareWithFriendModal({
     }, [selectedFriend])
 
     const categories = [
-        { key: 'finance', icon: 'fa-solid fa-coins', color: 'var(--accent-gold)', label: 'Finance' },
-        { key: 'sport', icon: 'fa-solid fa-person-running', color: 'var(--accent-sage)', label: 'Sport' },
-        { key: 'sleep', icon: 'fa-solid fa-moon', color: 'var(--accent-sky)', label: 'Sleep' },
-        { key: 'exploration', icon: 'fa-solid fa-globe', color: 'var(--accent-lavender)', label: 'Exploration' },
-        { key: 'connection', icon: 'fa-solid fa-link', color: 'var(--accent-rose)', label: 'Connection' },
+        { key: 'finance', icon: 'fa-solid fa-coins', color: 'var(--accent-gold)', labelKey: 'financeDimension' },
+        { key: 'sport', icon: 'fa-solid fa-person-running', color: 'var(--accent-sage)', labelKey: 'sport' },
+        { key: 'sleep', icon: 'fa-solid fa-moon', color: 'var(--accent-sky)', labelKey: 'sleep' },
+        { key: 'exploration', icon: 'fa-solid fa-globe', color: 'var(--accent-lavender)', labelKey: 'exploration' },
+        { key: 'connection', icon: 'fa-solid fa-link', color: 'var(--accent-rose)', labelKey: 'connection' },
     ]
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} id="compare-friend-modal" title="Compare Stats">
+        <Modal isOpen={isOpen} onClose={onClose} id="compare-friend-modal" title={t('compareStats')}>
             {/* Friend selector */}
             <div
                 className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
                 style={{ color: 'var(--text-tertiary)' }}
             >
-                Select Friend
+                {t('friends')}
             </div>
 
             <div
@@ -142,7 +142,7 @@ export default function CompareWithFriendModal({
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center gap-2">
                                             <i className={`${cat.icon} text-sm`} style={{ color: cat.color }} />
-                                            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{cat.label}</span>
+                                            <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{t(cat.labelKey)}</span>
                                         </div>
                                         {!isDraw && (
                                             <span

@@ -1076,7 +1076,7 @@
                 labelImageCache[node.index] = null;
                 let img = new Image();
                 img.onload = () => labelImageCache[node.index] = img;
-                img.src = `/truecircle/${clean}.jpg`;
+                img.src = `public/${clean}.jpg`;
             }
             return labelImageCache[node.index];
         }
@@ -1732,10 +1732,10 @@
             modalContent.innerHTML = `
                 <div class="connection-photos-row">
                     <div class="connection-photo-container" onclick="openModalFromConnection('${connData.name1}', ${connData.index1})">
-                        <img src="/truecircle/${clean1}.jpg" class="connection-photo" onerror="this.src='https://via.placeholder.com/80'">
+                        <img src="public/${clean1}.jpg" class="connection-photo" onerror="this.src='https://via.placeholder.com/80'">
                     </div>
                     <div class="connection-photo-container" onclick="openModalFromConnection('${connData.name2}', ${connData.index2})">
-                        <img src="/truecircle/${clean2}.jpg" class="connection-photo" onerror="this.src='https://via.placeholder.com/80'">
+                        <img src="public/${clean2}.jpg" class="connection-photo" onerror="this.src='https://via.placeholder.com/80'">
                     </div>
                 </div>
                 <div class="modal-name">${connData.name1} & ${connData.name2}</div>
@@ -1810,7 +1810,7 @@
 
                     <!-- Card Action (Rest of row) -->
                     <div onclick="selectSearchNode(${n.index})" style="flex:1; display: flex; align-items: center; cursor: pointer;">
-                        <img src="/truecircle/${nameToFilename(n.name)}.jpg" onerror="this.src='https://via.placeholder.com/40'" style="width: 36px; height: 36px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
+                        <img src="public/${nameToFilename(n.name)}.jpg" onerror="this.src='https://via.placeholder.com/40'" style="width: 36px; height: 36px; border-radius: 50%; margin-right: 12px; object-fit: cover;">
                         <div style="flex:1">
                             <div class="search-result-name" style="font-weight:600; font-size:16px;">${n.name}</div>
                             <div class="search-result-meta" style="font-size:13px; color:#888;">${n.age} ans • Rang ${n.layerRank}</div>
@@ -1870,7 +1870,7 @@
                         <div class="common-connections-list">
                             ${commonConnections.map(cn => `
                                 <div class="common-connection-item" onclick="openModalFromConnection('${cn.name}', ${cn.index})">
-                                    <img src="/truecircle/${nameToFilename(cn.name)}.jpg" class="common-connection-photo" onerror="this.src='https://via.placeholder.com/40'">
+                                    <img src="public/${nameToFilename(cn.name)}.jpg" class="common-connection-photo" onerror="this.src='https://via.placeholder.com/40'">
                                     <span class="common-connection-name">${cn.name}</span>
                                 </div>
                             `).join('')}
@@ -1880,7 +1880,7 @@
             }
 
             modalContent.innerHTML = `
-                <img src="/truecircle/${clean}.jpg" class="modal-photo" onerror="this.src='https://via.placeholder.com/100'">
+                <img src="public/${clean}.jpg" class="modal-photo" onerror="this.src='https://via.placeholder.com/100'">
                 <div class="modal-name">${node.name}</div>
                 <div class="modal-info-row">
                     <span class="modal-info-label">Âge</span><span class="modal-info-value">${node.age} ans</span>
@@ -1900,7 +1900,7 @@
                     return `<div class="modal-info-row"><span class="modal-info-label">Connecté(e) le</span><span class="modal-info-value">${day}-${month}-${year}</span></div>`;
                 })()}
                 ${commonHTML}
-                <a href="#" class="action-button" onclick="return handleViewFullProfile(event, '${node.name}', ${node.layerRank})">Voir profil complet</a>
+                <a href="#" class="action-button">Voir profil complet</a>
             `;
             modalSheet.classList.add('visible');
             modalOverlay.classList.add('visible');
@@ -1913,22 +1913,6 @@
             modalOverlay.classList.remove('visible');
             autoRotating = true; // Resume rotation
         }
-
-        // STATS App Integration: Navigate to full profile in STATS App
-        window.handleViewFullProfile = function (event, name, rank) {
-            event.preventDefault();
-
-            // Only Rank 1 (Inner Circle) friends can view full profile in STATS
-            if (rank !== 1) {
-                alert('Le profil complet est disponible uniquement pour le Cercle Intime (Rang 1).\n\nCette personne n\'est pas encore assez proche pour avoir un profil STATS.');
-                return false;
-            }
-
-            // Navigate to STATS App with contact preselected
-            // The URL structure matches STATS App's expected format
-            window.location.href = '/?view=view-social&contactName=' + encodeURIComponent(name);
-            return false;
-        };
 
         modalOverlay.addEventListener('click', closeModal);
 

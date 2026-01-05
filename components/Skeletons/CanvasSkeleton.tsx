@@ -1,6 +1,7 @@
 'use client'
 
 import React from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface CanvasSkeletonProps {
     /** Height of the skeleton container */
@@ -20,6 +21,8 @@ export default function CanvasSkeleton({
     className = '',
     type = 'sphere'
 }: CanvasSkeletonProps) {
+    const { t } = useLanguage()
+
     return (
         <div
             className={`relative flex items-center justify-center ${className}`}
@@ -46,7 +49,7 @@ export default function CanvasSkeleton({
                 className="absolute bottom-4 text-xs tracking-wide uppercase animate-pulse"
                 style={{ color: 'var(--text-muted)' }}
             >
-                Loading...
+                {t('loading')}
             </div>
         </div>
     )

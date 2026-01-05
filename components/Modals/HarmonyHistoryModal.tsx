@@ -122,7 +122,7 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
 
   return (
     <>
-      <Modal isOpen={isOpen} onClose={onClose} id="modal-harmony-guide" title="Harmony Guide">
+      <Modal isOpen={isOpen} onClose={onClose} id="modal-harmony-guide" title={t('harmonyGuide')}>
         <div className="mb-4">
 
           {/* Main Score Display with Info Button */}

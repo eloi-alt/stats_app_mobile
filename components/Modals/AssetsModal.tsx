@@ -2,6 +2,7 @@
 
 import Modal from './Modal'
 import { ThomasMorel, financeData } from '@/data/mockData'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface AssetsModalProps {
   isOpen: boolean
@@ -19,34 +20,35 @@ const formatCurrency = (value: number): string => {
 }
 
 export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
+  const { t } = useLanguage()
   const patrimoine = ThomasMorel.moduleC.patrimoine
   const revenus = ThomasMorel.moduleC.revenus
 
   const assets = [
-    { 
-      label: 'Real Estate', 
-      value: financeData.stock.realEstate, 
+    {
+      labelKey: 'realEstate',
+      value: financeData.stock.realEstate,
       color: 'var(--accent-gold)',
       icon: 'fa-building',
       percentage: Math.round((financeData.stock.realEstate / patrimoine.totalAssets) * 100)
     },
-    { 
-      label: 'Financial Assets', 
-      value: financeData.stock.financial, 
+    {
+      labelKey: 'financialAssets',
+      value: financeData.stock.financial,
       color: 'var(--accent-sage)',
       icon: 'fa-chart-line',
       percentage: Math.round((financeData.stock.financial / patrimoine.totalAssets) * 100)
     },
-    { 
-      label: 'Vehicles', 
-      value: financeData.stock.vehicles, 
+    {
+      labelKey: 'vehicles',
+      value: financeData.stock.vehicles,
       color: 'var(--accent-sky)',
       icon: 'fa-car',
       percentage: Math.round((financeData.stock.vehicles / patrimoine.totalAssets) * 100)
     },
-    { 
-      label: 'Cash', 
-      value: patrimoine.liquidAssets, 
+    {
+      labelKey: 'cash',
+      value: patrimoine.liquidAssets,
       color: 'var(--accent-lavender)',
       icon: 'fa-wallet',
       percentage: Math.round((patrimoine.liquidAssets / patrimoine.totalAssets) * 100)
@@ -54,56 +56,56 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
   ]
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} id="modal-assets" title="Net Worth">
+    <Modal isOpen={isOpen} onClose={onClose} id="modal-assets" title={t('netWorth')}>
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <div 
+        <div
           className="p-4 rounded-2xl text-center"
           style={{ background: 'rgba(201, 169, 98, 0.08)' }}
         >
-          <div 
+          <div
             className="text-2xl font-light text-display"
             style={{ color: 'var(--accent-gold)' }}
           >
             {formatCurrency(patrimoine.netWorth)}
           </div>
-          <div 
+          <div
             className="text-[10px] uppercase tracking-wider mt-1"
             style={{ color: 'var(--text-muted)' }}
           >
-            Net Worth
+            {t('netWorth')}
           </div>
         </div>
-        <div 
+        <div
           className="p-4 rounded-2xl text-center"
           style={{ background: 'rgba(139, 168, 136, 0.08)' }}
         >
-          <div 
+          <div
             className="text-2xl font-light text-display"
             style={{ color: 'var(--accent-sage)' }}
           >
             {formatCurrency(revenus.monthlyNetAverage)}
           </div>
-          <div 
+          <div
             className="text-[10px] uppercase tracking-wider mt-1"
             style={{ color: 'var(--text-muted)' }}
           >
-            /month net
+            {t('perMonthLabel')} net
           </div>
         </div>
       </div>
 
       {/* Assets breakdown */}
-      <div 
+      <div
         className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
-        Asset Distribution
+        {t('assetDistribution')}
       </div>
 
-      <div 
+      <div
         className="rounded-2xl p-4 mb-5"
-        style={{ 
+        style={{
           background: 'rgba(255, 255, 255, 0.6)',
           border: '1px solid var(--border-light)',
         }}
@@ -112,7 +114,7 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
         <div className="flex h-3 rounded-full overflow-hidden mb-4" style={{ background: 'rgba(0,0,0,0.03)' }}>
           {assets.map((asset, idx) => (
             <div
-              key={asset.label}
+              key={asset.labelKey}
               className="h-full transition-all duration-500"
               style={{
                 width: `${asset.percentage}%`,
@@ -125,27 +127,27 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
         {/* Legend */}
         <div className="space-y-3">
           {assets.map((asset) => (
-            <div key={asset.label} className="flex items-center justify-between">
+            <div key={asset.labelKey} className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div 
+                <div
                   className="w-8 h-8 rounded-lg flex items-center justify-center"
                   style={{ background: `${asset.color}15` }}
                 >
-                  <i 
+                  <i
                     className={`fa-solid ${asset.icon} text-xs`}
                     style={{ color: asset.color }}
                   />
                 </div>
-                <span style={{ color: 'var(--text-primary)' }}>{asset.label}</span>
+                <span style={{ color: 'var(--text-primary)' }}>{t(asset.labelKey)}</span>
               </div>
               <div className="text-right">
-                <div 
+                <div
                   className="font-medium"
                   style={{ color: asset.color }}
                 >
                   {formatCurrency(asset.value)}
                 </div>
-                <div 
+                <div
                   className="text-[10px]"
                   style={{ color: 'var(--text-muted)' }}
                 >
@@ -158,38 +160,38 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
       </div>
 
       {/* Liabilities */}
-      <div 
+      <div
         className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
-        Liabilities
+        {t('liabilities')}
       </div>
 
-      <div 
+      <div
         className="rounded-2xl p-4 mb-5"
-        style={{ 
+        style={{
           background: 'rgba(212, 165, 165, 0.05)',
           border: '1px solid rgba(212, 165, 165, 0.1)',
         }}
       >
         {patrimoine.liabilities.map((liability, idx) => (
-          <div 
+          <div
             key={liability.id}
             className="flex items-center justify-between py-3"
-            style={{ 
+            style={{
               borderBottom: idx < patrimoine.liabilities.length - 1 ? '1px solid var(--border-light)' : 'none',
             }}
           >
             <div>
               <div style={{ color: 'var(--text-primary)' }}>{liability.name}</div>
-              <div 
+              <div
                 className="text-xs mt-0.5"
                 style={{ color: 'var(--text-muted)' }}
               >
-                {liability.interestRate}% • {formatCurrency(liability.monthlyPayment)}/month
+                {liability.interestRate}% • {formatCurrency(liability.monthlyPayment)}{t('perMonthLabel')}
               </div>
             </div>
-            <div 
+            <div
               className="font-medium"
               style={{ color: 'var(--accent-rose)' }}
             >
@@ -200,51 +202,51 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
       </div>
 
       {/* Revenue sources */}
-      <div 
+      <div
         className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
-        Income Sources
+        {t('incomeSources')}
       </div>
 
-      <div 
+      <div
         className="rounded-2xl overflow-hidden"
-        style={{ 
+        style={{
           background: 'rgba(255, 255, 255, 0.6)',
           border: '1px solid var(--border-light)',
         }}
       >
         {revenus.sources.map((source, idx) => (
-          <div 
+          <div
             key={source.name}
             className="flex items-center justify-between p-4"
-            style={{ 
+            style={{
               borderBottom: idx < revenus.sources.length - 1 ? '1px solid var(--border-light)' : 'none',
             }}
           >
             <div className="flex items-center gap-3">
-              <div 
+              <div
                 className="w-2 h-2 rounded-full"
                 style={{ background: source.isActive ? 'var(--accent-sage)' : 'var(--text-muted)' }}
               />
               <div>
                 <div style={{ color: 'var(--text-primary)' }}>{source.name}</div>
-                <div 
+                <div
                   className="text-xs mt-0.5"
                   style={{ color: 'var(--text-muted)' }}
                 >
-                  {source.type === 'salary' ? 'Salary' : 
-                   source.type === 'freelance' ? 'Freelance' :
-                   source.type === 'rental' ? 'Rental' :
-                   source.type === 'investments' ? 'Investments' : 'Dividends'}
+                  {source.type === 'salary' ? t('salary') :
+                    source.type === 'freelance' ? t('freelance') :
+                      source.type === 'rental' ? t('rental') :
+                        source.type === 'investments' ? t('investments') : t('dividends')}
                 </div>
               </div>
             </div>
-            <div 
+            <div
               className="font-medium"
               style={{ color: 'var(--accent-sage)' }}
             >
-              +{formatCurrency(source.netAnnual)}/year
+              +{formatCurrency(source.netAnnual)}{t('perYear')}
             </div>
           </div>
         ))}

@@ -79,6 +79,8 @@ const translations: Translations = {
   'workout': { en: 'Workout', fr: 'Entraînement', es: 'Entrenamiento' },
   'activity': { en: 'Activity', fr: 'Activité', es: 'Actividad' },
   'steps': { en: 'Steps', fr: 'Pas', es: 'Pasos' },
+  'hrv': { en: 'HRV', fr: 'VFC', es: 'VFC' },
+  'hydration': { en: 'Hydration', fr: 'Hydratation', es: 'Hidratación' },
   'lastActivity': { en: 'Last activity', fr: 'Dernière activité', es: 'Última actividad' },
   'bodyComposition': { en: 'Body composition', fr: 'Composition corporelle', es: 'Composición corporal' },
   'bodyFat': { en: 'Body fat', fr: 'Masse grasse', es: 'Grasa corporal' },
@@ -207,6 +209,7 @@ const translations: Translations = {
   'adjustObjectives': { en: 'Adjust objectives', fr: 'Ajuster objectifs', es: 'Ajustar objetivos' },
   'whatIsHarmony': { en: 'What is Harmony?', fr: 'Qu\'est-ce que Harmony ?', es: '¿Qué es Harmony?' },
   'harmonyExplanation': { en: 'The Harmony score measures your life alignment: how much your daily actions bring you closer to your personal goals.', fr: 'Le score Harmony mesure ton alignement de vie : à quel point tes actions quotidiennes te rapprochent de tes objectifs personnels.', es: 'La puntuación Harmony mide tu alineación de vida: cuánto tus acciones diarias te acercan a tus metas personales.' },
+  'harmonyExplanation2': { en: 'It analyzes 5 key dimensions of your life.', fr: 'Il analyse 5 dimensions clés de ta vie.', es: 'Analiza 5 dimensiones clave de tu vida.' },
   'trendAnalysis': { en: 'Trend Analysis', fr: 'Analyse des Tendances', es: 'Análisis de Tendencias' },
   'recommendations': { en: 'Recommendations', fr: 'Recommandations', es: 'Recomendaciones' },
   'fullReport': { en: 'Full Report', fr: 'Rapport Complet', es: 'Informe Completo' },
@@ -216,6 +219,10 @@ const translations: Translations = {
   'longTermVision': { en: 'Long-term Vision', fr: 'Vision Long Terme', es: 'Visión a Largo Plazo' },
   'strengths': { en: 'Strengths', fr: 'Points forts', es: 'Puntos fuertes' },
   'toImproveLabel': { en: 'To improve', fr: 'À améliorer', es: 'A mejorar' },
+  'clickForFullReport': { en: 'Click for full report →', fr: 'Cliquer pour voir le rapport complet →', es: 'Clic para ver el informe completo →' },
+  'min': { en: 'Min', fr: 'Min', es: 'Mín' },
+  'avg': { en: 'Avg', fr: 'Moy', es: 'Med' },
+  'max': { en: 'Max', fr: 'Max', es: 'Máx' },
 
   // Dimensions
   'healthDimension': { en: 'Health', fr: 'Santé', es: 'Salud' },
@@ -223,6 +230,81 @@ const translations: Translations = {
   'socialDimension': { en: 'Social', fr: 'Social', es: 'Social' },
   'careerDimension': { en: 'Career', fr: 'Carrière', es: 'Carrera' },
   'worldDimension': { en: 'World', fr: 'Monde', es: 'Mundo' },
+
+  // Module Names (for HomeView cards)
+  'moduleHealth': { en: 'Health', fr: 'Santé', es: 'Salud' },
+  'moduleWorld': { en: 'World', fr: 'Monde', es: 'Mundo' },
+  'moduleFinance': { en: 'Finance', fr: 'Finance', es: 'Finanzas' },
+  'moduleAchievements': { en: 'Career', fr: 'Carrière', es: 'Carrera' },
+  'moduleCircle': { en: 'Social', fr: 'Social', es: 'Social' },
+
+
+
+
+  // Comparison/Ranking Labels (SocialView)
+  'sport': { en: 'Sport', fr: 'Sport', es: 'Deporte' },
+  'connection': { en: 'Connection', fr: 'Connexion', es: 'Conexión' },
+  'level': { en: 'Level', fr: 'Niveau', es: 'Nivel' },
+  'compare': { en: 'Compare', fr: 'Comparer', es: 'Comparar' },
+
+  // Finance Card
+  'flux': { en: 'Flux', fr: 'Flux', es: 'Flujo' },
+  'stock': { en: 'Stock', fr: 'Stock', es: 'Stock' },
+  'patrimoine': { en: 'Assets & Income', fr: 'Patrimoine & Revenus', es: 'Patrimonio e Ingresos' },
+  'perMonth': { en: '/month net', fr: '/mois net', es: '/mes neto' },
+  'netPatrimony': { en: 'net worth', fr: 'patrimoine net', es: 'patrimonio neto' },
+  'liquid': { en: 'liquid', fr: 'liquide', es: 'líquido' },
+  'savingsLabel': { en: 'savings', fr: 'épargne', es: 'ahorro' },
+  'assetBreakdown': { en: 'Asset breakdown', fr: 'Répartition des actifs', es: 'Distribución de activos' },
+  'realEstate': { en: 'Real Estate', fr: 'Immobilier', es: 'Inmobiliario' },
+  'financial': { en: 'Financial', fr: 'Financier', es: 'Financiero' },
+  'vehicles': { en: 'Vehicles', fr: 'Véhicules', es: 'Vehículos' },
+  'incomeSources': { en: 'Income sources', fr: 'Sources de revenus', es: 'Fuentes de ingresos' },
+  'pinned': { en: 'Pinned', fr: 'Épinglé', es: 'Fijado' },
+  'score': { en: 'Score', fr: 'Score', es: 'Puntuación' },
+  'goalLabel': { en: 'Goal', fr: 'Objectif', es: 'Objetivo' },
+  'perYear': { en: '/year', fr: '/an', es: '/año' },
+
+  // Pull to refresh
+  'pullToRefresh': { en: 'Pull to refresh', fr: 'Tirez pour actualiser', es: 'Desliza para actualizar' },
+  'releaseToRefresh': { en: 'Release to refresh', fr: 'Relâchez pour actualiser', es: 'Suelta para actualizar' },
+
+  // Loading
+  'loading': { en: 'Loading...', fr: 'Chargement...', es: 'Cargando...' },
+
+  // Private Stats Labels
+  'monthly': { en: 'Monthly', fr: 'Mensuel', es: 'Mensual' },
+  'savings': { en: 'Savings', fr: 'Épargne', es: 'Ahorros' },
+
+  // Global label
+  'global': { en: 'Global', fr: 'Global', es: 'Global' },
+
+  // Open TrueCircle
+  'openTrueCircle': { en: 'Open full TrueCircle', fr: 'Ouvrir TrueCircle complet', es: 'Abrir TrueCircle completo' },
+
+  // Map
+  'backToOrigin': { en: 'Back to origin', fr: 'Retour à la position d\'origine', es: 'Volver al origen' },
+
+  // Countries
+  'countriesLabel': { en: 'countries', fr: 'pays', es: 'países' },
+
+  // Assets Modal
+  'assetDistribution': { en: 'Asset Distribution', fr: 'Répartition des actifs', es: 'Distribución de activos' },
+  'liabilities': { en: 'Liabilities', fr: 'Passifs', es: 'Pasivos' },
+  'cash': { en: 'Cash', fr: 'Liquidités', es: 'Efectivo' },
+  'financialAssets': { en: 'Financial Assets', fr: 'Actifs financiers', es: 'Activos financieros' },
+  'perMonthLabel': { en: '/month', fr: '/mois', es: '/mes' },
+  'salary': { en: 'Salary', fr: 'Salaire', es: 'Salario' },
+  'freelance': { en: 'Freelance', fr: 'Freelance', es: 'Freelance' },
+  'rental': { en: 'Rental', fr: 'Location', es: 'Alquiler' },
+  'investments': { en: 'Investments', fr: 'Investissements', es: 'Inversiones' },
+  'dividends': { en: 'Dividends', fr: 'Dividendes', es: 'Dividendos' },
+
+  // Compare Modal
+  'compareStats': { en: 'Compare Stats', fr: 'Comparer les stats', es: 'Comparar estadísticas' },
+
+  // Harmony Modal
+  'harmonyGuide': { en: 'Harmony Guide', fr: 'Guide Harmony', es: 'Guía Harmony' },
 }
 
 interface LanguageContextType {

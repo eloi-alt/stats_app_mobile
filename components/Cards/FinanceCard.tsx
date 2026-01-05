@@ -1,5 +1,7 @@
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
+
 interface FinanceSource {
   name: string
   amount: number
@@ -50,10 +52,12 @@ const getTypeIcon = (type: string): string => {
 }
 
 export default function FinanceCard({ flux, stock, percentage, onClick, isPinned, isHero }: FinanceCardProps) {
+  const { t } = useLanguage()
+
   const assetBreakdown = [
-    { label: 'Immobilier', value: stock.realEstate, color: '#f59e0b', icon: 'fa-building' },
-    { label: 'Financier', value: stock.financial, color: '#10b981', icon: 'fa-chart-pie' },
-    { label: 'Véhicules', value: stock.vehicles, color: '#3b82f6', icon: 'fa-car' },
+    { labelKey: 'realEstate', value: stock.realEstate, color: '#f59e0b', icon: 'fa-building' },
+    { labelKey: 'financial', value: stock.financial, color: '#10b981', icon: 'fa-chart-pie' },
+    { labelKey: 'vehicles', value: stock.vehicles, color: '#3b82f6', icon: 'fa-car' },
   ]
 
   const totalAssetsForChart = stock.realEstate + stock.financial + stock.vehicles
@@ -70,7 +74,7 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
         }}
       >
         {/* Gradient background */}
-        <div 
+        <div
           className="absolute inset-0 opacity-30"
           style={{
             background: 'radial-gradient(ellipse at 20% 30%, rgba(245, 158, 11, 0.4) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, rgba(16, 185, 129, 0.3) 0%, transparent 50%)',
@@ -80,7 +84,7 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
         {/* Pin indicator */}
         {isPinned && (
           <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
-            <span className="text-[9px] uppercase tracking-widest text-amber-400/80 font-bold">Épinglé</span>
+            <span className="text-[9px] uppercase tracking-widest text-amber-400/80 font-bold">{t('pinned')}</span>
             <div className="w-6 h-6 rounded-full bg-amber-400/20 flex items-center justify-center">
               <i className="fa-solid fa-thumbtack text-amber-400 text-[10px]" />
             </div>
@@ -92,17 +96,17 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
           <div className="flex items-center gap-3 mb-5">
             <div className="text-3xl">💰</div>
             <div>
-              <h2 className="text-xl font-bold text-white">Finance</h2>
-              <p className="text-sm text-amber-300/70">Patrimoine & Revenus</p>
+              <h2 className="text-xl font-bold text-white">{t('financeDimension')}</h2>
+              <p className="text-sm text-amber-300/70">{t('patrimoine')}</p>
             </div>
           </div>
 
           {/* Main Stats - Flux vs Stock */}
           <div className="grid grid-cols-2 gap-4 mb-5">
             {/* FLUX - Revenus */}
-            <div 
+            <div
               className="p-4 rounded-2xl relative overflow-hidden"
-              style={{ 
+              style={{
                 background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%)',
                 border: '1px solid rgba(16, 185, 129, 0.2)',
               }}
@@ -112,16 +116,16 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
                 <span className="text-[10px] uppercase tracking-widest text-emerald-400/80 font-bold">Flux</span>
               </div>
               <div className="text-2xl font-bold text-white mb-1">{formatCurrency(flux.monthly)}</div>
-              <div className="text-[10px] text-gray-400">/mois net</div>
+              <div className="text-[10px] text-gray-400">{t('perMonth')}</div>
               <div className="mt-2 pt-2 border-t border-emerald-500/20">
-                <div className="text-[10px] text-emerald-400">{flux.savingsRate}% épargne</div>
+                <div className="text-[10px] text-emerald-400">{flux.savingsRate}% {t('savingsLabel')}</div>
               </div>
             </div>
 
             {/* STOCK - Patrimoine */}
-            <div 
+            <div
               className="p-4 rounded-2xl relative overflow-hidden"
-              style={{ 
+              style={{
                 background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.05) 100%)',
                 border: '1px solid rgba(245, 158, 11, 0.2)',
               }}
@@ -131,20 +135,20 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
                 <span className="text-[10px] uppercase tracking-widest text-amber-400/80 font-bold">Stock</span>
               </div>
               <div className="text-2xl font-bold text-white mb-1">{formatCurrency(stock.netWorth)}</div>
-              <div className="text-[10px] text-gray-400">patrimoine net</div>
+              <div className="text-[10px] text-gray-400">{t('netPatrimony')}</div>
               <div className="mt-2 pt-2 border-t border-amber-500/20">
-                <div className="text-[10px] text-amber-400">{formatCurrency(stock.liquidAssets)} liquide</div>
+                <div className="text-[10px] text-amber-400">{formatCurrency(stock.liquidAssets)} {t('liquid')}</div>
               </div>
             </div>
           </div>
 
           {/* Asset breakdown */}
           <div className="mb-4">
-            <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-3 font-bold">Répartition des actifs</div>
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-3 font-bold">{t('assetBreakdown')}</div>
             <div className="flex gap-1 h-3 rounded-full overflow-hidden bg-white/5">
               {assetBreakdown.map((asset, idx) => (
                 <div
-                  key={asset.label}
+                  key={asset.labelKey}
                   className="h-full transition-all duration-500"
                   style={{
                     width: `${(asset.value / totalAssetsForChart) * 100}%`,
@@ -155,9 +159,9 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
             </div>
             <div className="flex justify-between mt-2">
               {assetBreakdown.map((asset) => (
-                <div key={asset.label} className="flex items-center gap-1.5">
+                <div key={asset.labelKey} className="flex items-center gap-1.5">
                   <div className="w-2 h-2 rounded-full" style={{ background: asset.color }} />
-                  <span className="text-[9px] text-gray-400">{asset.label}</span>
+                  <span className="text-[9px] text-gray-400">{t(asset.labelKey)}</span>
                   <span className="text-[9px] text-gray-500">{formatCurrency(asset.value)}</span>
                 </div>
               ))}
@@ -166,9 +170,9 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
 
           {/* Revenue sources */}
           <div className="space-y-2">
-            <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-bold">Sources de revenus</div>
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 mb-2 font-bold">{t('incomeSources')}</div>
             {flux.sources.slice(0, 3).map((source) => (
-              <div 
+              <div
                 key={source.name}
                 className="flex items-center justify-between px-3 py-2 rounded-xl"
                 style={{ background: 'rgba(255, 255, 255, 0.03)' }}
@@ -177,7 +181,7 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
                   <i className={`fa-solid ${getTypeIcon(source.type)} text-emerald-400/60 text-xs`} />
                   <span className="text-xs text-gray-300">{source.name}</span>
                 </div>
-                <span className="text-xs font-semibold text-emerald-400">{formatCurrency(source.amount)}/an</span>
+                <span className="text-xs font-semibold text-emerald-400">{formatCurrency(source.amount)}{t('perYear')}</span>
               </div>
             ))}
           </div>
@@ -199,8 +203,8 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
               </div>
             </div>
             <div className="flex justify-between text-[9px] text-gray-500 mt-1.5">
-              <span>Score: {percentage}%</span>
-              <span>Objectif: 1M€</span>
+              <span>{t('score')}: {percentage}%</span>
+              <span>{t('goalLabel')}: 1M€</span>
             </div>
           </div>
         </div>
@@ -219,14 +223,14 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
 
   // Regular (non-hero) finance card
   return (
-    <div 
+    <div
       className="glass cursor-pointer relative"
       onClick={onClick}
     >
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span className="text-lg">💰</span>
-          <div className="text-[11px] uppercase tracking-widest text-gray-400 font-bold">Finance</div>
+          <div className="text-[11px] uppercase tracking-widest text-gray-400 font-bold">{t('financeDimension')}</div>
         </div>
         <span className="text-amber-400 font-bold">{percentage}%</span>
       </div>
@@ -260,7 +264,7 @@ export default function FinanceCard({ flux, stock, percentage, onClick, isPinned
           style={{ width: `${percentage}%`, background: 'linear-gradient(90deg, #f59e0b, #10b981)' }}
         />
       </div>
-      
+
       <i className="fa-solid fa-chevron-right absolute right-5 top-1/2 -translate-y-1/2 opacity-30" />
     </div>
   )

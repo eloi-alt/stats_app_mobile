@@ -2,6 +2,7 @@
 
 import { useRef } from 'react'
 import { motion, PanInfo } from 'framer-motion'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface TabBarProps {
   activeTab: string
@@ -9,14 +10,15 @@ interface TabBarProps {
 }
 
 const TABS = [
-  { id: 'view-physio', icon: 'fa-heart-pulse', label: 'Health' },
-  { id: 'view-social', icon: 'fa-users', label: 'TrueCircle' },
-  { id: 'view-home', icon: 'fa-house', label: 'Home' },
-  { id: 'view-map', icon: 'fa-globe', label: 'World' },
-  { id: 'view-pro', icon: 'fa-briefcase', label: 'Career' },
+  { id: 'view-physio', icon: 'fa-heart-pulse', labelKey: 'health' },
+  { id: 'view-social', icon: 'fa-users', labelKey: 'trueCircle' },
+  { id: 'view-home', icon: 'fa-house', labelKey: 'home' },
+  { id: 'view-map', icon: 'fa-globe', labelKey: 'world' },
+  { id: 'view-pro', icon: 'fa-briefcase', labelKey: 'career' },
 ]
 
 export default function TabBar({ activeTab, onTabChange }: TabBarProps) {
+  const { t } = useLanguage()
   const tabBarRef = useRef<HTMLElement>(null)
 
   const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
@@ -72,7 +74,7 @@ export default function TabBar({ activeTab, onTabChange }: TabBarProps) {
               width: '44px',
               height: '44px',
             }}
-            aria-label={tab.label}
+            aria-label={t(tab.labelKey)}
             aria-current={isActive ? 'page' : undefined}
           >
             <div
