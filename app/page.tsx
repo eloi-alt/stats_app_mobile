@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, Suspense } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useVisitor } from '@/contexts/VisitorContext'
+import { useProfileData } from '@/hooks/useProfileData'
 import { supabase } from '@/utils/supabase/client'
 import TabBar from '@/components/TabBar'
 import HomeView from '@/components/Views/HomeView'
@@ -18,14 +19,15 @@ import AssetsModal from '@/components/Modals/AssetsModal'
 import ObjectiveModal from '@/components/Modals/ObjectiveModal'
 import {
   modules,
-  userProfile,
+  userProfile as demoUserProfile,
   physioMetrics,
   careerInfo,
   contacts,
   comparisonData,
   aiAnalysis,
   defaultPinConfig,
-  type Module
+  type Module,
+  type HomeUserProfile
 } from '@/data/mockData'
 
 const PINNED_MODULE_KEY = 'statsapp_pinned_module'
@@ -33,15 +35,43 @@ const MODULE_ORDER_KEY = 'statsapp_module_order'
 
 import IPhoneWrapper from '@/components/IPhoneWrapper'
 
+
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { isVisitor } = useVisitor()
+  const profileData = useProfileData() // Get profile from Supabase or visitor mode
   const [isLoading, setIsLoading] = useState(true)
   const [activeView, setActiveView] = useState('view-home')
   const [initialContactName, setInitialContactName] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Compute the user profile based on auth state
+  // For authenticated users: use real profile from Supabase
+  // For visitors: use demo profile
+  const userProfile: HomeUserProfile = useMemo(() => {
+    const now = new Date()
+    const weekNumber = Math.ceil((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
+
+    if (profileData.isAuthenticated && profileData.profile) {
+      // Build user profile from real data
+      return {
+        name: `${profileData.profile.firstName} ${profileData.profile.lastName}`.trim() || 'User',
+        subtitle: profileData.profile.jobTitle || '',
+        globalPerformance: 0, // Will be calculated by harmony score
+        year: now.getFullYear(),
+        week: weekNumber,
+        connections: 0, // TODO: Get from social hook
+        avatar: profileData.profile.avatarUrl || '/icon.png',
+      }
+    }
+    // Visitor mode - use demo data
+    return demoUserProfile
+  }, [profileData.isAuthenticated, profileData.profile])
+
+  console.log('[HomeContent] Mode:', profileData.isAuthenticated ? 'AUTHENTICATED' : 'VISITOR', 'Profile:', userProfile.name)
+
 
   // Check authentication on mount - redirect to landing if not authenticated and not visitor
   useEffect(() => {

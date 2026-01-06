@@ -126,7 +126,7 @@ export interface ModuleB_Exploration {
       trips: number;
     };
   };
-  status: 'sedentary' | 'traveler' | 'nomad' | 'digital_nomad' | 'explorer';
+  status: 'sedentary' | 'traveler' | 'nomad' | 'digital_nomad' | 'explorer' | 'jet_setter';
   homeBase: {
     country: string;
     city: string;
@@ -162,7 +162,7 @@ export interface Revenus_Flux {
 // --- STOCK (Patrimoine/Assets) ---
 export interface RealEstateAsset {
   id: string;
-  type: 'house' | 'apartment' | 'land' | 'commercial' | 'parking';
+  type: 'house' | 'apartment' | 'land' | 'commercial' | 'parking' | 'mansion' | 'estate' | 'ranch' | 'island';
   location: string;
   purchaseDate: string;
   purchasePrice: number;
@@ -174,7 +174,7 @@ export interface RealEstateAsset {
 
 export interface VehicleAsset {
   id: string;
-  type: 'car' | 'motorcycle' | 'boat' | 'plane' | 'other';
+  type: 'car' | 'motorcycle' | 'boat' | 'plane' | 'other' | 'aircraft' | 'helicopter';
   brand: string;
   model: string;
   year: number;

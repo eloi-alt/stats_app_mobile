@@ -143,7 +143,7 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
               </button>
             </div>
             <div className="text-xs uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-              Score d'Alignement
+              Score d&apos;Alignement
             </div>
 
             {/* Info Tooltip */}
@@ -158,7 +158,7 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>
-                    Qu'est-ce que l'Harmony ?
+                    Qu&apos;est-ce que l&apos;Harmony ?
                   </span>
                   <button onClick={() => setShowInfoTooltip(false)}>
                     <i className="fa-solid fa-xmark text-xs" style={{ color: 'var(--text-muted)' }} />

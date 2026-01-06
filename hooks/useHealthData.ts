@@ -143,25 +143,33 @@ export function useHealthData(): HealthData {
     const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([])
     const [nutritionLogs, setNutritionLogs] = useState<NutritionLog[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [isDemo, setIsDemo] = useState(false)
+    const [isDemo, setIsDemo] = useState(true) // Default to demo until we confirm auth
+    const [authChecked, setAuthChecked] = useState(false)
 
     const fetchData = useCallback(async () => {
         setIsLoading(true)
         try {
             const { data: { user } } = await supabase.auth.getUser()
+
+            console.log('[useHealthData] User state:', user ? 'authenticated' : 'visitor')
+
             if (!user) {
                 // No authenticated user - use demo data
+                console.log('[useHealthData] Loading demo data')
                 setSleepRecords(DEMO_SLEEP_RECORDS)
                 setSportSessions(DEMO_SPORT_SESSIONS)
                 setBodyMeasurements(DEMO_BODY_MEASUREMENTS)
                 setNutritionLogs(DEMO_NUTRITION_LOGS)
                 setIsDemo(true)
                 setIsLoading(false)
+                setAuthChecked(true)
                 return
             }
 
             // Authenticated user - fetch from Supabase
+            console.log('[useHealthData] Fetching data for user:', user.id)
             setIsDemo(false)
+
             // Fetch all health data in parallel
             const [sleepRes, sportRes, bodyRes, nutritionRes] = await Promise.all([
                 supabase.from('sleep_records')
@@ -186,10 +194,19 @@ export function useHealthData(): HealthData {
                     .limit(30)
             ])
 
-            if (sleepRes.data) setSleepRecords(sleepRes.data)
-            if (sportRes.data) setSportSessions(sportRes.data)
-            if (bodyRes.data) setBodyMeasurements(bodyRes.data)
-            if (nutritionRes.data) setNutritionLogs(nutritionRes.data)
+            // Set real data (empty arrays are fine for new users)
+            setSleepRecords(sleepRes.data || [])
+            setSportSessions(sportRes.data || [])
+            setBodyMeasurements(bodyRes.data || [])
+            setNutritionLogs(nutritionRes.data || [])
+
+            console.log('[useHealthData] Loaded user data:', {
+                sleep: sleepRes.data?.length || 0,
+                sport: sportRes.data?.length || 0,
+                body: bodyRes.data?.length || 0,
+                nutrition: nutritionRes.data?.length || 0
+            })
+
         } catch (err) {
             console.error('Error fetching health data:', err)
             // On error, fall back to demo data
@@ -200,11 +217,26 @@ export function useHealthData(): HealthData {
             setIsDemo(true)
         } finally {
             setIsLoading(false)
+            setAuthChecked(true)
         }
     }, [])
 
     useEffect(() => {
+        // Initial fetch
         fetchData()
+
+        // Listen for auth changes and refetch
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (event, session) => {
+                console.log('[useHealthData] Auth state changed:', event)
+                // Refetch data when auth state changes
+                fetchData()
+            }
+        )
+
+        return () => {
+            subscription.unsubscribe()
+        }
     }, [fetchData])
 
     const hasSleepData = sleepRecords.length > 0

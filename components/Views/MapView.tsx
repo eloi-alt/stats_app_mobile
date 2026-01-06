@@ -77,6 +77,17 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
     }
   }, [isVisitor, travelData])
 
+  // Transform visited countries for Globe3D - must be before any conditional returns
+  const globeCountries = useMemo(() =>
+    visitedCountries.map(c => ({
+      code: c.code,
+      name: c.name,
+      lat: 0,
+      lng: 0,
+      visits: c.visits,
+    }))
+    , [])
+
   // Show empty state for authenticated users without any travel data
   const showEmptyState = !isVisitor && !travelData.isLoading && !travelData.hasAnyData
 
@@ -142,16 +153,6 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
     setSelectedCountry(details || { code: country.code, name: country.name, visits: country.visits })
   }
 
-  // Transform visited countries for Globe3D
-  const globeCountries = useMemo(() =>
-    visitedCountries.map(c => ({
-      code: c.code,
-      name: c.name,
-      lat: 0,
-      lng: 0,
-      visits: c.visits,
-    }))
-    , [])
 
   const handleAddTrip = () => {
     setShowToast(t('tripAdded'))

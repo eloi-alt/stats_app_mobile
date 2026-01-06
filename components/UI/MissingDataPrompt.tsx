@@ -152,7 +152,7 @@ export default function MissingDataPrompt({
 
                 <h2 className="title">Module {moduleName}</h2>
                 <p className="subtitle">
-                    Pour accéder à ce module, veuillez d'abord compléter les informations suivantes dans votre profil.
+                    Pour accéder à ce module, veuillez d&apos;abord compléter les informations suivantes dans votre profil.
                 </p>
 
                 <div className="missing-fields">

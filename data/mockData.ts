@@ -152,7 +152,7 @@ export const ThomasMorel: UserProfile = {
       {
         date: '2019-08-04',
         duration: 20,
-        type: 'stretching',
+        type: 'yoga',
         caloriesBurned: 50,
         intensity: 'low',
         notes: 'Physical therapy exercises',
@@ -160,7 +160,7 @@ export const ThomasMorel: UserProfile = {
       {
         date: '2019-08-01',
         duration: 60,
-        type: 'tennis',
+        type: 'other',
         caloriesBurned: 420,
         intensity: 'moderate',
         notes: 'Private court',
@@ -858,7 +858,7 @@ export const ThomasMorel: UserProfile = {
           remainingAmount: 45000000,
           interestRate: 0,
           monthlyPayment: 0,
-          endDate: null,
+          endDate: '',
         },
       ],
       totalAssets: 752780000,

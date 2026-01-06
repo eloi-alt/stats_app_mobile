@@ -263,7 +263,6 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
               className="text-xs mt-0.5"
               style={{ color: 'var(--text-tertiary)' }}
             >
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {latestSport.type} • {latestSport.duration}min • {(latestSport as any).caloriesBurned || (latestSport as any).calories_burned || 0} kcal
             </div>
           </div>

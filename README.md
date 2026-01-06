@@ -6,10 +6,139 @@
 >
 > **The production application must be implemented entirely in Swift** (SwiftUI/UIKit) to leverage native iOS frameworks (HealthKit, MapKit, SceneKit, CoreData) and ensure premium performance on Apple devices.
 
-## Vision
+---
+
+## 🎯 Vision
+
 STATS is not just a habit tracker; it is a **Quantified Self** dashboard that treats life as a high-performance role-playing game. It aggregates disparate data points—health biometrics, social interactions, travel history, and financial growth—into a unified, aesthetically stunning interface.
 
 The goal is to provide **Actionable Intelligence** on the user's life balance, using the "TrueCircle" philosophy to visualize social proximity and "Life Modules" to track personal development.
+
+---
+
+## � Quick Navigation
+
+**Understanding the Dual Architecture:**
+- 📖 **[docs/architecture/MODES.md](./docs/architecture/MODES.md)** - Quick reference guide to Visitor vs Authenticated modes
+- 🏗️ **[docs/architecture/ARCHITECTURE.md](./docs/architecture/ARCHITECTURE.md)** - Complete technical specifications with database schema
+- 🇫🇷 **[docs/architecture/ARCHITECTURE_FR.md](./docs/architecture/ARCHITECTURE_FR.md)** - Spécifications techniques en français
+- 🎨 **[docs/guides/VISUAL_GUIDE.md](./docs/guides/VISUAL_GUIDE.md)** - Visual diagrams and flowcharts
+- 👇 **Below:** Feature comparison table, setup instructions, and module documentation
+
+**Key Concepts:**
+- The STATS App operates in **two distinct modes** sharing the same UI
+- **🌐 Visitor Mode:** Demo experience with sample data (no login required)
+- **🔐 Authenticated Mode:** Personal tracking with Supabase backend
+
+---
+
+## �🔀 Two Architectures, One Experience
+
+**STATS App operates in two distinct modes**, providing flexibility for different user needs:
+
+### 🌐 **Mode 1: Visitor Mode** (Demo Experience)
+
+**What is it?**  
+A **fully functional demo** of the entire application using pre-populated sample data. No account, no login, no database connection required.
+
+**Who is it for?**
+- 👀 First-time users exploring the app before signing up
+- 📱 App Store previews and demonstrations
+- 🧪 Developers testing features
+- ✈️ Offline usage scenarios
+
+**Features:**
+- ✅ Instant access to all UI screens and modules
+- ✅ Realistic demo data (persona: "Jeffrey", a fictitious user)
+- ✅ Full navigation and gesture support
+- ✅ Read-only mode - no data persistence
+- ✅ Zero privacy concerns (no real data)
+- ✅ Works completely offline
+
+**Data Source:**
+- Static JSON files in `/data/` directory (`mockData.ts`, `demoHealthData.ts`, etc.)
+- Pre-populated with 30 days of sample health data, travel history, social connections, and financial metrics
+
+**Limitations:**
+- 🚫 Cannot save changes or add new data
+- 🚫 No AI analysis or Edge Functions
+- 🚫 No social features (user search, connections)
+- 🚫 No multi-device sync
+- 🎯 **Goal:** Convince users to create an account for personalized tracking
+
+---
+
+### 🔐 **Mode 2: Authenticated Mode** (Supabase-Powered)
+
+**What is it?**  
+A **fully personalized, cloud-synced experience** where users track their real data with complete CRUD capabilities.
+
+**Who is it for?**
+- 👤 Registered users with Supabase accounts
+- 📊 Long-term life tracking and analytics
+- 🤝 Users wanting social features (connections, comparisons)
+- 🤖 Users leveraging AI-powered insights
+
+**Features:**
+- ✅ Full authentication (email/password via Supabase Auth)
+- ✅ Personal data stored in **Supabase PostgreSQL database**
+- ✅ Create, read, update, delete (CRUD) all data
+- ✅ **Multi-device sync** - Access data from any device
+- ✅ **Row-Level Security (RLS)** - Your data is private and isolated
+- ✅ **AI Analyst Edge Function** - Groq-powered personalized insights
+- ✅ **Social features** - Search users, send connection requests, compare stats
+- ✅ **Real-time updates** - Instant sync across devices
+- ✅ **Data export/deletion** - GDPR compliant
+
+**Data Source:**
+- Supabase PostgreSQL database with dedicated tables:
+  - `profiles` - User account metadata (username, avatar, bio)
+  - `sleep_records`, `sport_sessions`, `body_measurements`, `nutrition_logs` - Health module
+  - `contacts`, `connections` - Social module
+  - `countries`, `trips` - Travel module
+  - `assets`, `career_goals` - Finance module
+
+**Security:**
+- 🔒 **Transport:** HTTPS/TLS encryption
+- 🔒 **Authentication:** JWT tokens with automatic expiration
+- 🔒 **Database:** RLS policies ensure users can only access their own data
+- 🔒 **Privacy:** PII excluded from AI analysis (name, email, phone)
+
+**Onboarding Flow:**
+1. User navigates to `/login`
+2. Signs up with email/password (or OAuth in future)
+3. Completes `/onboarding` (username, avatar upload)
+4. Redirected to main app with empty state (ready to track data)
+5. Data persists across sessions and devices
+
+---
+
+### 🔄 How Mode Detection Works
+
+The application **automatically detects** which mode to use based on authentication state:
+
+```typescript
+// Pseudo-code representation
+const { user } = useAuth() // From AuthContext
+
+if (user) {
+  // 🔐 AUTHENTICATED MODE
+  // Fetch data from Supabase: SELECT * FROM sleep_records WHERE user_id = user.id
+  // Enable "Add Entry" buttons
+  // Show user's real profile picture and username
+} else {
+  // 🌐 VISITOR MODE
+  // Load data from local files: DEMO_SLEEP_RECORDS
+  // Disable "Add Entry" buttons (show "Login to track" message)
+  // Show demo profile (Jeffrey)
+}
+```
+
+**Implementation Details:**
+- All data fetching hooks (`useHealthData`, `useSocialData`, etc.) check `user` state
+- If `user` is `null` → Load demo data
+- If `user` exists → Query Supabase with `user.id` filter
+- Graceful fallback: If Supabase query fails, fall back to demo data
 
 ---
 
@@ -101,30 +230,272 @@ STATS implements a **modern gesture-based navigation system** that enhances the 
 
 ---
 
-## Technical Architecture (Prototype)
+## 🏗️ Technical Architecture (Prototype)
 
 ### Directory Structure
+
 ```
+/app
+├── page.tsx                     # 🚦 Root router - Auth state check
+├── login/page.tsx               # 🔐 Supabase Auth UI
+├── onboarding/page.tsx          # 👤 New user setup (username, avatar)
+└── auth/callback/route.ts       # OAuth callback handler
+
 /components
-  /Views         # Full-screen page controllers (Home, Map, Social, Pro, Profile, Settings)
-  /Modals        # Sheet overlays (Detail views, Editors)
-  /Cards         # Reusable widgets (StatCard, PhysioCard, ComparisonCard)
-  /UI            # Atomic design elements (Buttons, Headers, ViewSheet, SwipeableCard)
-  /Visualizations # Three.js/Canvas complex renderings
-/contexts        # React Context providers (Theme, Language)
-/data
-  mockData.ts    # The Single Source of Truth for user profile state
+├── Views/                       # Full-screen page controllers
+│   ├── HomeView.tsx             # Dashboard Hub - Harmony Score
+│   ├── MapView.tsx              # World/Travel Map - Mapbox
+│   ├── PhysioView.tsx           # Health Metrics
+│   ├── SocialView.tsx           # Social Sphere & Rankings
+│   ├── ProView.tsx              # Career & Finance
+│   ├── ProfileView.tsx          # User Profile (ViewSheet)
+│   └── SettingsView.tsx         # App Settings (ViewSheet)
+├── Modals/                      # Sheet overlays (Detail views)
+├── Cards/                       # Reusable widgets (StatCard, PhysioCard)
+├── UI/                          # Atomic design elements (Buttons, Headers)
+└── Visualizations/              # Three.js/Canvas complex renderings
+
+/contexts
+├── AuthContext.tsx              # 🔑 Authentication state provider
+│                                # - Manages Supabase session
+│                                # - Provides user, session, loading, signOut
+│                                # - Triggers mode detection
+├── ThemeContext.tsx             # Dark/Light mode management
+└── LanguageContext.tsx          # i18n (FR/EN)
+
+/hooks                           # 🔀 DUAL-MODE DATA HOOKS
+├── useHealthData.ts             # Sleep, Sport, Nutrition
+│                                # - Checks user auth state
+│                                # - If authenticated: Query Supabase
+│                                # - If visitor: Load DEMO_SLEEP_RECORDS
+├── useSocialData.ts             # Contacts, Connections, Rankings
+├── useTravelData.ts             # Countries, Trips
+├── useFinancialData.ts          # Assets, Career, Skills
+└── useProfileData.ts            # User profile, avatar, username
+
+/data                            # 🌐 VISITOR MODE DATA SOURCE
+├── mockData.ts                  # Main demo profile (Jeffrey)
+├── demoHealthData.ts            # 30 days of sample health records
+├── demoSocialData.ts            # Demo contacts and social graph
+└── demoTravelData.ts            # Demo trips and countries
+
+/utils
+└── supabase/
+    └── client.ts                # 🔐 Supabase client initialization
+
+/supabase                        # 🔐 AUTHENTICATED MODE BACKEND
+├── functions/                   # Edge Functions
+│   └── ai-analyst/              # Groq AI-powered data analysis
+│       └── index.ts             # Analyzes user data, returns insights
+└── migrations/                  # Database schema migrations
+    └── *.sql                    # Table definitions, RLS policies
 ```
 
-### Data Flow
-- **Prototype:** React Context + Static JSON (`mockData.ts`).
-- **Production (iOS):**
-  - **Local Persistence:** CoreData / SwiftData models mirroring `UserProfile.ts`.
-  - **Remote Sync:** CloudKit or Firebase for multi-device sync.
+### 🔄 Data Flow Architecture
+
+#### 🌐 Visitor Mode Data Flow
+
+```
+User Opens App
+      ↓
+AuthContext Initializes
+      ↓
+supabase.auth.getSession() → null (No session)
+      ↓
+AuthContext: { user: null, session: null, loading: false }
+      ↓
+Components Render
+      ↓
+useHealthData() Hook Executes
+      ↓
+const { user } = await supabase.auth.getUser()
+      ↓
+user === null ✅
+      ↓
+Load DEMO_SLEEP_RECORDS from /data/demoHealthData.ts
+      ↓
+setState({ sleepRecords: DEMO_SLEEP_RECORDS, isDemo: true })
+      ↓
+PhysioView Renders with Demo Data
+      ↓
+UI shows "👁️ Viewing Demo Data" badge
+      ↓
+All "Add Entry" buttons disabled or show "Login to Track"
+```
+
+**Characteristics:**
+- ⚡ **Instant load** - No network calls
+- 📴 **Offline-first** - No backend dependency
+- 🔒 **Privacy-safe** - No sensitive data transmitted
+- 🎯 **Marketing tool** - Showcases full UI without commitment
+
+---
+
+#### 🔐 Authenticated Mode Data Flow
+
+```
+User Logs In via /login
+      ↓
+Supabase Auth: signInWithPassword(email, password)
+      ↓
+Session Created: { access_token: "...", user: { id, email, ... } }
+      ↓
+Session Stored in Local Storage (handled by Supabase)
+      ↓
+AuthContext: onAuthStateChange fires
+      ↓
+setState({ user: session.user, session: session })
+      ↓
+Components Re-render with user !== null
+      ↓
+useHealthData() Hook Re-executes
+      ↓
+const { user } = await supabase.auth.getUser()
+      ↓
+user !== null ✅ (user.id = "uuid-1234-...")
+      ↓
+Query Supabase:
+  SELECT * FROM sleep_records 
+  WHERE user_id = 'uuid-1234-...' 
+  ORDER BY date DESC 
+  LIMIT 30
+      ↓
+🛡️ RLS Policy Check:
+  POLICY: auth.uid() = user_id
+  ✅ ALLOWED (user can only see their own data)
+      ↓
+Database Returns: [{ id, user_id, date, duration, ... }, ...]
+      ↓
+setState({ sleepRecords: data, isDemo: false })
+      ↓
+PhysioView Renders with User's Real Data
+      ↓
+UI shows user's avatar and username
+      ↓
+All "Add Entry" buttons enabled
+      ↓
+User clicks "Add Sleep Entry"
+      ↓
+INSERT INTO sleep_records (user_id, date, duration, ...) 
+VALUES ('uuid-1234-...', '2026-01-06', 480, ...)
+      ↓
+🛡️ RLS Policy Check:
+  POLICY: auth.uid() = user_id
+  ✅ ALLOWED
+      ↓
+Data Saved to Database
+      ↓
+useHealthData() refetch() → UI updates
+```
+
+**Characteristics:**
+- 🔐 **Secure** - RLS ensures data isolation
+- 🔄 **Real-time** - Can subscribe to changes (Supabase Realtime)
+- 💾 **Persistent** - Data survives sessions, devices
+- 🚀 **Scalable** - Supports millions of entries per user
+
+---
+
+### 🗄️ Supabase Database Schema (Authenticated Mode)
+
+See `ARCHITECTURE.md` for complete schema details. Key tables:
+
+**Authentication:**
+- `auth.users` - Managed by Supabase Auth (email, password hash, etc.)
+
+**User Data:**
+- `profiles` - Extended user metadata (username, avatar_url, bio)
+- `sleep_records` - Sleep duration, quality, deep/REM cycles
+- `sport_sessions` - Workouts, activity type, calories
+- `body_measurements` - Weight, body fat, muscle mass
+- `contacts` - Social connections (TrueCircle)
+- `connections` - Friend requests, accepted/pending connections
+- `countries` - Visited countries, visit counts
+- `trips` - Travel log (start date, end date, type)
+- `assets` - Financial portfolio (real estate, stocks, crypto)
+- `career_goals` - Professional targets and probabilities
+
+**Security:**
+- All tables protected by **Row-Level Security (RLS)** policies
+- Users can only access rows where `user_id = auth.uid()`
+- Automatic enforcement at database level (impossible to bypass)
+
+---
+
+### 🔐 Authentication & Security
+
+**Visitor Mode:**
+- No credentials required
+- No data stored
+- Safe for public demonstrations
+
+**Authenticated Mode:**
+- **Email/Password:** Supabase Auth with bcrypt hashing
+- **Session Management:** JWT tokens (1 hour default expiry, auto-refresh)
+- **Transport:** HTTPS/TLS for all API calls
+- **Database:** RLS policies enforce user isolation
+- **Edge Functions:** JWT validation before execution
+- **Privacy:** User data never shared; GDPR-compliant export/deletion available
+
+---
+
+### 🧪 Technology Stack
+
+**Frontend (Prototype):**
+- **Framework:** Next.js 14 (App Router)
+- **Language:** TypeScript
+- **Styling:** Tailwind CSS + Custom CSS (Glassmorphism)
+- **Animations:** Framer Motion
+- **3D Rendering:** Three.js (Social sphere, Map globe)
+- **Maps:** Mapbox GL JS (World module)
+- **i18n:** Context-based (FR/EN)
+
+**Backend (Authenticated Mode):**
+- **Database:** Supabase PostgreSQL
+- **Authentication:** Supabase Auth (JWT-based)
+- **Storage:** Supabase Storage (for avatars)
+- **Edge Functions:** Deno Deploy (for AI Analyst)
+- **AI:** Groq API (`llama-3.1-8b-instant`)
+- **Real-time:** Supabase Realtime (optional)
+
+**Production Target:**
+- **iOS:** Swift + SwiftUI/UIKit
+- **iOS Frameworks:** HealthKit, MapKit, SceneKit, CoreData/SwiftData
+- **Backend:** Same (Supabase) or native CloudKit
+
+
+
+---
+
+## 📊 Mode Comparison Table
+
+| Feature                        | 🌐 **Visitor Mode**                          | 🔐 **Authenticated Mode**                     |
+|--------------------------------|---------------------------------------------|----------------------------------------------|
+| **Authentication**             | ❌ Not required                              | ✅ Email/password via Supabase Auth          |
+| **Data Source**                | Static JSON files (`/data/`)                | Supabase PostgreSQL database                 |
+| **Data Persistence**           | ❌ None (ephemeral)                          | ✅ Permanent (multi-device sync)             |
+| **Data Ownership**             | Demo persona ("Jeffrey")                    | User's personal data                         |
+| **Create/Edit Data**           | ❌ Read-only                                 | ✅ Full CRUD operations                      |
+| **Backend Dependency**         | ✅ None (offline-first)                      | ⚠️ Requires internet (offline cache planned) |
+| **Security**                   | N/A (no real data)                          | 🛡️ RLS policies, JWT tokens, HTTPS          |
+| **AI Analysis**                | ❌ Not available                             | ✅ Groq-powered insights (Edge Function)     |
+| **Social Features**            | ❌ Demo contacts only (no actions)           | ✅ Search users, send requests, compare      |
+| **User Search**                | ❌ Not available                             | ✅ Find friends by username                  |
+| **Profile Customization**      | ❌ Fixed demo profile                        | ✅ Custom avatar, username, bio              |
+| **Data Export/Deletion**       | N/A                                         | ✅ GDPR-compliant export/deletion            |
+| **Real-time Sync**             | N/A                                         | ✅ Supabase Realtime (optional)              |
+| **Performance**                | ⚡ Instant (no network)                      | ⚠️ Network-dependent (typically <500ms)      |
+| **Use Case**                   | Demo, preview, offline showcase             | Long-term tracking, analytics, social        |
+| **Cost**                       | Free (no backend)                           | Supabase free tier or paid (per usage)       |
+| **Privacy**                    | ✅ Zero data collection                      | ⚠️ User data stored (secured by RLS)         |
+| **Multi-language Support**     | ✅ FR/EN                                     | ✅ FR/EN                                     |
+| **Dark Mode**                  | ✅ Supported                                 | ✅ Supported                                 |
+| **Gesture Navigation**         | ✅ Fully functional                          | ✅ Fully functional                          |
 
 ---
 
 ## Getting Started (Prototype)
+
 
 This is a **Next.js 14** application using **TypeScript** and **Tailwind CSS**.
 
@@ -147,6 +518,88 @@ This is a **Next.js 14** application using **TypeScript** and **Tailwind CSS**.
    npm run dev
    ```
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### 🌐 Running in Visitor Mode (Default)
+
+The app will **automatically run in Visitor Mode** if no Supabase credentials are configured or if you're not logged in.
+
+- ✅ No additional setup required
+- ✅ Demo data loads automatically
+- ✅ Fully functional UI
+- 🔒 Login button redirects to `/login` page (requires Supabase setup)
+
+**To test Visitor Mode:**
+1. Ensure you're not logged in (or clear browser local storage)
+2. Navigate to `http://localhost:3000`
+3. Explore all modules with demo data (Jeffrey persona)
+
+---
+
+### 🔐 Running in Authenticated Mode
+
+To enable the full Supabase-powered experience:
+
+#### 1. Set Up Supabase Project
+1. Create a free account at [supabase.com](https://supabase.com)
+2. Create a new project
+3. Copy your project URL and anon key from **Settings → API**
+
+#### 2. Configure Environment Variables
+Create a `.env.local` file in the project root:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-here
+```
+
+#### 3. Run Database Migrations
+```bash
+# Install Supabase CLI (if not already installed)
+npm install -g supabase
+
+# Link to your project
+supabase link --project-ref your-project-ref
+
+# Apply migrations (creates tables, RLS policies)
+supabase db push
+```
+
+**Note:** Migration files are located in `/supabase/migrations/`. If migrations don't exist yet, you'll need to create them based on the schema documented in `ARCHITECTURE.md`.
+
+#### 4. (Optional) Deploy Edge Functions
+```bash
+# Deploy AI Analyst function
+supabase functions deploy ai-analyst
+
+# Set Groq API key secret
+supabase secrets set GROQ_API_KEY=your-groq-api-key
+```
+
+#### 5. Test Authenticated Mode
+1. Restart the dev server (`npm run dev`)
+2. Navigate to `http://localhost:3000/login`
+3. Sign up with email/password
+4. Complete onboarding (username, avatar)
+5. Your data is now stored in Supabase!
+
+**Verify RLS is Working:**
+- Open Supabase dashboard → Table Editor → `sleep_records`
+- You should only see rows where `user_id` matches your authenticated user ID
+- Try creating a second account → each user sees only their own data
+
+---
+
+### 🔄 Switching Between Modes
+
+**Switch to Visitor Mode:**
+- Click "Sign Out" in Settings
+- Or clear browser local storage: `localStorage.clear()`
+
+**Switch to Authenticated Mode:**
+- Click "Login" button
+- Sign in with your credentials
+
+The app automatically detects auth state and loads the appropriate data source.
 
 ---
 
