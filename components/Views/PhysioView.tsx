@@ -1,12 +1,16 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import Navbar from '../Navbar'
 import PhysioCard from '../Cards/PhysioCard'
 import BottomSheet from '../UI/BottomSheet'
 import GoalSettingModal from '../Modals/GoalSettingModal'
+import EmptyModuleState from '../UI/EmptyModuleState'
 import { PhysioMetric, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { useHealthData } from '@/hooks/useHealthData'
+import { useProfileData } from '@/hooks/useProfileData'
 
 interface PhysioViewProps {
   metrics: PhysioMetric[]
@@ -20,6 +24,10 @@ interface PhysioViewProps {
 
 export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardClick }: PhysioViewProps) {
   const { t } = useLanguage()
+  const { isVisitor } = useVisitor()
+  const healthData = useHealthData()
+  const profileData = useProfileData()
+
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [showAddModal, setShowAddModal] = useState(false)
   const [selectedMetricType, setSelectedMetricType] = useState<string | null>(null)
@@ -70,8 +78,66 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
     return trends
   }, [metricGoals])
 
-  const latestMeasurement = ThomasMorel.moduleA.measurements[0]
-  const latestSport = ThomasMorel.moduleA.sport[0]
+  const latestMeasurement = isVisitor ? ThomasMorel.moduleA.measurements[0] : (
+    healthData.bodyMeasurements.length > 0 ? healthData.bodyMeasurements[0] : null
+  )
+  const latestSport = isVisitor ? ThomasMorel.moduleA.sport[0] : (
+    healthData.sportSessions.length > 0 ? healthData.sportSessions[0] : null
+  )
+
+  // Check if user has required body data for composition section
+  const hasBodyData = isVisitor || (
+    profileData.profile?.height &&
+    profileData.profile?.weight &&
+    profileData.profile?.gender
+  )
+
+  // Show empty state for authenticated users without any health data
+  const showEmptyState = !isVisitor && !healthData.isLoading && !healthData.hasAnyData
+
+  // Loading state
+  if (!isVisitor && (healthData.isLoading || profileData.isLoading)) {
+    return (
+      <div className="content">
+        <Navbar
+          title={t('health')}
+          subtitle={t('balance')}
+          onAvatarClick={onAvatarClick}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: 'var(--accent-sage) transparent transparent transparent' }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state for new users
+  if (showEmptyState) {
+    return (
+      <div ref={scrollContainerRef} className="content">
+        <Navbar
+          title={t('health')}
+          subtitle={t('balance')}
+          onAvatarClick={onAvatarClick}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <EmptyModuleState
+          moduleName="Santé"
+          moduleIcon="fa-heart-pulse"
+          moduleColor="var(--accent-sage)"
+          title="Commencez à suivre votre santé"
+          description="Ajoutez vos premières données de sommeil, d'activité physique ou de nutrition pour commencer à visualiser vos métriques."
+          actionLabel="Ajouter des données"
+          onAction={() => setShowAddModal(true)}
+        />
+      </div>
+    )
+  }
 
   const handleLogData = (type: string) => {
     setSelectedMetricType(type)
@@ -197,7 +263,8 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
               className="text-xs mt-0.5"
               style={{ color: 'var(--text-tertiary)' }}
             >
-              {latestSport.type} • {latestSport.duration}min • {latestSport.caloriesBurned} kcal
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+              {latestSport.type} • {latestSport.duration}min • {(latestSport as any).caloriesBurned || (latestSport as any).calories_burned || 0} kcal
             </div>
           </div>
           <div
@@ -278,7 +345,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
 
           <div
             className="glass cursor-pointer transition-all active:scale-[0.98] rounded-2xl p-5 mb-5"
-            onClick={() => onCardClick('Composition', `${latestMeasurement.bodyFatPercentage}%`, 'Current body fat', 'var(--accent-lavender)')}
+            onClick={() => onCardClick('Composition', `${(latestMeasurement as any).bodyFatPercentage || (latestMeasurement as any).body_fat_percentage || '--'}%`, 'Current body fat', 'var(--accent-lavender)')}
             style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-light)',
@@ -303,7 +370,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
                   className="text-xl font-light text-display"
                   style={{ color: 'var(--accent-sage)' }}
                 >
-                  {latestMeasurement.bodyFatPercentage}%
+                  {(latestMeasurement as any).bodyFatPercentage || (latestMeasurement as any).body_fat_percentage || '--'}%
                 </div>
                 <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
                   {t('bodyFat')}
@@ -314,7 +381,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
                   className="text-xl font-light text-display"
                   style={{ color: 'var(--accent-lavender)' }}
                 >
-                  {latestMeasurement.muscleMass}
+                  {(latestMeasurement as any).muscleMass || (latestMeasurement as any).muscle_mass || '--'}
                 </div>
                 <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
                   {t('muscleMass').toLowerCase()}
@@ -325,11 +392,11 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
             <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
               <div className="flex justify-between text-xs mb-2">
                 <span style={{ color: 'var(--text-tertiary)' }}>{t('vo2Max')}</span>
-                <span style={{ color: 'var(--accent-sage)' }}>{latestMeasurement.vo2Max} ml/kg/min</span>
+                <span style={{ color: 'var(--accent-sage)' }}>{(latestMeasurement as any).vo2Max || (latestMeasurement as any).vo2_max || '--'} ml/kg/min</span>
               </div>
               <div className="flex justify-between text-xs">
                 <span style={{ color: 'var(--text-tertiary)' }}>{t('restingHR')}</span>
-                <span style={{ color: 'var(--accent-rose)' }}>{latestMeasurement.restingHeartRate} bpm</span>
+                <span style={{ color: 'var(--accent-rose)' }}>{(latestMeasurement as any).restingHeartRate || (latestMeasurement as any).resting_heart_rate || '--'} bpm</span>
               </div>
             </div>
           </div>

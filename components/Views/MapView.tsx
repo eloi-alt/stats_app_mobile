@@ -5,8 +5,11 @@ import { createPortal } from 'react-dom'
 import dynamic from 'next/dynamic'
 import Navbar from '../Navbar'
 import CountryDetailModal from '../Modals/CountryDetailModal'
+import EmptyModuleState from '../UI/EmptyModuleState'
 import { visitedCountries, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { useTravelData } from '@/hooks/useTravelData'
 import CanvasSkeleton from '../Skeletons/CanvasSkeleton'
 
 // Dynamic import for MapboxGlobe to avoid SSR issues
@@ -40,6 +43,8 @@ const getFlagEmoji = (countryCode: string): string => {
 
 export default function MapView({ mapContainerId, onFullscreenChange }: MapViewProps) {
   const { t } = useLanguage()
+  const { isVisitor } = useVisitor()
+  const travelData = useTravelData()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<CountryInfo | null>(null)
@@ -54,13 +59,69 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
     setMounted(true)
   }, [])
 
-  // Stats from the data
-  const stats = useMemo(() => ({
-    totalCountries: visitedCountries.length,
-    totalDistanceKm: ThomasMorel.moduleB.stats.totalDistanceKm,
-    currentYearDistanceKm: ThomasMorel.moduleB.stats.currentYear.distanceKm,
-    trips: ThomasMorel.moduleB.trips.length,
-  }), [])
+  // Stats from the data - use real data or mock data based on visitor mode
+  const stats = useMemo(() => {
+    if (isVisitor) {
+      return {
+        totalCountries: visitedCountries.length,
+        totalDistanceKm: ThomasMorel.moduleB.stats.totalDistanceKm,
+        currentYearDistanceKm: ThomasMorel.moduleB.stats.currentYear.distanceKm,
+        trips: ThomasMorel.moduleB.trips.length,
+      }
+    }
+    return {
+      totalCountries: travelData.totalCountriesVisited,
+      totalDistanceKm: travelData.totalDistanceKm,
+      currentYearDistanceKm: travelData.totalDistanceKm, // TODO: Filter by year
+      trips: travelData.totalTrips,
+    }
+  }, [isVisitor, travelData])
+
+  // Show empty state for authenticated users without any travel data
+  const showEmptyState = !isVisitor && !travelData.isLoading && !travelData.hasAnyData
+
+  // Loading state
+  if (!isVisitor && travelData.isLoading) {
+    return (
+      <div className="content">
+        <Navbar
+          title={t('world')}
+          subtitle={t('exploration')}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+          isHidden={isMapFullscreen}
+        />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: 'var(--accent-sky) transparent transparent transparent' }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state for new users
+  if (showEmptyState) {
+    return (
+      <div ref={scrollContainerRef} className="content">
+        <Navbar
+          title={t('world')}
+          subtitle={t('exploration')}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <EmptyModuleState
+          moduleName="Monde"
+          moduleIcon="fa-globe"
+          moduleColor="var(--accent-sky)"
+          title="Commencez votre exploration"
+          description="Ajoutez votre premier voyage pour visualiser vos découvertes sur le globe et suivre votre progression d'explorateur."
+          actionLabel="Ajouter un voyage"
+          onAction={() => setShowAddModal(true)}
+        />
+      </div>
+    )
+  }
 
   // Get country details
   const getCountryDetails = (code: string): CountryInfo | null => {

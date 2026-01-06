@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { supabase } from '@/utils/supabase/client'
 import TabBar from '@/components/TabBar'
 import HomeView from '@/components/Views/HomeView'
 import PhysioView from '@/components/Views/PhysioView'
@@ -11,6 +13,7 @@ import ProView from '@/components/Views/ProView'
 import ProfileView from '@/components/Views/ProfileView'
 import SettingsView from '@/components/Views/SettingsView'
 import ViewSheet from '@/components/UI/ViewSheet'
+import ProfileDataGate from '@/components/UI/ProfileDataGate'
 import AssetsModal from '@/components/Modals/AssetsModal'
 import ObjectiveModal from '@/components/Modals/ObjectiveModal'
 import {
@@ -32,10 +35,44 @@ import IPhoneWrapper from '@/components/IPhoneWrapper'
 
 function HomeContent() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const { isVisitor } = useVisitor()
+  const [isLoading, setIsLoading] = useState(true)
   const [activeView, setActiveView] = useState('view-home')
   const [initialContactName, setInitialContactName] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Check authentication on mount - redirect to landing if not authenticated and not visitor
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session && !isVisitor) {
+        router.push('/landing')
+        return
+      }
+
+      // If logged in, check if onboarding is completed
+      if (session) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('onboarding_completed')
+          .eq('id', session.user.id)
+          .single()
+
+        // If profile exists but onboarding not completed, redirect to onboarding
+        if (profile && !profile.onboarding_completed) {
+          router.push('/onboarding')
+          return
+        }
+      }
+
+      setIsLoading(false)
+    }
+
+    checkAuth()
+  }, [isVisitor, router])
 
   useEffect(() => {
     const viewParam = searchParams.get('view')
@@ -174,6 +211,20 @@ function HomeContent() {
     transition: 'opacity 0.3s ease'
   })
 
+  // Show loading while checking auth
+  if (isLoading) {
+    return (
+      <IPhoneWrapper>
+        <div className="app-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+          <div style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>
+            <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+            <div>Chargement...</div>
+          </div>
+        </div>
+      </IPhoneWrapper>
+    )
+  }
+
   return (
     <IPhoneWrapper>
       <div className="app-container">
@@ -194,12 +245,14 @@ function HomeContent() {
         </section>
 
         <section id="view-physio" className="view" style={viewStyle('view-physio')}>
-          <PhysioView
-            metrics={physioMetrics}
-            aiAnalysis={aiAnalysis}
-            onAvatarClick={openProfile}
-            onCardClick={handleObjectiveClick}
-          />
+          <ProfileDataGate module="physio">
+            <PhysioView
+              metrics={physioMetrics}
+              aiAnalysis={aiAnalysis}
+              onAvatarClick={openProfile}
+              onCardClick={handleObjectiveClick}
+            />
+          </ProfileDataGate>
         </section>
 
         <section id="view-social" className="view" style={viewStyle('view-social')}>
@@ -213,15 +266,19 @@ function HomeContent() {
         </section>
 
         <section id="view-map" className="view" style={viewStyle('view-map')}>
-          <MapView mapContainerId="map-full" onFullscreenChange={setIsMapFullscreen} />
+          <ProfileDataGate module="map">
+            <MapView mapContainerId="map-full" onFullscreenChange={setIsMapFullscreen} />
+          </ProfileDataGate>
         </section>
 
         <section id="view-pro" className="view" style={viewStyle('view-pro')}>
-          <ProView
-            careerInfo={careerInfo}
-            onAvatarClick={openProfile}
-            onAssetsClick={() => setAssetsModalOpen(true)}
-          />
+          <ProfileDataGate module="pro">
+            <ProView
+              careerInfo={careerInfo}
+              onAvatarClick={openProfile}
+              onAssetsClick={() => setAssetsModalOpen(true)}
+            />
+          </ProfileDataGate>
         </section>
 
         {/* TabBar with swipe support */}

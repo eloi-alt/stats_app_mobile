@@ -417,6 +417,20 @@ export interface GlobalPerformance {
 // MAIN INTERFACE: UserProfile
 // ============================================================================
 
+export type HarmonyDimension = 'health' | 'finance' | 'social' | 'career' | 'world';
+
+export interface HarmonyObjective {
+  id: string;
+  dimension: HarmonyDimension;
+  title: string;
+  description: string;
+  target: number;
+  current: number;
+  unit: string;
+  priority: 'high' | 'medium' | 'low';
+  deadline: string | null;
+}
+
 export interface UserProfile {
   identity: UserIdentity;
   settings: UserSettings;
@@ -428,5 +442,13 @@ export interface UserProfile {
   moduleC: ModuleC_Professionnel;
   moduleD: ModuleD_Extraordinaire;
   moduleE: ModuleE_Social;
+  harmony: {
+    currentScore: number;
+    history: { date: string; score: number }[];
+    aiInsight?: string;
+    objectives: HarmonyObjective[];
+    dimensionWeights: { [key in HarmonyDimension]: number };
+    lastUpdated: string;
+  };
 }
 

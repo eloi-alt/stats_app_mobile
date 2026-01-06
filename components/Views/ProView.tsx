@@ -6,8 +6,12 @@ import Navbar from '../Navbar'
 import CareerGoalModal from '../Modals/CareerGoalModal'
 import SkillEndorsementModal from '../Modals/SkillEndorsementModal'
 import FinancialProjectionsModal from '../Modals/FinancialProjectionsModal'
+import EmptyModuleState from '../UI/EmptyModuleState'
 import { CareerInfo, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { useFinancialData } from '@/hooks/useFinancialData'
+import { useProfileData } from '@/hooks/useProfileData'
 
 interface ProViewProps {
   careerInfo: CareerInfo
@@ -17,6 +21,9 @@ interface ProViewProps {
 
 export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: ProViewProps) {
   const { t } = useLanguage()
+  const { isVisitor } = useVisitor()
+  const financialData = useFinancialData()
+  const profileData = useProfileData()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [mounted, setMounted] = useState(false)
   const [showSkillsModal, setShowSkillsModal] = useState(false)
@@ -37,6 +44,60 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
   const handleAction = (message: string) => {
     setShowToast(message)
     setTimeout(() => setShowToast(null), 2000)
+  }
+
+  // Check if user has required job data
+  const profile: any = profileData.profile
+  const hasJobData = isVisitor || (
+    (profile?.job_title || profile?.jobTitle) &&
+    profile?.industry
+  )
+
+  // Show empty state for authenticated users without any career/financial data
+  const showEmptyState = !isVisitor && !financialData.isLoading && !profileData.isLoading && !hasJobData && !financialData.hasAnyData
+
+  // Loading state
+  if (!isVisitor && (financialData.isLoading || profileData.isLoading)) {
+    return (
+      <div className="content">
+        <Navbar
+          title="TrueCircle"
+          subtitle={t('growth')}
+          onAvatarClick={onAvatarClick}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: 'var(--accent-gold) transparent transparent transparent' }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state for new users
+  if (showEmptyState) {
+    return (
+      <div ref={scrollContainerRef} className="content">
+        <Navbar
+          title="TrueCircle"
+          subtitle={t('growth')}
+          onAvatarClick={onAvatarClick}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <EmptyModuleState
+          moduleName="Carrière"
+          moduleIcon="fa-briefcase"
+          moduleColor="var(--accent-gold)"
+          title="Configurez votre profil professionnel"
+          description="Renseignez votre poste actuel et vos objectifs de carrière pour débloquer les projections et le suivi de votre progression professionnelle."
+          actionLabel="Compléter mon profil"
+          actionHref="/onboarding"
+        />
+      </div>
+    )
   }
 
   return (

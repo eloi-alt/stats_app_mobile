@@ -8,8 +8,11 @@ import BottomSheet from '../UI/BottomSheet'
 import SwipeableCard from '../UI/SwipeableCard'
 import RankingDetailModal from '../Modals/RankingDetailModal'
 import CompareWithFriendModal from '../Modals/CompareWithFriendModal'
+import EmptyModuleState from '../UI/EmptyModuleState'
 import { Contact, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { useSocialData } from '@/hooks/useSocialData'
 
 interface ComparisonDataItem {
   width: number
@@ -41,6 +44,8 @@ interface ContactDetailModal {
 
 export default function SocialView({ contacts, comparisonData, onObjectiveClick, initialContactName, onClearInitialContact }: SocialViewProps) {
   const { t } = useLanguage()
+  const { isVisitor } = useVisitor()
+  const socialData = useSocialData()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [comparisonType, setComparisonType] = useState<'friends' | 'country' | 'world'>('friends')
   const [selectedContact, setSelectedContact] = useState<ContactDetailModal | null>(null)
@@ -86,6 +91,57 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
   const handleAction = (action: string, contactName: string) => {
     setShowInteraction(`${action} ${contactName}...`)
     setTimeout(() => setShowInteraction(null), 2000)
+  }
+
+  // Show empty state for authenticated users without any friends
+  const showEmptyState = !isVisitor && !socialData.isLoading && !socialData.hasAnyFriends && contacts.length === 0
+
+  // Loading state
+  if (!isVisitor && socialData.isLoading) {
+    return (
+      <div className="content">
+        <Navbar
+          title="TrueCircle"
+          subtitle={t('connections')}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+            style={{ borderColor: 'var(--accent-lavender) transparent transparent transparent' }}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // Empty state for new users
+  if (showEmptyState) {
+    return (
+      <div ref={scrollContainerRef} className="content">
+        <Navbar
+          title="TrueCircle"
+          subtitle={t('connections')}
+          showAvatar={false}
+          scrollContainerRef={scrollContainerRef}
+        />
+        <EmptyModuleState
+          moduleName="Social"
+          moduleIcon="fa-users"
+          moduleColor="var(--accent-lavender)"
+          title="Construisez votre TrueCircle"
+          description="Ajoutez vos premiers contacts pour visualiser votre sphère sociale et comparer vos statistiques avec vos amis."
+          actionLabel="Ajouter un contact"
+          onAction={() => {
+            // TODO: Open add contact modal
+          }}
+          secondaryActionLabel="Rechercher des utilisateurs"
+          onSecondaryAction={() => {
+            // TODO: Open search modal
+          }}
+        />
+      </div>
+    )
   }
 
   return (
