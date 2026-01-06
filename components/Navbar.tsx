@@ -9,6 +9,7 @@ interface NavbarProps {
   onNotificationClick?: () => void
   notificationCount?: number
   showAvatar?: boolean
+  avatarUrl?: string
   scrollContainerRef?: RefObject<HTMLElement>
   isHidden?: boolean
 }
@@ -20,6 +21,7 @@ export default function Navbar({
   onNotificationClick,
   notificationCount = 0,
   showAvatar = true,
+  avatarUrl,
   scrollContainerRef,
   isHidden = false
 }: NavbarProps) {
@@ -206,7 +208,7 @@ export default function Navbar({
               }}
             >
               <img
-                src="/eloi.png"
+                src={avatarUrl || "/eloi.png"}
                 className="w-full h-full rounded-full object-cover pointer-events-none"
                 alt="Avatar"
                 style={{

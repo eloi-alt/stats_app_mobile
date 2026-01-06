@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/utils/supabase/client'
+import { ThomasMorel } from '@/data/mockData'
 
 // Types for health data
 export interface SleepRecord {
@@ -57,6 +58,7 @@ export interface HealthData {
     hasBodyData: boolean
     hasNutritionData: boolean
     refetch: () => void
+    isDemo: boolean
 }
 
 // Calculate weekly/daily aggregates
@@ -95,22 +97,71 @@ function calculateMetrics(
     }
 }
 
+// Demo data from mockData
+const DEMO_SLEEP_RECORDS: SleepRecord[] = ThomasMorel.moduleA.sleep.map((s, i) => ({
+    id: `demo_sleep_${i}`,
+    date: s.date,
+    duration: s.duration,
+    quality: s.quality as SleepRecord['quality'],
+    deep_sleep_minutes: s.deepSleepMinutes,
+    rem_sleep_minutes: s.remSleepMinutes,
+    awakenings: s.awakenings
+}))
+
+const DEMO_SPORT_SESSIONS: SportSession[] = ThomasMorel.moduleA.sport.map((s, i) => ({
+    id: `demo_sport_${i}`,
+    date: s.date,
+    duration: s.duration,
+    type: s.type,
+    calories_burned: s.caloriesBurned,
+    intensity: s.intensity as SportSession['intensity']
+}))
+
+const DEMO_BODY_MEASUREMENTS: BodyMeasurement[] = ThomasMorel.moduleA.measurements.map((b, i) => ({
+    id: `demo_body_${i}`,
+    date: b.date,
+    weight: b.weight,
+    body_fat_percentage: b.bodyFatPercentage,
+    muscle_mass: b.muscleMass,
+    vo2_max: b.vo2Max,
+    resting_heart_rate: b.restingHeartRate
+}))
+
+const DEMO_NUTRITION_LOGS: NutritionLog[] = ThomasMorel.moduleA.nutrition.map((n, i) => ({
+    id: `demo_nutrition_${i}`,
+    date: n.date,
+    calories: n.calories,
+    protein: n.protein,
+    carbs: n.carbs,
+    fat: n.fat,
+    water_intake: n.waterIntake
+}))
+
 export function useHealthData(): HealthData {
     const [sleepRecords, setSleepRecords] = useState<SleepRecord[]>([])
     const [sportSessions, setSportSessions] = useState<SportSession[]>([])
     const [bodyMeasurements, setBodyMeasurements] = useState<BodyMeasurement[]>([])
     const [nutritionLogs, setNutritionLogs] = useState<NutritionLog[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [isDemo, setIsDemo] = useState(false)
 
     const fetchData = useCallback(async () => {
         setIsLoading(true)
         try {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) {
+                // No authenticated user - use demo data
+                setSleepRecords(DEMO_SLEEP_RECORDS)
+                setSportSessions(DEMO_SPORT_SESSIONS)
+                setBodyMeasurements(DEMO_BODY_MEASUREMENTS)
+                setNutritionLogs(DEMO_NUTRITION_LOGS)
+                setIsDemo(true)
                 setIsLoading(false)
                 return
             }
 
+            // Authenticated user - fetch from Supabase
+            setIsDemo(false)
             // Fetch all health data in parallel
             const [sleepRes, sportRes, bodyRes, nutritionRes] = await Promise.all([
                 supabase.from('sleep_records')
@@ -141,6 +192,12 @@ export function useHealthData(): HealthData {
             if (nutritionRes.data) setNutritionLogs(nutritionRes.data)
         } catch (err) {
             console.error('Error fetching health data:', err)
+            // On error, fall back to demo data
+            setSleepRecords(DEMO_SLEEP_RECORDS)
+            setSportSessions(DEMO_SPORT_SESSIONS)
+            setBodyMeasurements(DEMO_BODY_MEASUREMENTS)
+            setNutritionLogs(DEMO_NUTRITION_LOGS)
+            setIsDemo(true)
         } finally {
             setIsLoading(false)
         }
@@ -167,7 +224,8 @@ export function useHealthData(): HealthData {
         hasSportData,
         hasBodyData,
         hasNutritionData,
-        refetch: fetchData
+        refetch: fetchData,
+        isDemo
     }
 }
 

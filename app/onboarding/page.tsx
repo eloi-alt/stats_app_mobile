@@ -6,6 +6,7 @@ import { supabase } from '@/utils/supabase/client'
 import OnboardingSlide from '@/components/Onboarding/OnboardingSlide'
 import UsernameInput from '@/components/Onboarding/UsernameInput'
 import AvatarUploader from '@/components/Onboarding/AvatarUploader'
+import CountrySelector from '@/components/Onboarding/CountrySelector'
 
 const TOTAL_STEPS = 20
 
@@ -15,24 +16,6 @@ const industries = [
     'Énergie', 'Agriculture', 'Art & Culture', 'Sport', 'Autre'
 ]
 
-const countries = [
-    { code: 'FR', name: 'France' },
-    { code: 'US', name: 'États-Unis' },
-    { code: 'GB', name: 'Royaume-Uni' },
-    { code: 'DE', name: 'Allemagne' },
-    { code: 'ES', name: 'Espagne' },
-    { code: 'IT', name: 'Italie' },
-    { code: 'BE', name: 'Belgique' },
-    { code: 'CH', name: 'Suisse' },
-    { code: 'CA', name: 'Canada' },
-    { code: 'JP', name: 'Japon' },
-    { code: 'CN', name: 'Chine' },
-    { code: 'AU', name: 'Australie' },
-    { code: 'BR', name: 'Brésil' },
-    { code: 'MA', name: 'Maroc' },
-    { code: 'PT', name: 'Portugal' },
-    { code: 'NL', name: 'Pays-Bas' },
-]
 
 const currencies = [
     { code: 'EUR', symbol: '€', name: 'Euro' },
@@ -400,18 +383,11 @@ function OnboardingContent() {
                         icon="fa-passport"
                         {...commonProps}
                     >
-                        <div className="options-grid countries">
-                            {countries.map((country) => (
-                                <button
-                                    key={country.code}
-                                    className={`option-btn country ${profileData.nationality === country.code ? 'active' : ''}`}
-                                    onClick={() => updateData('nationality', country.code)}
-                                >
-                                    <span className="country-flag">{getFlagEmoji(country.code)}</span>
-                                    {country.name}
-                                </button>
-                            ))}
-                        </div>
+                        <CountrySelector
+                            value={profileData.nationality}
+                            onChange={(code) => updateData('nationality', code)}
+                            placeholder="Sélectionner votre nationalité"
+                        />
                     </OnboardingSlide>
                 )
 
@@ -526,18 +502,11 @@ function OnboardingContent() {
                         icon="fa-house"
                         {...commonProps}
                     >
-                        <div className="options-grid countries">
-                            {countries.map((country) => (
-                                <button
-                                    key={country.code}
-                                    className={`option-btn country ${profileData.homeCountry === country.code ? 'active' : ''}`}
-                                    onClick={() => updateData('homeCountry', country.code)}
-                                >
-                                    <span className="country-flag">{getFlagEmoji(country.code)}</span>
-                                    {country.name}
-                                </button>
-                            ))}
-                        </div>
+                        <CountrySelector
+                            value={profileData.homeCountry}
+                            onChange={(code) => updateData('homeCountry', code)}
+                            placeholder="Sélectionner votre pays"
+                        />
                     </OnboardingSlide>
                 )
 
@@ -737,8 +706,17 @@ function OnboardingContent() {
         <div className="onboarding-container">
             <style jsx global>{`
         .onboarding-container {
-          min-height: 100vh;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          width: 100vw;
+          height: 100vh;
           background: var(--bg-primary);
+          margin: 0;
+          padding: 0;
+          z-index: 100;
         }
 
         .onboarding-input {
@@ -803,40 +781,26 @@ function OnboardingContent() {
         .options-grid {
           display: grid;
           grid-template-columns: repeat(3, 1fr);
-          gap: 6px;
+          gap: 8px;
           width: 100%;
-          max-height: 240px;
-          overflow-y: auto;
-          padding: 4px;
-        }
-
-        .options-grid.countries {
-          grid-template-columns: repeat(2, 1fr);
-          max-height: 220px;
-          overflow-y: auto;
         }
 
         .options-grid.currencies {
-          grid-template-columns: repeat(2, 1fr);
-          max-height: 220px;
+          grid-template-columns: repeat(3, 1fr);
         }
 
         .options-grid.gender {
           grid-template-columns: repeat(3, 1fr);
-          gap: 8px;
-          max-height: none;
         }
 
         .options-grid.units {
           grid-template-columns: repeat(2, 1fr);
-          gap: 10px;
-          max-height: none;
+          gap: 12px;
         }
 
         .options-grid.modules {
-          grid-template-columns: repeat(2, 1fr);
-          gap: 8px;
-          max-height: 200px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 10px;
         }
 
         .option-btn {
@@ -873,20 +837,12 @@ function OnboardingContent() {
           font-size: 20px;
         }
 
-        .option-btn.country {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-          justify-content: flex-start;
-          padding: 10px 12px;
-        }
-
         .option-btn.currency {
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 3px;
-          padding: 12px;
+          gap: 4px;
+          padding: 12px 8px;
         }
 
         .option-btn.module {
@@ -894,22 +850,17 @@ function OnboardingContent() {
           flex-direction: column;
           align-items: center;
           gap: 6px;
-          padding: 14px;
+          padding: 12px 8px;
         }
 
         .option-btn.module i {
-          font-size: 22px;
+          font-size: 20px;
         }
 
         .option-btn.module.active {
           background: var(--module-color);
           border-color: var(--module-color);
         }
-
-        .country-flag {
-          font-size: 16px;
-        }
-
         .currency-symbol {
           font-size: 20px;
           font-weight: 700;
@@ -944,13 +895,7 @@ function OnboardingContent() {
     )
 }
 
-function getFlagEmoji(countryCode: string) {
-    const codePoints = countryCode
-        .toUpperCase()
-        .split('')
-        .map(char => 127397 + char.charCodeAt(0))
-    return String.fromCodePoint(...codePoints)
-}
+
 
 export default function OnboardingPage() {
     return (

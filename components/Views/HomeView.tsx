@@ -172,6 +172,7 @@ export default function HomeView({
         }}
         notificationCount={unreadCount}
         showAvatar={true}
+        avatarUrl={userProfile.avatar}
         scrollContainerRef={scrollContainerRef}
       />
 

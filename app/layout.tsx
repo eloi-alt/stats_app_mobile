@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { VisitorProvider } from '@/contexts/VisitorContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import LiquidBackground from '@/components/LiquidBackground'
 
 export const metadata: Metadata = {
@@ -56,14 +58,18 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="antialiased" suppressHydrationWarning>
-        <ThemeProvider>
-          <LanguageProvider>
-            <LiquidBackground />
-            <main className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden w-full relative" style={{ zIndex: 1 }}>
-              {children}
-            </main>
-          </LanguageProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <VisitorProvider>
+            <ThemeProvider>
+              <LanguageProvider>
+                <LiquidBackground />
+                <main className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden w-full relative" style={{ zIndex: 1 }}>
+                  {children}
+                </main>
+              </LanguageProvider>
+            </ThemeProvider>
+          </VisitorProvider>
+        </AuthProvider>
       </body>
     </html>
   )

@@ -40,11 +40,12 @@ export default function OnboardingSlide({
       <style jsx>{`
         .onboarding-slide {
           height: 100vh;
+          width: 100%;
           max-height: 100vh;
           display: flex;
           flex-direction: column;
           background: var(--bg-primary);
-          padding: 12px 16px;
+          padding: 16px 20px;
           overflow: hidden;
           box-sizing: border-box;
         }
@@ -127,19 +128,17 @@ export default function OnboardingSlide({
         }
 
         .subtitle {
-          font-size: 13px;
+          font-size: 14px;
           color: var(--text-secondary);
-          margin-bottom: 16px;
-          max-width: 280px;
+          margin-bottom: 20px;
           flex-shrink: 0;
+          padding: 0 10px;
         }
 
         .input-container {
           width: 100%;
-          max-width: 320px;
           flex: 1;
           min-height: 0;
-          overflow-y: auto;
           display: flex;
           flex-direction: column;
           justify-content: flex-start;

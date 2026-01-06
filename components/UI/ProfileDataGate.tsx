@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react'
 import { useProfileData, ProfileCompleteness } from '@/hooks/useProfileData'
+import { useVisitor } from '@/contexts/VisitorContext'
 import MissingDataPrompt from './MissingDataPrompt'
 
 type ModuleType = 'physio' | 'pro' | 'map' | 'social'
@@ -51,7 +52,13 @@ const MODULE_CONFIG: Record<ModuleType, {
 
 export default function ProfileDataGate({ children, module, fallbackComponent }: ProfileDataGateProps) {
     const profileData = useProfileData()
+    const { isVisitor } = useVisitor()
     const config = MODULE_CONFIG[module]
+
+    // In visitor mode, show content directly with demo data
+    if (isVisitor) {
+        return <>{children}</>
+    }
 
     // While loading, show nothing or a skeleton
     if (profileData.isLoading) {
