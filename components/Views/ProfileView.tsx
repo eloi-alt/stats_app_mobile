@@ -1,27 +1,105 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import Navbar from '../Navbar'
+import { useState, useRef, useEffect } from 'react'
 import BottomSheet from '../UI/BottomSheet'
-import { ThomasMorel } from '@/data/mockData'
+import AvatarUploader from '../Onboarding/AvatarUploader'
+import ProfileEditModal from '../Modals/ProfileEditModal'
+import PublicCardCreatorModal from '../Modals/PublicCardCreatorModal'
+import PublicCardDisplay, { PublicCardCategory } from '../Cards/PublicCardDisplay'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { supabase } from '@/utils/supabase/client'
+import { ThomasMorel } from '@/data/mockData'
 
 interface ProfileViewProps {
     onOpenSettings: () => void
     onNavigate?: (viewId: string) => void
     onBack?: () => void
+    userProfile?: {
+        id?: string
+        firstName: string
+        lastName: string
+        avatarUrl: string
+        username?: string
+        harmonyScore?: number
+        joinedDate?: string
+        dateOfBirth?: string
+        gender?: string
+        height?: number
+        weight?: number
+    }
+    onAvatarUpdated?: (newUrl: string) => void
+    onProfileUpdated?: (updatedData: any) => void
 }
 
-export default function ProfileView({ onOpenSettings, onNavigate, onBack }: ProfileViewProps) {
+export default function ProfileView({ onOpenSettings, onNavigate, onBack, userProfile, onAvatarUpdated, onProfileUpdated }: ProfileViewProps) {
     const { t } = useLanguage()
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const [showQRSheet, setShowQRSheet] = useState(false)
+    const [showAvatarSheet, setShowAvatarSheet] = useState(false)
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [showPublicCardModal, setShowPublicCardModal] = useState(false)
+    const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null)
+    const [localProfileData, setLocalProfileData] = useState<typeof userProfile | null>(null)
+    const [existingPublicCard, setExistingPublicCard] = useState<{
+        imageUrl: string
+        category: PublicCardCategory
+    } | null>(null)
+    const { isVisitor } = useVisitor()
 
-    const user = ThomasMorel.identity
-    const performance = ThomasMorel.performance
+    // Load existing public card
+    useEffect(() => {
+        const loadPublicCard = async () => {
+            if (isVisitor) {
+                // Demo mode: load from localStorage
+                const demoCard = localStorage.getItem('demoPublicCard')
+                if (demoCard) {
+                    const parsed = JSON.parse(demoCard)
+                    setExistingPublicCard({
+                        imageUrl: parsed.imageUrl,
+                        category: parsed.category
+                    })
+                }
+            } else if (userProfile?.id) {
+                // Auth mode: load from Supabase
+                const { data } = await supabase
+                    .from('public_cards')
+                    .select('image_url, category')
+                    .eq('user_id', userProfile.id)
+                    .single()
+
+                if (data) {
+                    setExistingPublicCard({
+                        imageUrl: data.image_url,
+                        category: data.category as PublicCardCategory
+                    })
+                }
+            }
+        }
+        loadPublicCard()
+    }, [userProfile?.id, isVisitor])
+
+    // Use local data if available, otherwise use props
+    const currentProfile = localProfileData || userProfile
+
+    const displayName = currentProfile?.firstName && currentProfile?.lastName
+        ? `${currentProfile.firstName} ${currentProfile.lastName}`
+        : 'Utilisateur'
+    const avatarUrl = localAvatarUrl || currentProfile?.avatarUrl || '/icon.png'
+    const username = currentProfile?.username || ''
+    const harmonyScore = currentProfile?.harmonyScore ?? 72
+    const isVerified = false // Only verified after certain criteria
+    const joinedYear = currentProfile?.joinedDate
+        ? new Date(currentProfile.joinedDate).getFullYear()
+        : new Date().getFullYear()
+
+    // Module performance (to be replaced with real data later)
+    const performance = {
+        byModule: { A: 78, B: 65, C: 72, D: 68, E: 82 }
+    }
 
     // Generate QR code URL for profile
-    const profileUrl = `https://statsapp.com/profile/${user.id}`
+    const profileUrl = `https://statsapp.com/profile/${username || 'user'}`
     const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`
 
     // Module colors for the radial chart
@@ -103,24 +181,32 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack }: Prof
                         </defs>
                     </svg>
 
-                    {/* Avatar - Center */}
+                    {/* Avatar - Center - Clickable */}
                     <div className="relative z-10">
                         <div
-                            className="rounded-full overflow-hidden border-4"
+                            className="rounded-full overflow-hidden border-4 cursor-pointer"
                             style={{
                                 width: '100px',
                                 height: '100px',
                                 borderColor: 'var(--bg-primary)',
                                 boxShadow: '0 8px 32px rgba(0,0,0,0.2)'
                             }}
+                            onClick={() => userProfile?.id && setShowAvatarSheet(true)}
                         >
                             <img
-                                src={user.avatar}
+                                src={avatarUrl}
                                 className="w-full h-full object-cover"
                                 alt="Profile"
                             />
+                            {/* Edit overlay */}
+                            <div
+                                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity"
+                                style={{ borderRadius: '50%' }}
+                            >
+                                <i className="fa-solid fa-camera text-white text-xl" />
+                            </div>
                         </div>
-                        {user.isVerified && (
+                        {isVerified && (
                             <div
                                 className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full flex items-center justify-center"
                                 style={{
@@ -141,13 +227,30 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack }: Prof
                         className="text-2xl font-light text-display mb-1"
                         style={{ color: 'var(--text-primary)' }}
                     >
-                        {user.displayName}
+                        {displayName}
                     </h1>
-                    <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
-                        {ThomasMorel.identity.bio}
-                    </p>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        {username ? (
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                @{username}
+                            </p>
+                        ) : (
+                            <p className="text-sm italic" style={{ color: 'var(--text-muted)' }}>
+                                Pas de pseudo
+                            </p>
+                        )}
+                        {userProfile?.id && (
+                            <button
+                                onClick={() => setShowEditModal(true)}
+                                className="w-6 h-6 rounded-full flex items-center justify-center transition-all active:scale-90"
+                                style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-light)' }}
+                            >
+                                <i className="fa-solid fa-pen text-[10px]" style={{ color: 'var(--text-muted)' }} />
+                            </button>
+                        )}
+                    </div>
                     <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                        {t('memberSince')} {new Date(user.joinedDate).getFullYear()}
+                        {t('memberSince')} {joinedYear}
                     </p>
                 </div>
             </div>
@@ -164,7 +267,7 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack }: Prof
                     className="text-6xl font-extralight text-display mb-1"
                     style={{ color: 'var(--accent-gold)' }}
                 >
-                    {performance.overall}
+                    {harmonyScore}
                 </div>
                 <div className="text-xs uppercase tracking-widest" style={{ color: 'var(--text-muted)' }}>
                     Harmony Score
@@ -212,16 +315,79 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack }: Prof
                     <i className="fa-solid fa-share-nodes" style={{ color: 'var(--accent-lavender)' }} />
                     <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('share')}</span>
                 </button>
-                <button
-                    className="flex-1 py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-95"
-                    style={{
-                        background: 'var(--glass-bg)',
-                        border: '1px solid var(--border-light)'
-                    }}
-                >
-                    <i className="fa-solid fa-pen" style={{ color: 'var(--accent-sage)' }} />
-                    <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('edit')}</span>
-                </button>
+            </div>
+
+            {/* Public Card Section */}
+            <div className="mb-6">
+                <div className="text-xs uppercase tracking-widest mb-3 px-1" style={{ color: 'var(--text-muted)' }}>
+                    Ma Carte Publique
+                </div>
+                {existingPublicCard ? (
+                    <div className="flex flex-col items-center gap-3">
+                        <PublicCardDisplay
+                            imageUrl={existingPublicCard.imageUrl}
+                            category={existingPublicCard.category}
+                            stats={{
+                                physio: {
+                                    weight: currentProfile?.weight || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.weight || 82 : 70),
+                                    height: currentProfile?.height || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.height || 183 : 175),
+                                    bmi: currentProfile?.weight && currentProfile?.height
+                                        ? currentProfile.weight / ((currentProfile.height / 100) ** 2)
+                                        : (isVisitor ? 24.5 : 22.9)
+                                },
+                                social: {
+                                    friendsCount: isVisitor ? 148 : 12,
+                                    harmonyScore: harmonyScore
+                                },
+                                world: {
+                                    countriesVisited: isVisitor ? ThomasMorel.moduleB.countriesVisited.length : 5,
+                                    tripsCount: isVisitor ? ThomasMorel.moduleB.trips.length : 8
+                                },
+                                career: {
+                                    jobTitle: isVisitor ? ThomasMorel.moduleC.career.currentPosition : 'Développeur',
+                                    industry: isVisitor ? ThomasMorel.moduleC.career.industry : 'Tech',
+                                    experienceYears: isVisitor ? ThomasMorel.moduleC.career.totalYearsExperience : 3
+                                },
+                                finance: {
+                                    netWorth: isVisitor ? 85000 : 35000,
+                                    savingsRate: isVisitor ? 22 : 15
+                                }
+                            }}
+                            userName={displayName}
+                            username={username}
+                            avatarUrl={avatarUrl}
+                            size="medium"
+                        />
+                        <button
+                            onClick={() => setShowPublicCardModal(true)}
+                            className="text-xs font-medium py-2 px-4 rounded-full transition-all active:scale-95"
+                            style={{
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-secondary)',
+                                border: '1px solid var(--border-light)'
+                            }}
+                        >
+                            <i className="fa-solid fa-pen mr-2" />Modifier
+                        </button>
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => setShowPublicCardModal(true)}
+                        className="w-full py-5 rounded-2xl flex flex-col items-center justify-center gap-2 transition-all active:scale-95"
+                        style={{
+                            background: 'linear-gradient(135deg, rgba(201, 169, 98, 0.1) 0%, rgba(184, 165, 212, 0.1) 100%)',
+                            border: '2px dashed var(--border-light)'
+                        }}
+                    >
+                        <i className="fa-solid fa-id-card text-xl" style={{ color: 'var(--accent-gold)' }} />
+                        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            Créer ma carte publique
+                        </span>
+                        <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                            Partagez vos stats avec une belle carte visuelle
+                        </span>
+                    </button>
+                )}
             </div>
 
             <div className="h-20" />
@@ -250,7 +416,7 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack }: Prof
                     </div>
 
                     <p className="text-base font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                        {user.displayName}
+                        {displayName}
                     </p>
                     <p className="text-xs mb-5" style={{ color: 'var(--text-muted)' }}>
                         {t('scanToView')}
@@ -267,6 +433,112 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack }: Prof
                     </button>
                 </div>
             </BottomSheet>
+
+            {/* Avatar Change BottomSheet */}
+            <BottomSheet isOpen={showAvatarSheet} onClose={() => setShowAvatarSheet(false)}>
+                <div className="flex flex-col items-center py-4">
+                    <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
+                        Changer de photo
+                    </h2>
+
+                    {userProfile?.id && (
+                        <AvatarUploader
+                            userId={userProfile.id}
+                            currentAvatarUrl={avatarUrl}
+                            showCameraOption={true}
+                            compact={true}
+                            onUploadComplete={async (newUrl) => {
+                                console.log('[ProfileView] New avatar uploaded:', newUrl)
+
+                                // Update local state immediately for instant feedback
+                                setLocalAvatarUrl(newUrl)
+
+                                // Update the profile in Supabase
+                                try {
+                                    const { error } = await supabase
+                                        .from('profiles')
+                                        .update({
+                                            avatar_url: newUrl,
+                                            updated_at: new Date().toISOString()
+                                        })
+                                        .eq('id', userProfile.id)
+
+                                    if (error) {
+                                        console.error('[ProfileView] Failed to update profile:', error)
+                                    } else {
+                                        console.log('[ProfileView] Profile updated successfully')
+                                        onAvatarUpdated?.(newUrl)
+                                    }
+                                } catch (err) {
+                                    console.error('[ProfileView] Error updating profile:', err)
+                                }
+
+                                // Close the sheet
+                                setShowAvatarSheet(false)
+                            }}
+                        />
+                    )}
+                </div>
+            </BottomSheet>
+
+            {/* Profile Edit Modal - Username only */}
+            {userProfile?.id && (
+                <ProfileEditModal
+                    isOpen={showEditModal}
+                    onClose={() => setShowEditModal(false)}
+                    userId={userProfile.id}
+                    currentUsername={currentProfile?.username}
+                    onSave={(newUsername) => {
+                        // Update local state for immediate feedback
+                        setLocalProfileData(prev => ({
+                            ...prev,
+                            ...userProfile,
+                            username: newUsername,
+                        }))
+                        onProfileUpdated?.({ username: newUsername })
+                    }}
+                />
+            )}
+
+            {/* Public Card Creator Modal */}
+            <PublicCardCreatorModal
+                isOpen={showPublicCardModal}
+                onClose={() => setShowPublicCardModal(false)}
+                userId={userProfile?.id}
+                isDemo={isVisitor}
+                userStats={{
+                    physio: {
+                        weight: currentProfile?.weight || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.weight || 82 : 70),
+                        height: currentProfile?.height || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.height || 183 : 175),
+                        bmi: currentProfile?.weight && currentProfile?.height
+                            ? currentProfile.weight / ((currentProfile.height / 100) ** 2)
+                            : (isVisitor ? 24.5 : 22.9)
+                    },
+                    social: {
+                        friendsCount: isVisitor ? 148 : 12,
+                        harmonyScore: harmonyScore
+                    },
+                    world: {
+                        countriesVisited: isVisitor ? ThomasMorel.moduleB.countriesVisited.length : 5,
+                        tripsCount: isVisitor ? ThomasMorel.moduleB.trips.length : 8
+                    },
+                    career: {
+                        jobTitle: isVisitor ? ThomasMorel.moduleC.career.currentPosition : 'Développeur',
+                        industry: isVisitor ? ThomasMorel.moduleC.career.industry : 'Tech',
+                        experienceYears: isVisitor ? ThomasMorel.moduleC.career.totalYearsExperience : 3
+                    },
+                    finance: {
+                        netWorth: isVisitor ? 85000 : 35000,
+                        savingsRate: isVisitor ? 22 : 15
+                    }
+                }}
+                userName={displayName}
+                username={username}
+                avatarUrl={avatarUrl}
+                onCardCreated={(card) => {
+                    setExistingPublicCard(card)
+                }}
+            />
         </div>
     )
 }

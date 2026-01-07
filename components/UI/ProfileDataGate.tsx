@@ -77,8 +77,10 @@ export default function ProfileDataGate({ children, module, fallbackComponent }:
         return null
     }
 
-    // Social module doesn't require specific fields (friends are added manually)
-    if (module === 'social') {
+    // Social and Map modules don't require specific fields
+    // Social: friends are added manually
+    // Map: users can explore the globe and add trips without required profile fields
+    if (module === 'social' || module === 'map') {
         return <>{children}</>
     }
 

@@ -27,6 +27,8 @@ export interface ProfileData {
     pinnedModule: string
     onboardingStep: number
     onboardingCompleted: boolean
+    harmonyScore: number
+    createdAt: string | null
 }
 
 export interface ProfileCompleteness {
@@ -125,6 +127,8 @@ export function useProfileData(): ProfileCompleteness {
                         pinnedModule: profile.pinned_module || 'A',
                         onboardingStep: profile.onboarding_step || 0,
                         onboardingCompleted: profile.onboarding_completed || false,
+                        harmonyScore: profile.harmony_score || 0,
+                        createdAt: profile.created_at || null,
                     }
 
                     // Check physio completeness

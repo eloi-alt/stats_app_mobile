@@ -9,6 +9,7 @@ import SwipeableCard from '../UI/SwipeableCard'
 import RankingDetailModal from '../Modals/RankingDetailModal'
 import CompareWithFriendModal from '../Modals/CompareWithFriendModal'
 import EmptyModuleState from '../UI/EmptyModuleState'
+import UserSearchModal from '../Modals/UserSearchModal'
 import { Contact, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useVisitor } from '@/contexts/VisitorContext'
@@ -60,6 +61,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
     displayValue: string
   } | null>(null)
   const [showCompareModal, setShowCompareModal] = useState(false)
+  const [showSearchModal, setShowSearchModal] = useState(false)
 
   // Handle deep linking for contact
   useEffect(() => {
@@ -146,12 +148,28 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
 
   return (
     <div ref={scrollContainerRef} className="content">
-      <Navbar
-        title="TrueCircle"
-        subtitle={t('connections')}
-        showAvatar={false}
-        scrollContainerRef={scrollContainerRef}
-      />
+      {/* Header with search button */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex-1">
+          <Navbar
+            title="TrueCircle"
+            subtitle={t('connections')}
+            showAvatar={false}
+            scrollContainerRef={scrollContainerRef}
+          />
+        </div>
+        <button
+          onClick={() => setShowSearchModal(true)}
+          className="w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95"
+          style={{
+            background: 'var(--glass-bg)',
+            border: '1px solid var(--border-light)',
+          }}
+          aria-label="Rechercher un utilisateur"
+        >
+          <i className="fa-solid fa-magnifying-glass" style={{ color: 'var(--text-primary)' }} />
+        </button>
+      </div>
 
       {/* Boule sociale 3D - Rank 1 Sphere */}
       <div className="relative w-full mb-8 pointer-events-auto" style={{ height: '450px' }}>
@@ -629,6 +647,16 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         onClose={() => setShowCompareModal(false)}
         currentContact={selectedContact?.contact || null}
         allContacts={contacts}
+      />
+
+      {/* User Search Modal */}
+      <UserSearchModal
+        isOpen={showSearchModal}
+        onClose={() => setShowSearchModal(false)}
+        onSelectUser={(user) => {
+          console.log('Selected user:', user)
+          // TODO: Navigate to user profile or add as friend
+        }}
       />
     </div>
   )

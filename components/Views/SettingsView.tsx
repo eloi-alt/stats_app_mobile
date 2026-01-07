@@ -1,22 +1,46 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext'
+import { useVisitor } from '@/contexts/VisitorContext'
+import { supabase } from '@/utils/supabase/client'
 
 interface SettingsViewProps {
     onBack?: () => void
 }
 
 export default function SettingsView({ onBack }: SettingsViewProps) {
+    const { isVisitor, setIsVisitor } = useVisitor()
+    const router = useRouter()
     const { language, setLanguage, t } = useLanguage()
     const { theme, setTheme } = useTheme()
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const [notifications, setNotifications] = useState(true)
     const [privacy, setPrivacy] = useState<'public' | 'friends' | 'private'>('friends')
+    const [isSigningOut, setIsSigningOut] = useState(false)
 
     const handleThemeChange = (newTheme: ThemeMode) => {
         setTheme(newTheme)
+    }
+
+    const handleSignOut = async () => {
+        setIsSigningOut(true)
+        try {
+            if (isVisitor) {
+                // Demo mode: just exit visitor mode and redirect to landing
+                setIsVisitor(false)
+                router.push('/landing')
+                return
+            }
+            // Authenticated user: sign out from Supabase
+            await supabase.auth.signOut()
+            router.push('/landing')
+        } catch (error) {
+            console.error('Sign out error:', error)
+            setIsSigningOut(false)
+        }
     }
 
     return (
@@ -196,11 +220,26 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
 
             {/* Sign Out */}
             <button
+                onClick={handleSignOut}
+                disabled={isSigningOut}
                 className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-98"
-                style={{ background: 'rgba(212, 165, 165, 0.15)', color: 'var(--accent-rose)' }}
+                style={{
+                    background: 'rgba(212, 165, 165, 0.15)',
+                    color: 'var(--accent-rose)',
+                    opacity: isSigningOut ? 0.6 : 1
+                }}
             >
-                <i className="fa-solid fa-right-from-bracket mr-2" />
-                {t('signOut')}
+                {isSigningOut ? (
+                    <>
+                        <div className="inline-block w-4 h-4 border-2 border-t-transparent rounded-full animate-spin mr-2" style={{ borderColor: 'var(--accent-rose) transparent transparent transparent' }} />
+                        Déconnexion...
+                    </>
+                ) : (
+                    <>
+                        <i className="fa-solid fa-right-from-bracket mr-2" />
+                        {t('signOut')}
+                    </>
+                )}
             </button>
 
             <div className="h-24" />

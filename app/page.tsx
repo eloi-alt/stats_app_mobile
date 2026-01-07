@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useVisitor } from '@/contexts/VisitorContext'
 import { useProfileData } from '@/hooks/useProfileData'
+import { useHealthData } from '@/hooks/useHealthData'
 import { supabase } from '@/utils/supabase/client'
 import TabBar from '@/components/TabBar'
 import HomeView from '@/components/Views/HomeView'
@@ -20,14 +21,15 @@ import ObjectiveModal from '@/components/Modals/ObjectiveModal'
 import {
   modules,
   userProfile as demoUserProfile,
-  physioMetrics,
+  physioMetrics as demoPhysioMetrics,
   careerInfo,
   contacts,
   comparisonData,
   aiAnalysis,
   defaultPinConfig,
   type Module,
-  type HomeUserProfile
+  type HomeUserProfile,
+  type PhysioMetric
 } from '@/data/mockData'
 
 const PINNED_MODULE_KEY = 'statsapp_pinned_module'
@@ -41,11 +43,102 @@ function HomeContent() {
   const router = useRouter()
   const { isVisitor } = useVisitor()
   const profileData = useProfileData() // Get profile from Supabase or visitor mode
+  const healthData = useHealthData() // Get health data based on auth state
   const [isLoading, setIsLoading] = useState(true)
   const [activeView, setActiveView] = useState('view-home')
   const [initialContactName, setInitialContactName] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // Create dynamic physioMetrics based on auth state
+  // For authenticated users: compute from healthData and profileData
+  // For visitors: use demo data from mockData
+  const physioMetrics: PhysioMetric[] = useMemo(() => {
+    // Use demo data for visitors or when data is still loading
+    if (healthData.isDemo || isVisitor) {
+      return demoPhysioMetrics
+    }
+
+    // For authenticated users, build metrics from their actual data
+    const latestSleep = healthData.sleepRecords[0]
+    const latestNutrition = healthData.nutritionLogs[0]
+    const latestBody = healthData.bodyMeasurements[0]
+
+    // Calculate weekly activity from sport sessions
+    const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+    const recentSport = healthData.sportSessions.filter(s => s.date >= lastWeek)
+    const weeklyActivity = recentSport.reduce((sum, s) => sum + s.duration, 0)
+
+    // Default values for new users
+    const weight = latestBody?.weight || profileData.profile?.weight || 0
+    const sleepDuration = latestSleep?.duration || 0
+    const sleepHours = Math.floor(sleepDuration / 60)
+    const sleepMins = sleepDuration % 60
+    const waterIntake = latestNutrition?.water_intake || 0
+
+    return [
+      {
+        id: 'sleep',
+        icon: 'fa-solid fa-moon',
+        label: 'Sleep',
+        value: sleepDuration > 0 ? `${sleepHours}h${sleepMins}` : '--',
+        valueColor: '#ef4444',
+        progress: 0,
+        progressColor: '#ef4444',
+        detailSubtitle: 'Sleep quality this week',
+      },
+      {
+        id: 'activity',
+        icon: 'fa-solid fa-person-running',
+        label: 'Activity',
+        value: weeklyActivity > 0 ? `${weeklyActivity} min` : '--',
+        valueColor: '#f59e0b',
+        progress: Math.min(100, Math.round((weeklyActivity / 300) * 100)),
+        progressColor: '#f59e0b',
+        detailSubtitle: 'Activity minutes this week',
+      },
+      {
+        id: 'steps',
+        icon: 'fa-solid fa-shoe-prints',
+        label: 'Steps',
+        value: '--', // TODO: Add steps tracking
+        valueColor: '#f59e0b',
+        progress: 0,
+        progressColor: '#f59e0b',
+        detailSubtitle: 'Steps today',
+      },
+      {
+        id: 'weight',
+        icon: 'fa-solid fa-weight-scale',
+        label: 'Weight',
+        value: weight > 0 ? `${weight} kg` : '--',
+        valueColor: '#8b5cf6',
+        progress: 100,
+        progressColor: '#8b5cf6',
+        detailSubtitle: 'Current weight',
+      },
+      {
+        id: 'hrv',
+        icon: 'fa-solid fa-heart-pulse',
+        label: 'HRV',
+        value: latestBody?.resting_heart_rate ? `${latestBody.resting_heart_rate} bpm` : '--',
+        valueColor: '#ef4444',
+        progress: 0,
+        progressColor: '#ef4444',
+        detailSubtitle: 'Resting heart rate',
+      },
+      {
+        id: 'hydration',
+        icon: 'fa-solid fa-droplet',
+        label: 'Hydration',
+        value: waterIntake > 0 ? `${waterIntake}L` : '--',
+        valueColor: '#f59e0b',
+        progress: Math.min(100, Math.round((waterIntake / 3) * 100)),
+        progressColor: '#f59e0b',
+        detailSubtitle: 'Water intake today',
+      },
+    ]
+  }, [healthData, profileData.profile, isVisitor])
 
   // Compute the user profile based on auth state
   // For authenticated users: use real profile from Supabase
@@ -322,6 +415,15 @@ function HomeContent() {
             onOpenSettings={openSettings}
             onNavigate={handleViewChange}
             onBack={closeProfile}
+            userProfile={profileData.isAuthenticated && profileData.profile ? {
+              id: profileData.profile.id,
+              firstName: profileData.profile.firstName || '',
+              lastName: profileData.profile.lastName || '',
+              avatarUrl: profileData.profile.avatarUrl || '',
+              username: profileData.profile.username || '',
+              harmonyScore: profileData.profile.harmonyScore || 0,
+              joinedDate: profileData.profile.createdAt || new Date().toISOString(),
+            } : undefined}
           />
         </ViewSheet>
 

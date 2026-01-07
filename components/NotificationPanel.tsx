@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import {
     getUserNotifications,
@@ -10,6 +10,8 @@ import {
     markAllAsRead,
     Notification,
 } from '@/data/notificationData'
+import { useFriendRequests, FriendRequest } from '@/hooks/useFriendRequests'
+import { supabase } from '@/utils/supabase/client'
 import haptics from '@/utils/haptics'
 
 interface NotificationPanelProps {
@@ -20,8 +22,26 @@ interface NotificationPanelProps {
 
 export default function NotificationPanel({ isOpen, onClose, onRefresh }: NotificationPanelProps) {
     const [mounted, setMounted] = useState(false)
-    const [activeTab, setActiveTab] = useState<'me' | 'friends'>('me')
+    const [activeTab, setActiveTab] = useState<'me' | 'requests' | 'friends'>('me')
+    const [userId, setUserId] = useState<string | null>(null)
     const panelRef = useRef<HTMLDivElement>(null)
+
+    // Get current user
+    useEffect(() => {
+        const getUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+            setUserId(user?.id || null)
+        }
+        getUser()
+    }, [])
+
+    // Friend requests hook
+    const {
+        pendingRequests,
+        acceptFriendRequest,
+        rejectFriendRequest,
+        refetch: refetchRequests
+    } = useFriendRequests(userId || undefined)
 
     useEffect(() => {
         setMounted(true)
@@ -66,10 +86,27 @@ export default function NotificationPanel({ isOpen, onClose, onRefresh }: Notifi
         onRefresh()
     }
 
+    const handleAcceptRequest = useCallback(async (request: FriendRequest) => {
+        haptics.success()
+        const result = await acceptFriendRequest(request.id, request.senderId)
+        if (result.success) {
+            refetchRequests()
+            onRefresh()
+        }
+    }, [acceptFriendRequest, refetchRequests, onRefresh])
+
+    const handleRejectRequest = useCallback(async (request: FriendRequest) => {
+        haptics.medium()
+        const result = await rejectFriendRequest(request.id)
+        if (result.success) {
+            refetchRequests()
+            onRefresh()
+        }
+    }, [rejectFriendRequest, refetchRequests, onRefresh])
+
     const userNotifications = getUserNotifications()
     const friendNotifications = getFriendNotifications()
-    const notifications = activeTab === 'me' ? userNotifications : friendNotifications
-    const totalUnread = getUnreadCount()
+    const totalUnread = getUnreadCount() + pendingRequests.length
 
     if (!mounted || !isOpen) return null
 
@@ -106,7 +143,7 @@ export default function NotificationPanel({ isOpen, onClose, onRefresh }: Notifi
                             Notifications
                         </h2>
                         <div className="flex items-center gap-2">
-                            {totalUnread > 0 && (
+                            {totalUnread > 0 && activeTab !== 'requests' && (
                                 <button
                                     onClick={handleMarkAllRead}
                                     className="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wider uppercase transition-all active:scale-95 flex items-center gap-1.5"
@@ -129,83 +166,233 @@ export default function NotificationPanel({ isOpen, onClose, onRefresh }: Notifi
                         </div>
                     </div>
 
-                    {/* Tabs */}
+                    {/* Tabs - 3 tabs */}
                     <div className="flex gap-2">
                         <button
                             onClick={() => setActiveTab('me')}
-                            className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all"
+                            className="flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all"
                             style={{
                                 background: activeTab === 'me'
                                     ? 'linear-gradient(135deg, rgba(201, 169, 98, 0.9) 0%, rgba(201, 169, 98, 0.8) 100%)'
                                     : 'var(--hover-overlay)',
                                 color: activeTab === 'me' ? 'white' : 'var(--text-secondary)',
-                                border: activeTab === 'me' ? '1px solid rgba(201, 169, 98, 0.3)' : '1px solid transparent',
-                                boxShadow: activeTab === 'me' ? '0 4px 12px rgba(201, 169, 98, 0.25)' : 'none',
                             }}
                         >
-                            <i className="fa-solid fa-user mr-2" />
+                            <i className="fa-solid fa-user mr-1.5" />
                             Moi
-                            {userNotifications.filter(n => !n.isRead).length > 0 && (
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('requests')}
+                            className="flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all relative"
+                            style={{
+                                background: activeTab === 'requests'
+                                    ? 'linear-gradient(135deg, rgba(212, 165, 165, 0.9) 0%, rgba(212, 165, 165, 0.8) 100%)'
+                                    : 'var(--hover-overlay)',
+                                color: activeTab === 'requests' ? 'white' : 'var(--text-secondary)',
+                            }}
+                        >
+                            <i className="fa-solid fa-user-plus mr-1.5" />
+                            Demandes
+                            {pendingRequests.length > 0 && (
                                 <span
-                                    className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] text-white"
+                                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full text-[10px] text-white flex items-center justify-center font-bold"
                                     style={{ background: 'var(--accent-rose)' }}
                                 >
-                                    {userNotifications.filter(n => !n.isRead).length}
+                                    {pendingRequests.length}
                                 </span>
                             )}
                         </button>
                         <button
                             onClick={() => setActiveTab('friends')}
-                            className="flex-1 py-2.5 px-4 rounded-xl text-sm font-medium transition-all"
+                            className="flex-1 py-2 px-3 rounded-xl text-xs font-medium transition-all"
                             style={{
                                 background: activeTab === 'friends'
                                     ? 'linear-gradient(135deg, rgba(139, 168, 136, 0.9) 0%, rgba(139, 168, 136, 0.8) 100%)'
                                     : 'var(--hover-overlay)',
                                 color: activeTab === 'friends' ? 'white' : 'var(--text-secondary)',
-                                border: activeTab === 'friends' ? '1px solid rgba(139, 168, 136, 0.3)' : '1px solid transparent',
-                                boxShadow: activeTab === 'friends' ? '0 4px 12px rgba(139, 168, 136, 0.25)' : 'none',
                             }}
                         >
-                            <i className="fa-solid fa-users mr-2" />
+                            <i className="fa-solid fa-users mr-1.5" />
                             Amis
-                            {friendNotifications.filter(n => !n.isRead).length > 0 && (
-                                <span
-                                    className="ml-2 px-1.5 py-0.5 rounded-full text-[10px] text-white"
-                                    style={{ background: 'var(--accent-rose)' }}
-                                >
-                                    {friendNotifications.filter(n => !n.isRead).length}
-                                </span>
-                            )}
                         </button>
                     </div>
                 </div>
 
-                {/* Notification List */}
+                {/* Content Area */}
                 <div
                     className="overflow-y-auto"
                     style={{ maxHeight: 'calc(100vh - 280px)' }}
                 >
-                    {notifications.length === 0 ? (
-                        <div className="py-12 text-center">
-                            <i
-                                className="fa-solid fa-bell-slash text-3xl mb-3"
-                                style={{ color: 'var(--text-muted)' }}
-                            />
-                            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                                Aucune notification
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="py-2">
-                            {notifications.map((notification) => (
-                                <NotificationItem key={notification.id} notification={notification} />
-                            ))}
-                        </div>
+                    {/* Tab: Me - Personal notifications */}
+                    {activeTab === 'me' && (
+                        userNotifications.length === 0 ? (
+                            <EmptyState icon="fa-bell-slash" title="Aucune notification" />
+                        ) : (
+                            <div className="py-2">
+                                {userNotifications.map((notification) => (
+                                    <NotificationItem key={notification.id} notification={notification} />
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {/* Tab: Requests - Friend requests with accept/reject */}
+                    {activeTab === 'requests' && (
+                        pendingRequests.length === 0 ? (
+                            <EmptyState icon="fa-user-group" title="Aucune demande d'ami" subtitle="Les demandes apparaîtront ici" />
+                        ) : (
+                            <div className="py-2">
+                                {pendingRequests.map((request) => (
+                                    <FriendRequestItem
+                                        key={request.id}
+                                        request={request}
+                                        onAccept={() => handleAcceptRequest(request)}
+                                        onReject={() => handleRejectRequest(request)}
+                                    />
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {/* Tab: Friends - Friend activity */}
+                    {activeTab === 'friends' && (
+                        friendNotifications.length === 0 ? (
+                            <EmptyState icon="fa-users" title="Aucune activité" />
+                        ) : (
+                            <div className="py-2">
+                                {friendNotifications.map((notification) => (
+                                    <NotificationItem key={notification.id} notification={notification} />
+                                ))}
+                            </div>
+                        )
                     )}
                 </div>
             </div>
         </div>,
         document.body
+    )
+}
+
+// Empty state component
+function EmptyState({ icon, title, subtitle }: { icon: string; title: string; subtitle?: string }) {
+    return (
+        <div className="py-12 text-center">
+            <i
+                className={`fa-solid ${icon} text-3xl mb-3`}
+                style={{ color: 'var(--text-muted)' }}
+            />
+            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                {title}
+            </p>
+            {subtitle && (
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    {subtitle}
+                </p>
+            )}
+        </div>
+    )
+}
+
+// Friend request item with accept/reject buttons
+function FriendRequestItem({
+    request,
+    onAccept,
+    onReject
+}: {
+    request: FriendRequest
+    onAccept: () => void
+    onReject: () => void
+}) {
+    const [isProcessing, setIsProcessing] = useState(false)
+
+    const handleAccept = async () => {
+        setIsProcessing(true)
+        await onAccept()
+        setIsProcessing(false)
+    }
+
+    const handleReject = async () => {
+        setIsProcessing(true)
+        await onReject()
+        setIsProcessing(false)
+    }
+
+    return (
+        <div
+            className="px-5 py-3"
+            style={{ background: 'rgba(212, 165, 165, 0.08)' }}
+        >
+            <div className="flex items-center gap-3">
+                {/* Avatar */}
+                <div className="relative flex-shrink-0">
+                    {request.senderAvatarUrl ? (
+                        <img
+                            src={request.senderAvatarUrl}
+                            alt={request.senderName}
+                            className="w-12 h-12 rounded-full object-cover"
+                            style={{ border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                        />
+                    ) : (
+                        <div
+                            className="w-12 h-12 rounded-full flex items-center justify-center"
+                            style={{ background: 'var(--bg-secondary)' }}
+                        >
+                            <i className="fa-solid fa-user text-lg" style={{ color: 'var(--text-muted)' }} />
+                        </div>
+                    )}
+                    <div
+                        className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
+                        style={{ background: 'var(--accent-rose)' }}
+                    >
+                        <i className="fa-solid fa-user-plus text-[8px] text-white" />
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                    <p
+                        className="text-sm font-medium truncate"
+                        style={{ color: 'var(--text-primary)' }}
+                    >
+                        {request.senderName}
+                    </p>
+                    {request.senderUsername && (
+                        <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                            @{request.senderUsername}
+                        </p>
+                    )}
+                    <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                        Souhaite vous ajouter en ami
+                    </p>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleReject}
+                        disabled={isProcessing}
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95"
+                        style={{
+                            background: 'rgba(220, 80, 80, 0.15)',
+                            opacity: isProcessing ? 0.5 : 1
+                        }}
+                    >
+                        <i className="fa-solid fa-xmark text-lg" style={{ color: '#DC5050' }} />
+                    </button>
+                    <button
+                        onClick={handleAccept}
+                        disabled={isProcessing}
+                        className="w-10 h-10 rounded-full flex items-center justify-center transition-all active:scale-95"
+                        style={{
+                            background: 'rgba(100, 180, 100, 0.15)',
+                            opacity: isProcessing ? 0.5 : 1
+                        }}
+                    >
+                        <i className="fa-solid fa-check text-lg" style={{ color: '#64B464' }} />
+                    </button>
+                </div>
+            </div>
+        </div>
     )
 }
 

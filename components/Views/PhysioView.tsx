@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import Navbar from '../Navbar'
 import PhysioCard from '../Cards/PhysioCard'
 import BottomSheet from '../UI/BottomSheet'
 import GoalSettingModal from '../Modals/GoalSettingModal'
+import HealthDataEntryModal from '../Modals/HealthDataEntryModal'
+import BodyDataEntryModal from '../Modals/BodyDataEntryModal'
 import EmptyModuleState from '../UI/EmptyModuleState'
 import { PhysioMetric, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -30,7 +32,8 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [showAddModal, setShowAddModal] = useState(false)
-  const [selectedMetricType, setSelectedMetricType] = useState<string | null>(null)
+  const [showBodyDataModal, setShowBodyDataModal] = useState(false)
+  const [selectedMetricType, setSelectedMetricType] = useState<'sleep' | 'activity' | 'weight' | 'hydration' | 'body' | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [aiAnalysisExpanded, setAiAnalysisExpanded] = useState(false)
 
@@ -92,8 +95,9 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
     profileData.profile?.gender
   )
 
-  // Show empty state for authenticated users without any health data
-  const showEmptyState = !isVisitor && !healthData.isLoading && !healthData.hasAnyData
+  // Show empty state for authenticated users without body data (height, weight, gender)
+  // Once user enters body data, show metrics even if no activity data yet
+  const showEmptyState = !isVisitor && !profileData.isLoading && !hasBodyData
 
   // Loading state
   if (!isVisitor && (healthData.isLoading || profileData.isLoading)) {
@@ -131,17 +135,63 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
           moduleIcon="fa-heart-pulse"
           moduleColor="var(--accent-sage)"
           title="Commencez à suivre votre santé"
-          description="Ajoutez vos premières données de sommeil, d'activité physique ou de nutrition pour commencer à visualiser vos métriques."
-          actionLabel="Ajouter des données"
-          onAction={() => setShowAddModal(true)}
+          description="Renseignez vos informations corporelles pour débloquer le suivi de vos métriques santé."
+          actionLabel="Ajouter mes données"
+          onAction={() => setShowBodyDataModal(true)}
         />
+
+        {/* Body Data Entry Modal - Available even in empty state */}
+        {profileData.profile?.id && (
+          <BodyDataEntryModal
+            isOpen={showBodyDataModal}
+            onClose={() => setShowBodyDataModal(false)}
+            userId={profileData.profile.id}
+            currentData={{
+              dateOfBirth: profileData.profile.dateOfBirth || undefined,
+              gender: profileData.profile.gender || undefined,
+              height: profileData.profile.height || undefined,
+              weight: profileData.profile.weight || undefined,
+            }}
+            onSave={() => {
+              setShowToast('Données enregistrées')
+              setTimeout(() => setShowToast(null), 2000)
+              // Force page reload to refresh data
+              window.location.reload()
+            }}
+          />
+        )}
       </div>
     )
   }
 
-  const handleLogData = (type: string) => {
-    setSelectedMetricType(type)
-    setShowAddModal(true)
+  // Map metric label/id to our modal types
+  const mapMetricToType = (metricId: string): 'sleep' | 'activity' | 'weight' | 'hydration' | 'body' | null => {
+    const mapping: { [key: string]: 'sleep' | 'activity' | 'weight' | 'hydration' | 'body' } = {
+      'sleep': 'sleep',
+      'sommeil': 'sleep',
+      'activity': 'activity',
+      'activité': 'activity',
+      'workout': 'activity',
+      'steps': 'activity',
+      'pas': 'activity',
+      'weight': 'weight',
+      'poids': 'weight',
+      'hydration': 'hydration',
+      'eau': 'hydration',
+      'water': 'hydration',
+      'hrv': 'body',
+      'body': 'body',
+      'composition': 'body'
+    }
+    return mapping[metricId.toLowerCase()] || null
+  }
+
+  const handleLogData = (metricId: string) => {
+    const type = mapMetricToType(metricId)
+    if (type) {
+      setSelectedMetricType(type)
+      setShowAddModal(true)
+    }
   }
 
   const handleSaveData = () => {
@@ -315,8 +365,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
               current={goal.current}
               trendData={trendData}
               onClick={() => {
-                setSelectedMetricType(metric.label)
-                setShowAddModal(true)
+                handleLogData(metric.id)
               }}
               onGoalClick={() => handleOpenGoalModal(metric.id, metric.label, metric.progressColor)}
               style={{ animationDelay: `${index * 60}ms` }}
@@ -325,8 +374,8 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
         })}
       </div>
 
-      {/* Body composition section */}
-      {latestMeasurement && (
+      {/* Body composition section - Uses profile data or body measurements */}
+      {hasBodyData && (
         <>
           <div className="flex items-center gap-3 mb-5 mt-6 px-1">
             <div className="h-px flex-1" style={{ background: 'var(--border-subtle)' }} />
@@ -344,7 +393,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
 
           <div
             className="glass cursor-pointer transition-all active:scale-[0.98] rounded-2xl p-5 mb-5"
-            onClick={() => onCardClick('Composition', `${(latestMeasurement as any).bodyFatPercentage || (latestMeasurement as any).body_fat_percentage || '--'}%`, 'Current body fat', 'var(--accent-lavender)')}
+            onClick={() => setShowBodyDataModal(true)}
             style={{
               background: 'var(--bg-card)',
               border: '1px solid var(--border-light)',
@@ -352,52 +401,82 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
               backdropFilter: 'blur(20px)',
             }}
           >
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div>
-                <div
-                  className="text-xl font-light text-display"
-                  style={{ color: 'var(--accent-gold)' }}
-                >
-                  {latestMeasurement.weight}
-                </div>
-                <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-                  kg
-                </div>
-              </div>
-              <div>
-                <div
-                  className="text-xl font-light text-display"
-                  style={{ color: 'var(--accent-sage)' }}
-                >
-                  {(latestMeasurement as any).bodyFatPercentage || (latestMeasurement as any).body_fat_percentage || '--'}%
-                </div>
-                <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {t('bodyFat')}
-                </div>
-              </div>
-              <div>
-                <div
-                  className="text-xl font-light text-display"
-                  style={{ color: 'var(--accent-lavender)' }}
-                >
-                  {(latestMeasurement as any).muscleMass || (latestMeasurement as any).muscle_mass || '--'}
-                </div>
-                <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-                  {t('muscleMass').toLowerCase()}
-                </div>
-              </div>
-            </div>
+            {/* Use body measurements if available, otherwise use profile data */}
+            {(() => {
+              // Get data from measurements first, then fall back to profile
+              // Note: height is only stored in profile, not in body_measurements
+              const weight = latestMeasurement?.weight || profileData.profile?.weight || 0
+              const height = profileData.profile?.height || 170
+              const bmi = height > 0 ? weight / ((height / 100) ** 2) : 0
+              const bodyFat = (latestMeasurement as any)?.bodyFatPercentage || (latestMeasurement as any)?.body_fat_percentage
+              const muscleMass = (latestMeasurement as any)?.muscleMass || (latestMeasurement as any)?.muscle_mass
 
-            <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
-              <div className="flex justify-between text-xs mb-2">
-                <span style={{ color: 'var(--text-tertiary)' }}>{t('vo2Max')}</span>
-                <span style={{ color: 'var(--accent-sage)' }}>{(latestMeasurement as any).vo2Max || (latestMeasurement as any).vo2_max || '--'} ml/kg/min</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span style={{ color: 'var(--text-tertiary)' }}>{t('restingHR')}</span>
-                <span style={{ color: 'var(--accent-rose)' }}>{(latestMeasurement as any).restingHeartRate || (latestMeasurement as any).resting_heart_rate || '--'} bpm</span>
-              </div>
-            </div>
+              return (
+                <>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <div
+                        className="text-xl font-light text-display"
+                        style={{ color: 'var(--accent-gold)' }}
+                      >
+                        {weight || '--'}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
+                        kg
+                      </div>
+                    </div>
+                    <div>
+                      <div
+                        className="text-xl font-light text-display"
+                        style={{ color: bmi < 18.5 ? 'var(--accent-sky)' : bmi < 25 ? 'var(--accent-sage)' : bmi < 30 ? 'var(--accent-gold)' : 'var(--accent-rose)' }}
+                      >
+                        {bmi > 0 ? bmi.toFixed(1) : '--'}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
+                        IMC
+                      </div>
+                    </div>
+                    <div>
+                      <div
+                        className="text-xl font-light text-display"
+                        style={{ color: 'var(--accent-lavender)' }}
+                      >
+                        {height || '--'}
+                      </div>
+                      <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
+                        cm
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Only show advanced stats if we have body measurements */}
+                  {latestMeasurement && (bodyFat || muscleMass) && (
+                    <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-light)' }}>
+                      {bodyFat && (
+                        <div className="flex justify-between text-xs mb-2">
+                          <span style={{ color: 'var(--text-tertiary)' }}>{t('bodyFat')}</span>
+                          <span style={{ color: 'var(--accent-sage)' }}>{bodyFat}%</span>
+                        </div>
+                      )}
+                      {muscleMass && (
+                        <div className="flex justify-between text-xs">
+                          <span style={{ color: 'var(--text-tertiary)' }}>{t('muscleMass')}</span>
+                          <span style={{ color: 'var(--accent-lavender)' }}>{muscleMass} kg</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Edit hint */}
+                  <div className="mt-4 pt-3 flex items-center justify-center gap-2" style={{ borderTop: '1px solid var(--border-light)' }}>
+                    <i className="fa-solid fa-pen-to-square text-xs" style={{ color: 'var(--text-muted)' }} />
+                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                      Appuyez pour modifier
+                    </span>
+                  </div>
+                </>
+              )
+            })()}
           </div>
         </>
       )}
@@ -405,87 +484,21 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
       {/* Espace en bas pour permettre le scroll complet jusqu'au bloc "body composition" */}
       <div className="h-32 mb-12" style={{ minHeight: '120px' }} />
 
-      {/* Add data modal - Bottom Sheet Interactive avec Framer Motion */}
-      <BottomSheet
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        initialHeight="60vh"
-        maxHeight="85vh"
-        showCloseButton={true}
-      >
-        <h3
-          className="text-lg font-light text-display mb-4 pr-10"
-          style={{ color: 'var(--text-primary)' }}
-        >
-          {t('add')} {selectedMetricType}
-        </h3>
-
-        <div className="space-y-3">
-          {selectedMetricType === 'Sleep' && (
-            <>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('bedtime')}</label>
-                <input type="time" defaultValue="23:00" className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-              </div>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('wakeTime')}</label>
-                <input type="time" defaultValue="07:00" className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-              </div>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('quality')}</label>
-                <select className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
-                  <option>{t('excellent')}</option>
-                  <option>{t('good')}</option>
-                  <option>{t('average')}</option>
-                  <option>{t('poor')}</option>
-                </select>
-              </div>
-            </>
-          )}
-
-          {selectedMetricType === 'Workout' && (
-            <>
-              <select className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
-                <option>{t('running')}</option>
-                <option>{t('gym')}</option>
-                <option>{t('yoga')}</option>
-                <option>{t('cycling')}</option>
-                <option>{t('swimming')}</option>
-                <option>{t('hiit')}</option>
-              </select>
-              <div>
-                <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('durationMin')}</label>
-                <input type="number" placeholder="45" className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-              </div>
-              <select className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }}>
-                <option>{t('intensityLight')}</option>
-                <option>{t('intensityModerate')}</option>
-                <option>{t('intensityIntense')}</option>
-                <option>{t('intensityExtreme')}</option>
-              </select>
-            </>
-          )}
-
-          {selectedMetricType === 'Weight' && (
-            <div>
-              <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('weightKg')}</label>
-              <input type="number" step="0.1" placeholder="78.5" className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-            </div>
-          )}
-
-          {selectedMetricType === 'Water' && (
-            <div>
-              <label className="text-xs mb-1 block" style={{ color: 'var(--text-tertiary)' }}>{t('amountL')}</label>
-              <input type="number" step="0.1" placeholder="2.5" className="w-full px-4 py-3 rounded-xl text-sm" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid var(--border-light)', color: 'var(--text-primary)' }} />
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-2 mt-5">
-          <button onClick={() => setShowAddModal(false)} className="flex-1 py-3 rounded-xl text-sm font-medium" style={{ background: 'rgba(0, 0, 0, 0.04)', color: 'var(--text-secondary)' }}>{t('cancel')}</button>
-          <button onClick={handleSaveData} className="flex-1 py-3 rounded-xl text-sm font-medium" style={{ background: 'var(--accent-sage)', color: 'white' }}>{t('save')}</button>
-        </div>
-      </BottomSheet>
+      {/* Health Data Entry Modal */}
+      {profileData.profile?.id && (
+        <HealthDataEntryModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          userId={profileData.profile.id}
+          metricType={selectedMetricType}
+          onSave={() => {
+            setShowToast(t('saved'))
+            setTimeout(() => setShowToast(null), 2000)
+            // Refresh health data
+            healthData.refetch?.()
+          }}
+        />
+      )}
 
       <style jsx>{`
         @keyframes slideUp {

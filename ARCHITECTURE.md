@@ -485,3 +485,50 @@ if let session = try await supabase.auth.session {
 - **Comparisons:** Compare stats with connections
 - **Privacy Controls:** Control who sees what data
 
+### Public Cards System
+- **Card Creation:** Users can create personalized public cards showcasing their stats
+- **5 Categories:** Santé (health), Social, Monde (travel), Carrière (career), Finance
+- **Photo Upload:** 4:5 aspect ratio image with cropping/zooming
+- **Stats Snapshot:** Selected category stats displayed on card (e.g., 5 pays, 8 voyages)
+- **Supabase Storage:** Images stored in `public_cards` bucket
+- **Discovery:** Cards visible when viewing other users' profiles via search
+
+**Database Table:**
+```sql
+public.public_cards
+  - id (uuid, primary key)
+  - user_id (uuid, unique, references auth.users)
+  - image_url (text)
+  - category (text) -- 'sante', 'social', 'monde', 'carriere', 'finance'
+  - stats_snapshot (jsonb) -- category-specific stats
+  - created_at, updated_at (timestamp)
+```
+
+### Friend Requests System
+- **Send Request:** Via "Ajouter en ami" button in user search modal
+- **Notifications:** 3-tab panel (Moi, Demandes, Amis) shows pending requests
+- **Accept/Decline:** Green tick / Red cross actions on each request
+- **Mutual Friendship:** Accepting creates bidirectional friendship entries
+
+**Database Tables:**
+```sql
+public.friend_requests
+  - id (uuid, primary key)
+  - sender_id (uuid, references auth.users)
+  - receiver_id (uuid, references auth.users)
+  - status (text) -- 'pending', 'accepted', 'declined'
+  - created_at (timestamp)
+
+public.friendships
+  - user_id (uuid, references auth.users)
+  - friend_id (uuid, references auth.users)
+  - created_at (timestamp)
+  - PRIMARY KEY (user_id, friend_id)
+```
+
+**Hook: `useFriendRequests()`**
+- `sendFriendRequest(receiverId)` - Create pending request
+- `acceptRequest(requestId, senderId)` - Accept and create friendship
+- `declineRequest(requestId)` - Decline request
+- `checkExistingRequest(userId)` - Check friendship/request status
+

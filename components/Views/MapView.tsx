@@ -88,51 +88,8 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
     }))
     , [])
 
-  // Show empty state for authenticated users without any travel data
-  const showEmptyState = !isVisitor && !travelData.isLoading && !travelData.hasAnyData
-
-  // Loading state
-  if (!isVisitor && travelData.isLoading) {
-    return (
-      <div className="content">
-        <Navbar
-          title={t('world')}
-          subtitle={t('exploration')}
-          showAvatar={false}
-          scrollContainerRef={scrollContainerRef}
-          isHidden={isMapFullscreen}
-        />
-        <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
-            style={{ borderColor: 'var(--accent-sky) transparent transparent transparent' }}
-          />
-        </div>
-      </div>
-    )
-  }
-
-  // Empty state for new users
-  if (showEmptyState) {
-    return (
-      <div ref={scrollContainerRef} className="content">
-        <Navbar
-          title={t('world')}
-          subtitle={t('exploration')}
-          showAvatar={false}
-          scrollContainerRef={scrollContainerRef}
-        />
-        <EmptyModuleState
-          moduleName="Monde"
-          moduleIcon="fa-globe"
-          moduleColor="var(--accent-sky)"
-          title="Commencez votre exploration"
-          description="Ajoutez votre premier voyage pour visualiser vos découvertes sur le globe et suivre votre progression d'explorateur."
-          actionLabel="Ajouter un voyage"
-          onAction={() => setShowAddModal(true)}
-        />
-      </div>
-    )
-  }
+  // Always show full MapView - no empty state needed, users can explore even with 0 trips
+  // The stats will show 0 countries/trips if user hasn't added any yet
 
   // Get country details
   const getCountryDetails = (code: string): CountryInfo | null => {
