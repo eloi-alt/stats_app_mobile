@@ -6,44 +6,20 @@
 
 ---
 
-## 🔀 Dual Architecture Overview
+## 🔐 Authentication-Only Architecture
 
-The STATS App implements **two distinct architectural modes** that share the same UI layer but differ fundamentally in their data sources and authentication requirements:
+The STATS App **requires authentication** for all features. Unauthenticated users are redirected to `/landing`.
 
-### 🌐 Mode 1: Visitor Mode (Demo/Guest Experience)
-**Purpose:** Showcase the full application capabilities without requiring user authentication or database connection.
-
-**Characteristics:**
-- ✅ **No authentication required** - Instant access to all features
-- ✅ **Static demo data** - Pre-populated with realistic sample data (e.g., "Jeffrey" persona)
-- ✅ **Read-only experience** - Users cannot modify data
-- ✅ **Zero backend dependency** - Fully functional offline
-- ✅ **Onboarding preview** - Allows exploration before commitment
-
-**Use Cases:**
-- First-time visitors exploring the app
-- App Store preview/demo mode
-- Testing and development
-- Offline demonstrations
-
----
-
-### 🔐 Mode 2: Authenticated Mode (Supabase-Connected Users)
-**Purpose:** Provide personalized, persistent data management for registered users.
-
-**Characteristics:**
+### Characteristics
 - 🔒 **Authentication required** - Email/password login via Supabase Auth
 - 🗄️ **Live database connection** - Real-time sync with Supabase PostgreSQL
 - ✏️ **Full CRUD operations** - Users create, read, update, delete their data
 - 🔄 **Multi-device sync** - Data accessible across devices
 - 🛡️ **Row-Level Security (RLS)** - Users can only access their own data
-- 📊 **Advanced features** - AI analysis, Edge Functions, user search, connections
+- 📊 **Dynamic modules** - HomeView percentages computed from real Supabase data
 
-**Use Cases:**
-- Registered users managing their personal data
-- Long-term tracking and analytics
-- Social features (connections, comparisons)
-- Data persistence and history
+### Empty State for New Users
+New users see **0% for all modules** with "Aucune donnée" subtitle until they add data.
 
 ---
 
@@ -111,26 +87,63 @@ The STATS App implements **two distinct architectural modes** that share the sam
 
 ## 🏗️ Architectural Patterns
 
-### 1. Authentication Flow & Mode Detection
+### 1. Authentication Flow
 
-The application automatically detects which mode to operate in based on authentication state:
+All routes require authentication. Unauthenticated users redirected to `/landing`:
 
 ```typescript
-// AuthContext.tsx - Core authentication provider
-const { user, session, loading } = useAuth()
-
-if (user) {
-  // 🔐 AUTHENTICATED MODE
-  // - Fetch data from Supabase
-  // - Enable write operations
-  // - Show user-specific features
-} else {
-  // 🌐 VISITOR MODE
-  // - Load demo data from /data/mockData.ts
-  // - Display read-only interface
-  // - Show "Login to save changes" prompts
-}
+// page.tsx - Root authentication check
+useEffect(() => {
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      router.push('/landing') // → Redirect to landing
+      return
+    }
+    // Check profile completion
+    if (!profile || !profile.onboarding_completed) {
+      router.push('/onboarding') // → Complete profile first
+    }
+  }
+  checkAuth()
+}, [])
 ```
+
+---
+
+### 2. Dynamic Modules (HomeView)
+
+HomeView modules compute percentages from **real Supabase data**:
+
+```typescript
+// page.tsx - dynamicModules useMemo
+const dynamicModules: Module[] = useMemo(() => {
+  return [
+    {
+      id: 'A',
+      title: 'Santé',
+      percentage: calculateHealthPercentage(healthData), // ← From useHealthData
+      subtitle: healthData.hasAnyData ? `${count} entrées` : 'Aucune donnée',
+    },
+    {
+      id: 'B', 
+      title: 'Monde',
+      percentage: Math.round((travelData.totalCountries / 195) * 100), // ← From useTravelData
+      subtitle: `${travelData.totalCountries} pays visités`,
+    },
+    // ... Social (E), Carrière (D)
+  ]
+}, [healthData, travelData, socialData, profileData])
+```
+
+| Module | Hook | % Calculation |
+|--------|------|---------------|
+| **Santé** | `useHealthData` | Avg sleep + activity scores |
+| **Monde** | `useTravelData` | `countries / 195 × 100` |
+| **Social** | `useSocialData` | `friends / 50 × 100` |
+| **Carrière** | `useProfileData` | jobTitle + company completeness |
+
+---
 
 **Authentication Provider Responsibilities:**
 - Initialize Supabase auth session on mount

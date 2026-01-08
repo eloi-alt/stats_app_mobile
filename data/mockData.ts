@@ -1452,51 +1452,42 @@ export interface PhysioMetric {
   detailSubtitle: string;
 }
 
-// Modules for HomeView
+// Modules for HomeView - Default values (0%), actual data comes from hooks
 export const modules: Module[] = [
   {
     id: 'A',
-    title: 'Health',
-    percentage: ThomasMorel.performance.byModule.A,
-    subtitle: 'Physiological score',
-    detailSubtitle: 'Complete health analysis',
-    color: '#10b981',
+    title: 'Santé',
+    percentage: 0, // Populated from useHealthData
+    subtitle: 'Aucune donnée',
+    detailSubtitle: 'Analyse santé complète',
+    color: '#8BA888',
     icon: 'fa-solid fa-heart-pulse',
   },
   {
-    id: 'C',
-    title: 'Finance',
-    percentage: ThomasMorel.performance.byModule.C,
-    subtitle: `$${Math.round(ThomasMorel.moduleC.patrimoine.netWorth / 1000000)}M net worth`,
-    detailSubtitle: 'Wealth management',
-    color: '#f59e0b',
-    icon: 'fa-solid fa-coins',
-  },
-  {
     id: 'D',
-    title: 'Achievements',
-    percentage: ThomasMorel.performance.byModule.D,
-    subtitle: `${ThomasMorel.moduleD.stats.total} achievements`,
-    detailSubtitle: 'Your extraordinary accomplishments',
-    color: '#8b5cf6',
-    icon: 'fa-solid fa-trophy',
+    title: 'Carrière',
+    percentage: 0, // Populated from profile/financial data
+    subtitle: 'Aucune donnée',
+    detailSubtitle: 'Objectifs professionnels',
+    color: '#C9A962',
+    icon: 'fa-solid fa-briefcase',
   },
   {
     id: 'E',
-    title: 'Circle',
-    percentage: ThomasMorel.moduleE.stats.socialScore,
-    subtitle: `${ThomasMorel.moduleE.dunbarNumbers.innerCircle} inner circle`,
-    detailSubtitle: 'Your social network',
-    color: '#ec4899',
+    title: 'Social',
+    percentage: 0, // Populated from useSocialData
+    subtitle: 'Aucune donnée',
+    detailSubtitle: 'Votre réseau social',
+    color: '#D4A5A5',
     icon: 'fa-solid fa-users',
   },
   {
     id: 'B',
-    title: 'World',
-    percentage: Math.round((ThomasMorel.moduleB.stats.totalCountries / 195) * 100),
-    subtitle: `${ThomasMorel.moduleB.stats.totalCountries} countries visited`,
-    detailSubtitle: 'Your world exploration map',
-    color: '#3b82f6',
+    title: 'Monde',
+    percentage: 0, // Populated from useTravelData
+    subtitle: 'Aucune donnée',
+    detailSubtitle: 'Votre exploration du monde',
+    color: '#A5C4D4',
     icon: 'fa-solid fa-globe',
   },
 ];

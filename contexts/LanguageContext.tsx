@@ -237,10 +237,11 @@ const translations: Translations = {
   'moduleFinance': { en: 'Finance', fr: 'Finance', es: 'Finanzas' },
   'moduleAchievements': { en: 'Career', fr: 'Carrière', es: 'Carrera' },
   'moduleCircle': { en: 'Social', fr: 'Social', es: 'Social' },
-
-
-
-
+  'moduleCareer': { en: 'Career', fr: 'Carrière', es: 'Carrera' },
+  'noData': { en: 'No data', fr: 'Aucune donnée', es: 'Sin datos' },
+  'completeProfile': { en: 'Complete profile', fr: 'Compléter le profil', es: 'Completar perfil' },
+  'newMember': { en: 'New member', fr: 'Nouveau membre', es: 'Nuevo miembro' },
+  'profileInProgress': { en: 'Profile in progress...', fr: 'Profil en cours de création...', es: 'Perfil en creación...' },
   // Comparison/Ranking Labels (SocialView)
   'sport': { en: 'Sport', fr: 'Sport', es: 'Deporte' },
   'connection': { en: 'Connection', fr: 'Connexion', es: 'Conexión' },

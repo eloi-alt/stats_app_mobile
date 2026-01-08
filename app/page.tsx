@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useVisitor } from '@/contexts/VisitorContext'
 import { useProfileData } from '@/hooks/useProfileData'
 import { useHealthData } from '@/hooks/useHealthData'
+import { useTravelData } from '@/hooks/useTravelData'
+import { useSocialData } from '@/hooks/useSocialData'
 import { supabase } from '@/utils/supabase/client'
 import TabBar from '@/components/TabBar'
 import HomeView from '@/components/Views/HomeView'
@@ -21,8 +22,6 @@ import ObjectiveModal from '@/components/Modals/ObjectiveModal'
 import BodyDataEntryModal from '@/components/Modals/BodyDataEntryModal'
 import {
   modules,
-  userProfile as demoUserProfile,
-  physioMetrics as demoPhysioMetrics,
   careerInfo,
   contacts,
   comparisonData,
@@ -42,9 +41,10 @@ import IPhoneWrapper from '@/components/IPhoneWrapper'
 function HomeContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { isVisitor } = useVisitor()
-  const profileData = useProfileData() // Get profile from Supabase or visitor mode
+  const profileData = useProfileData() // Get profile from Supabase
   const healthData = useHealthData() // Get health data based on auth state
+  const travelData = useTravelData() // Get travel data (countries, trips)
+  const socialData = useSocialData() // Get social data (friends)
   const [isLoading, setIsLoading] = useState(true)
   const [activeView, setActiveView] = useState('view-home')
   const [initialContactName, setInitialContactName] = useState<string | null>(null)
@@ -54,11 +54,10 @@ function HomeContent() {
 
   // Create dynamic physioMetrics based on auth state
   // For authenticated users: compute from healthData and profileData
-  // For visitors: use demo data from mockData
   const physioMetrics: PhysioMetric[] = useMemo(() => {
-    // Use demo data for visitors or when data is still loading
-    if (healthData.isDemo || isVisitor) {
-      return demoPhysioMetrics
+    // If still loading or no health data yet, return empty array
+    if (healthData.isDemo || healthData.isLoading) {
+      return []
     }
 
     // For authenticated users, build metrics from their actual data
@@ -140,64 +139,194 @@ function HomeContent() {
         detailSubtitle: 'Water intake today',
       },
     ]
-  }, [healthData, profileData.profile, isVisitor])
+  }, [healthData, profileData.profile])
 
   // Compute the user profile based on auth state
   // For authenticated users: use real profile from Supabase
-  // For visitors: use demo profile
+  // For non-authenticated: use demo profile (shouldn't happen as they should be redirected to landing)
   const userProfile: HomeUserProfile = useMemo(() => {
     const now = new Date()
     const weekNumber = Math.ceil((now.getTime() - new Date(now.getFullYear(), 0, 1).getTime()) / (7 * 24 * 60 * 60 * 1000))
 
-    if (profileData.isAuthenticated && profileData.profile) {
-      // Build user profile from real data
-      return {
-        name: `${profileData.profile.firstName} ${profileData.profile.lastName}`.trim() || 'User',
-        subtitle: profileData.profile.jobTitle || '',
-        globalPerformance: 0, // Will be calculated by harmony score
-        year: now.getFullYear(),
-        week: weekNumber,
-        connections: 0, // TODO: Get from social hook
-        avatar: profileData.profile.avatarUrl || '/icon.png',
+    if (profileData.isAuthenticated) {
+      if (profileData.profile) {
+        // Build user profile from real data
+        return {
+          name: `${profileData.profile.firstName} ${profileData.profile.lastName}`.trim() || 'User',
+          subtitle: profileData.profile.jobTitle || '',
+          globalPerformance: 0, // Will be calculated by harmony score
+          year: now.getFullYear(),
+          week: weekNumber,
+          connections: 0, // TODO: Get from social hook
+          avatar: profileData.profile.avatarUrl || undefined,
+        }
+      } else {
+        // Authenticated but no profile yet - show basic user info
+        return {
+          name: 'Nouveau membre',
+          subtitle: 'Profil en cours de création...',
+          globalPerformance: 0,
+          year: now.getFullYear(),
+          week: weekNumber,
+          connections: 0,
+          avatar: undefined,
+        }
       }
     }
-    // Visitor mode - use demo data
-    return demoUserProfile
+    // Not authenticated - generic empty profile (shouldn't happen - should redirect to landing)
+    return {
+      name: 'Chargement...',
+      subtitle: '',
+      globalPerformance: 0,
+      year: new Date().getFullYear(),
+      week: 1,
+      connections: 0,
+      avatar: undefined,
+    }
   }, [profileData.isAuthenticated, profileData.profile])
 
-  console.log('[HomeContent] Mode:', profileData.isAuthenticated ? 'AUTHENTICATED' : 'VISITOR', 'Profile:', userProfile.name)
+  // Compute dynamic modules based on real Supabase data
+  const dynamicModules: Module[] = useMemo(() => {
+    // Calculate health percentage (average of available data quality)
+    const calculateHealthPercentage = () => {
+      if (!healthData.hasAnyData || healthData.isDemo) return 0
+
+      let totalScore = 0
+      let metrics = 0
+
+      // Sleep quality score (based on last 7 days average)
+      if (healthData.hasSleepData) {
+        const avgSleep = healthData.sleepRecords.slice(0, 7)
+          .reduce((sum, r) => sum + r.duration, 0) / Math.min(7, healthData.sleepRecords.length)
+        // Score: 8h = 100%, scale proportionally
+        totalScore += Math.min(100, Math.round((avgSleep / 480) * 100))
+        metrics++
+      }
+
+      // Activity score (based on weekly activity)
+      if (healthData.hasSportData) {
+        const weeklyMinutes = healthData.sportSessions
+          .filter(s => new Date(s.date) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
+          .reduce((sum, s) => sum + s.duration, 0)
+        // Score: 300 min/week = 100%
+        totalScore += Math.min(100, Math.round((weeklyMinutes / 300) * 100))
+        metrics++
+      }
+
+      return metrics > 0 ? Math.round(totalScore / metrics) : 0
+    }
+
+    // Calculate travel percentage (% of world explored)
+    const calculateTravelPercentage = () => {
+      if (!travelData.hasAnyData || travelData.isDemo) return 0
+      return Math.round((travelData.totalCountries / 195) * 100)
+    }
+
+    // Calculate social percentage (based on connection count)
+    const calculateSocialPercentage = () => {
+      if (!socialData.hasAnyFriends || socialData.isDemo) return 0
+      // Score: 50 friends = 100% (Dunbar's inner circle)
+      return Math.min(100, Math.round((socialData.friendCount / 50) * 100))
+    }
+
+    // Calculate career percentage (from profile completeness)
+    const calculateCareerPercentage = () => {
+      if (!profileData.profile) return 0
+      let score = 0
+      if (profileData.profile.jobTitle) score += 50
+      if (profileData.profile.company) score += 50
+      return score
+    }
+
+    const healthPct = calculateHealthPercentage()
+    const travelPct = calculateTravelPercentage()
+    const socialPct = calculateSocialPercentage()
+    const careerPct = calculateCareerPercentage()
+
+    return [
+      {
+        id: 'A',
+        title: 'Santé',
+        percentage: healthPct,
+        subtitle: healthData.hasAnyData && !healthData.isDemo
+          ? `${healthData.sleepRecords.length + healthData.sportSessions.length} entrées`
+          : 'Aucune donnée',
+        detailSubtitle: 'Analyse santé complète',
+        color: '#8BA888',
+        icon: 'fa-solid fa-heart-pulse',
+      },
+      {
+        id: 'D',
+        title: 'Carrière',
+        percentage: careerPct,
+        subtitle: profileData.profile?.jobTitle || 'Aucune donnée',
+        detailSubtitle: 'Objectifs professionnels',
+        color: '#C9A962',
+        icon: 'fa-solid fa-briefcase',
+      },
+      {
+        id: 'E',
+        title: 'Social',
+        percentage: socialPct,
+        subtitle: socialData.hasAnyFriends && !socialData.isDemo
+          ? `${socialData.friendCount} connexions`
+          : 'Aucune donnée',
+        detailSubtitle: 'Votre réseau social',
+        color: '#D4A5A5',
+        icon: 'fa-solid fa-users',
+      },
+      {
+        id: 'B',
+        title: 'Monde',
+        percentage: travelPct,
+        subtitle: travelData.hasAnyData && !travelData.isDemo
+          ? `${travelData.totalCountries} pays visités`
+          : 'Aucune donnée',
+        detailSubtitle: 'Votre exploration du monde',
+        color: '#A5C4D4',
+        icon: 'fa-solid fa-globe',
+      },
+    ]
+  }, [healthData, travelData, socialData, profileData.profile])
+
+  console.log('[HomeContent] Auth:', profileData.isAuthenticated ? 'YES' : 'NO', 'Loading:', profileData.isLoading, 'Profile:', userProfile.name)
 
 
-  // Check authentication on mount - redirect to landing if not authenticated and not visitor
+  // Check authentication on mount - ALWAYS redirect to landing if not authenticated
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
 
-      if (!session && !isVisitor) {
+      // No session = redirect to landing (authentication required)
+      if (!session) {
         router.push('/landing')
         return
       }
 
-      // If logged in, check if onboarding is completed
-      if (session) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('onboarding_completed')
-          .eq('id', session.user.id)
-          .single()
+      // Check if profile exists and onboarding completed
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed')
+        .eq('id', session.user.id)
+        .single()
 
-        // If profile exists but onboarding not completed, redirect to onboarding
-        if (profile && !profile.onboarding_completed) {
-          router.push('/onboarding')
-          return
-        }
+      // If profile exists but onboarding not completed, redirect to onboarding
+      if (profile && !profile.onboarding_completed) {
+        router.push('/onboarding')
+        return
+      }
+
+      // If no profile exists, also redirect to onboarding to create one
+      if (!profile) {
+        router.push('/onboarding')
+        return
       }
 
       setIsLoading(false)
     }
 
     checkAuth()
-  }, [isVisitor, router])
+  }, [router])
 
   useEffect(() => {
     const viewParam = searchParams.get('view')
@@ -293,9 +422,9 @@ function HomeContent() {
       : moduleOrder
 
     return orderedIds
-      .map(id => modules.find(m => m.id === id))
+      .map(id => dynamicModules.find(m => m.id === id))
       .filter((m): m is Module => m !== undefined)
-  }, [moduleOrder, pinnedModuleId])
+  }, [moduleOrder, pinnedModuleId, dynamicModules])
 
   const handleViewChange = (viewId: string) => {
     setActiveView(viewId)

@@ -89,7 +89,7 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack, userPr
     const displayName = currentProfile?.firstName && currentProfile?.lastName
         ? `${currentProfile.firstName} ${currentProfile.lastName}`
         : 'Utilisateur'
-    const avatarUrl = localAvatarUrl || currentProfile?.avatarUrl || '/icon.png'
+    const avatarUrl = localAvatarUrl || currentProfile?.avatarUrl || undefined
     const username = currentProfile?.username || ''
     const harmonyScore = currentProfile?.harmonyScore ?? 72
     const isVerified = false // Only verified after certain criteria

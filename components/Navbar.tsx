@@ -207,14 +207,29 @@ export default function Navbar({
                 position: 'relative',
               }}
             >
-              <img
-                src={avatarUrl || "/eloi.png"}
-                className="w-full h-full rounded-full object-cover pointer-events-none"
-                alt="Avatar"
-                style={{
-                  border: '1.5px solid var(--text-primary)',
-                }}
-              />
+              {avatarUrl ? (
+                <img
+                  src={avatarUrl}
+                  className="w-full h-full rounded-full object-cover pointer-events-none"
+                  alt="Avatar"
+                  style={{
+                    border: '1.5px solid var(--text-primary)',
+                  }}
+                />
+              ) : (
+                <div
+                  className="w-full h-full rounded-full pointer-events-none"
+                  style={{
+                    border: '1.5px solid var(--text-primary)',
+                    background: `
+                      repeating-conic-gradient(
+                        var(--bg-secondary) 0deg 90deg,
+                        var(--bg-tertiary) 90deg 180deg
+                      ) 0 0 / 8px 8px
+                    `,
+                  }}
+                />
+              )}
             </div>
           )}
         </div>

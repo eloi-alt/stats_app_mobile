@@ -27,118 +27,33 @@ The goal is to provide **Actionable Intelligence** on the user's life balance, u
 
 **Key Concepts:**
 - The STATS App operates in **two distinct modes** sharing the same UI
-- **🌐 Visitor Mode:** Demo experience with sample data (no login required)
-- **🔐 Authenticated Mode:** Personal tracking with Supabase backend
 
 ---
 
-## �🔀 Two Architectures, One Experience
+## 🔐 Authentication Required
 
-**STATS App operates in two distinct modes**, providing flexibility for different user needs:
+**STATS requires user authentication.** All features are connected to Supabase:
 
-### 🌐 **Mode 1: Visitor Mode** (Demo Experience)
-
-**What is it?**  
-A **fully functional demo** of the entire application using pre-populated sample data. No account, no login, no database connection required.
-
-**Who is it for?**
-- 👀 First-time users exploring the app before signing up
-- 📱 App Store previews and demonstrations
-- 🧪 Developers testing features
-- ✈️ Offline usage scenarios
-
-**Features:**
-- ✅ Instant access to all UI screens and modules
-- ✅ Realistic demo data (persona: "Jeffrey", a fictitious user)
-- ✅ Full navigation and gesture support
-- ✅ Read-only mode - no data persistence
-- ✅ Zero privacy concerns (no real data)
-- ✅ Works completely offline
-
-**Data Source:**
-- Static JSON files in `/data/` directory (`mockData.ts`, `demoHealthData.ts`, etc.)
-- Pre-populated with 30 days of sample health data, travel history, social connections, and financial metrics
-
-**Limitations:**
-- 🚫 Cannot save changes or add new data
-- 🚫 No AI analysis or Edge Functions
-- 🚫 No social features (user search, connections)
-- 🚫 No multi-device sync
-- 🎯 **Goal:** Convince users to create an account for personalized tracking
+- 📊 **Personal Data:** All modules (Health, Travel, Social, Career) fetch from Supabase
+- 🔒 **Row-Level Security:** Users can only access their own data
+- 🚫 **No Demo Mode:** Unauthenticated users are redirected to `/landing`
+- 📱 **Onboarding:** New users complete profile setup before accessing the app
 
 ---
-
-### 🔐 **Mode 2: Authenticated Mode** (Supabase-Powered)
-
-**What is it?**  
-A **fully personalized, cloud-synced experience** where users track their real data with complete CRUD capabilities.
-
-**Who is it for?**
-- 👤 Registered users with Supabase accounts
-- 📊 Long-term life tracking and analytics
-- 🤝 Users wanting social features (connections, comparisons)
-- 🤖 Users leveraging AI-powered insights
-
-**Features:**
-- ✅ Full authentication (email/password via Supabase Auth)
-- ✅ Personal data stored in **Supabase PostgreSQL database**
-- ✅ Create, read, update, delete (CRUD) all data
-- ✅ **Multi-device sync** - Access data from any device
-- ✅ **Row-Level Security (RLS)** - Your data is private and isolated
-- ✅ **AI Analyst Edge Function** - Groq-powered personalized insights
-- ✅ **Social features** - Search users, send connection requests, compare stats
-- ✅ **Real-time updates** - Instant sync across devices
-- ✅ **Data export/deletion** - GDPR compliant
-
-**Data Source:**
-- Supabase PostgreSQL database with dedicated tables:
-  - `profiles` - User account metadata (username, avatar, bio)
-  - `sleep_records`, `sport_sessions`, `body_measurements`, `nutrition_logs` - Health module
-  - `contacts`, `connections` - Social module
-  - `countries`, `trips` - Travel module
-  - `assets`, `career_goals` - Finance module
-
-**Security:**
-- 🔒 **Transport:** HTTPS/TLS encryption
-- 🔒 **Authentication:** JWT tokens with automatic expiration
-- 🔒 **Database:** RLS policies ensure users can only access their own data
-- 🔒 **Privacy:** PII excluded from AI analysis (name, email, phone)
-
-**Onboarding Flow:**
-1. User navigates to `/login`
-2. Signs up with email/password (or OAuth in future)
-3. Completes `/onboarding` (username, avatar upload)
-4. Redirected to main app with empty state (ready to track data)
-5. Data persists across sessions and devices
-
 ---
 
-### 🔄 How Mode Detection Works
+## 🏠 HomeView Dynamic Modules
 
-The application **automatically detects** which mode to use based on authentication state:
+The HomeView displays 4 core modules with **real-time data from Supabase**:
 
-```typescript
-// Pseudo-code representation
-const { user } = useAuth() // From AuthContext
+| Module | Data Source | % Calculation | Subtitle |
+|--------|------------|---------------|----------|
+| **Santé (A)** | `useHealthData` | Avg sleep + activity scores | `X entrées` |
+| **Monde (B)** | `useTravelData` | `countries / 195 × 100` | `X pays visités` |
+| **Social (E)** | `useSocialData` | `friends / 50 × 100` | `X connexions` |
+| **Carrière (D)** | `useProfileData` | jobTitle + company | Job title |
 
-if (user) {
-  // 🔐 AUTHENTICATED MODE
-  // Fetch data from Supabase: SELECT * FROM sleep_records WHERE user_id = user.id
-  // Enable "Add Entry" buttons
-  // Show user's real profile picture and username
-} else {
-  // 🌐 VISITOR MODE
-  // Load data from local files: DEMO_SLEEP_RECORDS
-  // Disable "Add Entry" buttons (show "Login to track" message)
-  // Show demo profile (Jeffrey)
-}
-```
-
-**Implementation Details:**
-- All data fetching hooks (`useHealthData`, `useSocialData`, etc.) check `user` state
-- If `user` is `null` → Load demo data
-- If `user` exists → Query Supabase with `user.id` filter
-- Graceful fallback: If Supabase query fails, fall back to demo data
+**Empty State:** New users see 0% for all modules until they add data.
 
 ---
 
