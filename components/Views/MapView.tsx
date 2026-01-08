@@ -1,15 +1,14 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import dynamic from 'next/dynamic'
 import Navbar from '../Navbar'
-import CountryDetailModal from '../Modals/CountryDetailModal'
-import EmptyModuleState from '../UI/EmptyModuleState'
-import { visitedCountries, ThomasMorel } from '@/data/mockData'
+import AddCountryModal from '../Modals/AddCountryModal'
+import CountryFriendsModal from '../Modals/CountryFriendsModal'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useVisitor } from '@/contexts/VisitorContext'
-import { useTravelData } from '@/hooks/useTravelData'
+import { useTravelData, COUNTRY_NAMES, FriendCountryVisit } from '@/hooks/useTravelData'
 import CanvasSkeleton from '../Skeletons/CanvasSkeleton'
 
 // Dynamic import for MapboxGlobe to avoid SSR issues
@@ -27,8 +26,8 @@ interface CountryInfo {
   code: string
   name: string
   visits: number
-  lastVisit?: string
-  regions?: string[]
+  lastVisitYear?: number
+  firstVisitYear?: number
 }
 
 // Country flag emoji from code
@@ -46,79 +45,96 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
   const { isVisitor } = useVisitor()
   const travelData = useTravelData()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
+
   const [mounted, setMounted] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState<CountryInfo | null>(null)
-  const [showCountryModal, setShowCountryModal] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [isMapFullscreen, setIsMapFullscreen] = useState(false)
   const [showTooltip, setShowTooltip] = useState(false)
 
-  // Pattern mounted pour éviter les erreurs SSR
+  // Friends toggle
+  const [showFriendsMode, setShowFriendsMode] = useState(false)
+  const [friendsCountries, setFriendsCountries] = useState<FriendCountryVisit[]>([])
+  const [showFriendsModal, setShowFriendsModal] = useState(false)
+  const [selectedFriendCountry, setSelectedFriendCountry] = useState<{ code: string; name: string } | null>(null)
+
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Stats from the data - use real data or mock data based on visitor mode
-  const stats = useMemo(() => {
-    if (isVisitor) {
-      return {
-        totalCountries: visitedCountries.length,
-        totalDistanceKm: ThomasMorel.moduleB.stats.totalDistanceKm,
-        currentYearDistanceKm: ThomasMorel.moduleB.stats.currentYear.distanceKm,
-        trips: ThomasMorel.moduleB.trips.length,
+  // Load friends countries when toggle is enabled
+  useEffect(() => {
+    if (showFriendsMode && !travelData.isDemo) {
+      travelData.getFriendsCountries().then(setFriendsCountries)
+    }
+  }, [showFriendsMode, travelData])
+
+  // Stats from real data
+  const stats = useMemo(() => ({
+    totalCountries: travelData.totalCountries,
+    totalTrips: travelData.totalTrips,
+    totalCities: travelData.totalCities,
+  }), [travelData])
+
+  // Countries for display (user's or friends' based on toggle)
+  const displayCountries = useMemo(() => {
+    if (showFriendsMode) {
+      // Group friends countries and count unique countries
+      const countryMap = new Map<string, number>()
+      friendsCountries.forEach(fc => {
+        countryMap.set(fc.country_code, (countryMap.get(fc.country_code) || 0) + 1)
+      })
+      return Array.from(countryMap.entries()).map(([code, friendCount]) => ({
+        code,
+        name: COUNTRY_NAMES[code] || code,
+        visits: friendCount,
+        isFriend: true
+      }))
+    }
+    return travelData.countries.map(c => ({
+      code: c.country_code,
+      name: c.country_name,
+      visits: c.visit_count,
+      lastVisitYear: c.last_visit_year,
+      firstVisitYear: c.first_visit_year,
+      isFriend: false
+    }))
+  }, [showFriendsMode, friendsCountries, travelData.countries])
+
+  // Handle country click
+  const handleCountryClick = (country: { code: string; name: string; visits: number }) => {
+    if (showFriendsMode) {
+      // Show friends who visited this country
+      setSelectedFriendCountry({ code: country.code, name: country.name })
+      setShowFriendsModal(true)
+    } else {
+      const userCountry = travelData.countries.find(c => c.country_code === country.code)
+      setSelectedCountry({
+        code: country.code,
+        name: country.name,
+        visits: country.visits,
+        lastVisitYear: userCountry?.last_visit_year,
+        firstVisitYear: userCountry?.first_visit_year
+      })
+    }
+  }
+
+  // Handle delete country
+  const handleDeleteCountry = async (countryCode: string) => {
+    const country = travelData.countries.find(c => c.country_code === countryCode)
+    if (country) {
+      const success = await travelData.deleteCountry(country.id)
+      if (success) {
+        setSelectedCountry(null)
+        setShowToast('Pays supprimé')
+        setTimeout(() => setShowToast(null), 2000)
       }
     }
-    return {
-      totalCountries: travelData.totalCountriesVisited,
-      totalDistanceKm: travelData.totalDistanceKm,
-      currentYearDistanceKm: travelData.totalDistanceKm, // TODO: Filter by year
-      trips: travelData.totalTrips,
-    }
-  }, [isVisitor, travelData])
-
-  // Transform visited countries for Globe3D - must be before any conditional returns
-  const globeCountries = useMemo(() =>
-    visitedCountries.map(c => ({
-      code: c.code,
-      name: c.name,
-      lat: 0,
-      lng: 0,
-      visits: c.visits,
-    }))
-    , [])
-
-  // Always show full MapView - no empty state needed, users can explore even with 0 trips
-  // The stats will show 0 countries/trips if user hasn't added any yet
-
-  // Get country details
-  const getCountryDetails = (code: string): CountryInfo | null => {
-    const country = ThomasMorel.moduleB.countriesVisited.find(c => c.code === code)
-    if (!country) return null
-    return {
-      code: country.code,
-      name: country.name,
-      visits: country.visitCount,
-      lastVisit: country.lastVisit,
-      regions: country.regions?.map(r => r.name),
-    }
-  }
-
-  // Handle country click from globe
-  const handleCountryClick = (country: { code: string; name: string; visits: number }) => {
-    const details = getCountryDetails(country.code)
-    setSelectedCountry(details || { code: country.code, name: country.name, visits: country.visits })
-  }
-
-
-  const handleAddTrip = () => {
-    setShowToast(t('tripAdded'))
-    setShowAddModal(false)
-    setTimeout(() => setShowToast(null), 2000)
   }
 
   // Calculate exploration level
-  const TOTAL_COUNTRIES = 195 // UN-recognized countries
+  const TOTAL_COUNTRIES = 195
   const explorationPercentage = (stats.totalCountries / TOTAL_COUNTRIES) * 100
 
   const getExplorationLevel = (percentage: number): string => {
@@ -128,6 +144,12 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
     if (percentage <= 75) return 'Grand Voyageur'
     return 'Explorateur Confirmé'
   }
+
+  // Memoized callback for getFriendsForCountry
+  const getFriendsForCountryCallback = useCallback(
+    (countryCode: string) => travelData.getFriendsForCountry(countryCode),
+    [travelData]
+  )
 
   return (
     <div ref={scrollContainerRef} className="content">
@@ -139,54 +161,73 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
         isHidden={isMapFullscreen}
       />
 
-      {/* Exploration Level Indicator */}
-      <div className="mb-4 px-1">
-        <div className="flex items-center justify-center gap-2">
-          <span
-            className="text-[10px] uppercase tracking-[0.2em] font-medium"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            Niveau d&apos;exploration : {getExplorationLevel(explorationPercentage)}
-          </span>
-          <button
-            onClick={() => setShowTooltip(!showTooltip)}
-            className="relative w-4 h-4 rounded-full flex items-center justify-center transition-colors"
-            style={{
-              background: 'rgba(201, 169, 98, 0.15)',
-              border: '1px solid rgba(201, 169, 98, 0.3)'
-            }}
-          >
-            <i className="fa-solid fa-info text-[8px]" style={{ color: 'var(--accent-gold)' }} />
-          </button>
-        </div>
+      {/* Friends toggle is now inside MapboxGlobe */}
 
-        {/* Tooltip */}
-        {showTooltip && (
-          <div
-            className="absolute left-1/2 -translate-x-1/2 mt-2 px-4 py-3 rounded-xl z-50 shadow-lg animate-fade-in"
-            style={{
-              background: 'var(--bg-elevated)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid var(--border-light)',
-              width: '200px'
-            }}
-          >
-            <div className="text-center">
-              <div className="text-2xl font-light mb-1" style={{ color: 'var(--accent-gold)' }}>
-                {explorationPercentage.toFixed(1)}%
-              </div>
-              <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                {stats.totalCountries} / {TOTAL_COUNTRIES} pays
-              </div>
-              <div className="text-[10px] mt-2" style={{ color: 'var(--text-tertiary)' }}>
-                Exploration de la Terre
+      {/* Exploration Level Indicator */}
+      {!showFriendsMode && (
+        <div className="mb-4 px-1">
+          <div className="flex items-center justify-center gap-2">
+            <span
+              className="text-[10px] uppercase tracking-[0.2em] font-medium"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Niveau d&apos;exploration : {getExplorationLevel(explorationPercentage)}
+            </span>
+            <button
+              onClick={() => setShowTooltip(!showTooltip)}
+              className="relative w-4 h-4 rounded-full flex items-center justify-center transition-colors"
+              style={{
+                background: 'rgba(201, 169, 98, 0.15)',
+                border: '1px solid rgba(201, 169, 98, 0.3)'
+              }}
+            >
+              <i className="fa-solid fa-info text-[8px]" style={{ color: 'var(--accent-gold)' }} />
+            </button>
+          </div>
+
+          {/* Tooltip */}
+          {showTooltip && (
+            <div
+              className="absolute left-1/2 -translate-x-1/2 mt-2 px-4 py-3 rounded-xl z-50 shadow-lg animate-fade-in"
+              style={{
+                background: 'var(--bg-elevated)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid var(--border-light)',
+                width: '200px'
+              }}
+            >
+              <div className="text-center">
+                <div className="text-2xl font-light mb-1" style={{ color: 'var(--accent-gold)' }}>
+                  {explorationPercentage.toFixed(1)}%
+                </div>
+                <div className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  {stats.totalCountries} / {TOTAL_COUNTRIES} pays
+                </div>
+                <div className="text-[10px] mt-2" style={{ color: 'var(--text-tertiary)' }}>
+                  Exploration de la Terre
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
-      {/* Mapbox Globe - Seamless borderless integration */}
+      {/* Friends mode indicator */}
+      {showFriendsMode && (
+        <div className="mb-4 px-1">
+          <div className="flex items-center justify-center gap-2">
+            <span
+              className="text-[10px] uppercase tracking-[0.2em] font-medium"
+              style={{ color: 'var(--accent-sage)' }}
+            >
+              <i className="fa-solid fa-users mr-2" />
+              Mode Amis : {friendsCountries.length} visites de vos amis
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Mapbox Globe */}
       <div className="mb-8">
         <MapboxGlobe
           height="calc(90vh - 180px)"
@@ -194,54 +235,83 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
             setIsMapFullscreen(isFullscreen)
             onFullscreenChange?.(isFullscreen)
           }}
+          userCountries={travelData.countries.map(c => ({
+            code: c.country_code,
+            name: c.country_name,
+            visitYears: [c.first_visit_year, c.last_visit_year].filter(Boolean) as number[]
+          }))}
+          friendsCountries={friendsCountries}
+          showFriendsMode={showFriendsMode}
+          onToggleFriendsMode={() => setShowFriendsMode(!showFriendsMode)}
+          isDemo={travelData.isDemo}
+          onCountryClick={(countryCode, countryName) => {
+            if (showFriendsMode) {
+              setSelectedFriendCountry({ code: countryCode, name: countryName })
+              setShowFriendsModal(true)
+            } else {
+              const userCountry = travelData.countries.find(c => c.country_code === countryCode)
+              if (userCountry) {
+                setSelectedCountry({
+                  code: countryCode,
+                  name: countryName,
+                  visits: userCountry.visit_count,
+                  lastVisitYear: userCountry.last_visit_year,
+                  firstVisitYear: userCountry.first_visit_year
+                })
+              }
+            }
+          }}
         />
       </div>
 
-      {/* Stats Grid - Moved below globe */}
-      <div className="grid grid-cols-3 gap-3 mb-5">
-        <div
-          className="rounded-2xl p-4 text-center"
-          style={{
-            background: 'linear-gradient(135deg, rgba(165, 196, 212, 0.1) 0%, rgba(165, 196, 212, 0.05) 100%)',
-            border: '1px solid rgba(165, 196, 212, 0.2)',
-          }}
-        >
-          <div className="text-xl font-light text-display" style={{ color: 'var(--accent-sky)' }}>
-            {stats.totalCountries}
+
+      {/* Stats Grid */}
+      {!showFriendsMode && (
+        <div className="grid grid-cols-3 gap-3 mb-5">
+          <div
+            className="rounded-2xl p-4 text-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(165, 196, 212, 0.1) 0%, rgba(165, 196, 212, 0.05) 100%)',
+              border: '1px solid rgba(165, 196, 212, 0.2)',
+            }}
+          >
+            <div className="text-xl font-light text-display" style={{ color: 'var(--accent-sky)' }}>
+              {stats.totalCountries}
+            </div>
+            <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
+              {t('countries')}
+            </div>
           </div>
-          <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-            {t('countries')}
+          <div
+            className="rounded-2xl p-4 text-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(201, 169, 98, 0.1) 0%, rgba(201, 169, 98, 0.05) 100%)',
+              border: '1px solid rgba(201, 169, 98, 0.2)',
+            }}
+          >
+            <div className="text-xl font-light text-display" style={{ color: 'var(--accent-gold)' }}>
+              {stats.totalTrips}
+            </div>
+            <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
+              {t('trips')}
+            </div>
+          </div>
+          <div
+            className="rounded-2xl p-4 text-center"
+            style={{
+              background: 'linear-gradient(135deg, rgba(139, 168, 136, 0.1) 0%, rgba(139, 168, 136, 0.05) 100%)',
+              border: '1px solid rgba(139, 168, 136, 0.2)',
+            }}
+          >
+            <div className="text-xl font-light text-display" style={{ color: 'var(--accent-sage)' }}>
+              {stats.totalCities}
+            </div>
+            <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
+              {t('cities')}
+            </div>
           </div>
         </div>
-        <div
-          className="rounded-2xl p-4 text-center"
-          style={{
-            background: 'linear-gradient(135deg, rgba(201, 169, 98, 0.1) 0%, rgba(201, 169, 98, 0.05) 100%)',
-            border: '1px solid rgba(201, 169, 98, 0.2)',
-          }}
-        >
-          <div className="text-xl font-light text-display" style={{ color: 'var(--accent-gold)' }}>
-            {stats.trips}
-          </div>
-          <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-            {t('trips')}
-          </div>
-        </div>
-        <div
-          className="rounded-2xl p-4 text-center"
-          style={{
-            background: 'linear-gradient(135deg, rgba(139, 168, 136, 0.1) 0%, rgba(139, 168, 136, 0.05) 100%)',
-            border: '1px solid rgba(139, 168, 136, 0.2)',
-          }}
-        >
-          <div className="text-xl font-light text-display" style={{ color: 'var(--accent-sage)' }}>
-            {(stats.totalDistanceKm / 1000).toFixed(0)}k
-          </div>
-          <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
-            {t('km2025')}
-          </div>
-        </div>
-      </div>
+      )}
 
       {/* Section: Visited Countries */}
       <div className="flex items-center gap-3 mb-4 px-1">
@@ -253,51 +323,83 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
             fontFamily: 'Inter, sans-serif',
           }}
         >
-          {t('visitedCountries')}
+          {showFriendsMode ? 'Pays des Amis' : t('visitedCountries')}
         </span>
         <div className="h-px flex-1" style={{ background: 'var(--border-subtle)' }} />
       </div>
 
+      {/* Countries Grid */}
       <div className="grid grid-cols-2 gap-2 mb-5">
-        {visitedCountries.slice(0, 8).map(country => (
+        {displayCountries.slice(0, 8).map(country => (
           <button
             key={country.code}
-            onClick={() => {
-              const details = getCountryDetails(country.code)
-              setSelectedCountry(details || { code: country.code, name: country.name, visits: country.visits })
-            }}
+            onClick={() => handleCountryClick(country)}
             className="p-3 rounded-xl flex items-center gap-2 transition-all active:scale-95"
             style={{
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border-light)',
+              background: showFriendsMode
+                ? 'linear-gradient(135deg, rgba(139, 168, 136, 0.1) 0%, rgba(139, 168, 136, 0.05) 100%)'
+                : 'var(--bg-card)',
+              border: showFriendsMode
+                ? '1px solid rgba(139, 168, 136, 0.2)'
+                : '1px solid var(--border-light)',
               boxShadow: 'var(--shadow-sm)',
             }}
           >
             <span className="text-2xl">{getFlagEmoji(country.code)}</span>
             <div className="flex-1 text-left">
-              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{country.name}</div>
-              <div className="text-[10px]" style={{ color: 'var(--text-tertiary)' }}>{country.visits} visit{country.visits > 1 ? 's' : ''}</div>
+              <div className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                {country.name}
+              </div>
+              <div className="text-[10px]" style={{ color: showFriendsMode ? 'var(--accent-sage)' : 'var(--text-tertiary)' }}>
+                {showFriendsMode
+                  ? `${country.visits} ami${country.visits > 1 ? 's' : ''}`
+                  : `${country.visits} visite${country.visits > 1 ? 's' : ''}`
+                }
+              </div>
             </div>
+            {showFriendsMode && (
+              <i className="fa-solid fa-chevron-right text-xs" style={{ color: 'var(--text-tertiary)' }} />
+            )}
           </button>
         ))}
       </div>
 
-      {/* Add Trip Button */}
-      <button
-        onClick={() => setShowAddModal(true)}
-        className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-98 mb-4"
-        style={{
-          background: 'linear-gradient(135deg, #C9A962 0%, #D4C4A8 100%)',
-          color: 'white',
-          boxShadow: '0 4px 16px rgba(201, 169, 98, 0.3)',
-        }}
-      >
-        <i className="fa-solid fa-plus" />
-        <span className="font-medium">{t('addNewTrip')}</span>
-      </button>
+      {/* Empty state */}
+      {displayCountries.length === 0 && !travelData.isLoading && (
+        <div className="text-center py-8" style={{ color: 'var(--text-tertiary)' }}>
+          <i className="fa-solid fa-globe text-4xl mb-3 block opacity-30" />
+          <p className="text-sm">
+            {showFriendsMode
+              ? 'Vos amis n\'ont pas encore partagé leurs voyages'
+              : 'Aucun pays visité'
+            }
+          </p>
+          {!showFriendsMode && (
+            <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+              Ajoutez votre premier voyage !
+            </p>
+          )}
+        </div>
+      )}
 
-      {/* Country info popup */}
-      {selectedCountry && (
+      {/* Add Trip Button */}
+      {!showFriendsMode && (
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="w-full py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-98 mb-4"
+          style={{
+            background: 'linear-gradient(135deg, #C9A962 0%, #D4C4A8 100%)',
+            color: 'white',
+            boxShadow: '0 4px 16px rgba(201, 169, 98, 0.3)',
+          }}
+        >
+          <i className="fa-solid fa-plus" />
+          <span className="font-medium">{t('addNewTrip')}</span>
+        </button>
+      )}
+
+      {/* Country info popup (user's countries only) */}
+      {selectedCountry && !showFriendsMode && (
         <div
           className="fixed bottom-[130px] left-[20px] right-[20px] z-[500] rounded-2xl p-4"
           style={{
@@ -328,141 +430,105 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
               >
                 {selectedCountry.name}
               </h3>
-              <p
-                className="text-xs"
-                style={{ color: 'var(--text-tertiary)' }}
-              >
-                {selectedCountry.visits} visit{selectedCountry.visits > 1 ? 's' : ''}
-                {selectedCountry.lastVisit && ` • Last: ${new Date(selectedCountry.lastVisit).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`}
+              <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                {selectedCountry.visits} visite{selectedCountry.visits > 1 ? 's' : ''}
+                {selectedCountry.lastVisitYear && ` • Dernière: ${selectedCountry.lastVisitYear}`}
               </p>
             </div>
           </div>
 
-          {selectedCountry.regions && selectedCountry.regions.length > 0 && (
+          {/* Years visited */}
+          {(selectedCountry.firstVisitYear || selectedCountry.lastVisitYear) && (
             <div className="flex flex-wrap gap-1.5 mb-3">
-              {selectedCountry.regions.slice(0, 3).map((region) => (
+              {selectedCountry.firstVisitYear && (
                 <span
-                  key={region}
+                  className="px-2.5 py-1 rounded-full text-[10px] font-medium"
+                  style={{
+                    background: 'rgba(165, 196, 212, 0.1)',
+                    color: 'var(--accent-sky)',
+                  }}
+                >
+                  Première visite: {selectedCountry.firstVisitYear}
+                </span>
+              )}
+              {selectedCountry.lastVisitYear && selectedCountry.lastVisitYear !== selectedCountry.firstVisitYear && (
+                <span
                   className="px-2.5 py-1 rounded-full text-[10px] font-medium"
                   style={{
                     background: 'rgba(201, 169, 98, 0.1)',
                     color: 'var(--accent-gold)',
                   }}
                 >
-                  {region}
+                  Dernière visite: {selectedCountry.lastVisitYear}
                 </span>
-              ))}
+              )}
             </div>
           )}
 
-          {/* View Details button */}
-          <button
-            onClick={() => {
-              setShowCountryModal(true)
-            }}
-            className="w-full py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all active:scale-95"
-            style={{
-              background: 'var(--accent-sky)',
-              color: 'white',
-            }}
-          >
-            <i className="fa-solid fa-expand" />
-            View Full Details
-          </button>
+          {/* Actions */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleDeleteCountry(selectedCountry.code)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all active:scale-95"
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.2)'
+              }}
+            >
+              <i className="fa-solid fa-trash" />
+              Supprimer
+            </button>
+            <button
+              onClick={() => {
+                setSelectedCountry(null)
+                setShowAddModal(true)
+              }}
+              className="flex-1 py-2.5 rounded-xl text-xs font-medium flex items-center justify-center gap-2 transition-all active:scale-95"
+              style={{
+                background: 'var(--accent-sky)',
+                color: 'white',
+              }}
+            >
+              <i className="fa-solid fa-plus" />
+              Ajouter voyage
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Add trip modal */}
-      {mounted && showAddModal && createPortal(
-        <div
-          className="fixed inset-0 z-[99999] flex flex-col justify-end"
-          onClick={() => setShowAddModal(false)}
-        >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative w-full bg-[var(--bg-elevated)] rounded-t-[32px] pb-safe pt-6 px-5 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] max-h-[85vh] overflow-y-auto cursor-default"
-          >
-            <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: 'var(--separator-color)' }} />
-            <button
-              onClick={() => setShowAddModal(false)}
-              className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-              style={{
-                background: 'var(--hover-overlay)',
-                color: 'var(--text-tertiary)',
-              }}
-            >
-              <i className="fa-solid fa-xmark text-sm" />
-            </button>
-            <h3
-              className="text-xl font-light text-display mb-6 pr-10"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {t('addNewTrip')}
-            </h3>
+      {/* Add Country Modal */}
+      {mounted && (
+        <AddCountryModal
+          isOpen={showAddModal}
+          onClose={() => setShowAddModal(false)}
+          onAddCountry={travelData.addCountry}
+          onAddTrip={travelData.addTrip}
+          onUploadPhoto={travelData.uploadTripPhoto}
+          isDemo={travelData.isDemo}
+        />
+      )}
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] uppercase tracking-wider text-tertiary mb-1 block">{t('destination')}</label>
-                <input
-                  type="text"
-                  placeholder={t('whereGoing')}
-                  className="apple-input w-full"
-                  style={{
-                    background: 'rgba(0, 0, 0, 0.03)',
-                    border: '1px solid rgba(0, 0, 0, 0.08)',
-                    borderRadius: '12px',
-                    padding: '14px',
-                    fontSize: '14px'
-                  }}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] uppercase tracking-wider text-tertiary mb-1 block">{t('start')}</label>
-                  <input type="date" className="apple-input w-full" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '12px', padding: '12px' }} />
-                </div>
-                <div>
-                  <label className="text-[10px] uppercase tracking-wider text-tertiary mb-1 block">{t('end')}</label>
-                  <input type="date" className="apple-input w-full" style={{ background: 'rgba(0, 0, 0, 0.03)', border: '1px solid rgba(0, 0, 0, 0.08)', borderRadius: '12px', padding: '12px' }} />
-                </div>
-              </div>
-              <div>
-                <label className="text-[10px] uppercase tracking-wider text-tertiary mb-1 block">{t('purpose')}</label>
-                <div className="flex flex-wrap gap-2">
-                  {[t('leisure'), t('work'), t('family'), t('adventure')].map(tag => (
-                    <button key={tag} className="px-4 py-2 rounded-xl text-xs font-medium border border-black/5 bg-black/5 hover:bg-black/10 transition-colors">
-                      {tag}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-2 mt-8">
-              <button
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 py-4 rounded-2xl text-sm font-medium"
-                style={{ background: 'var(--hover-overlay)', color: 'var(--text-secondary)' }}
-              >
-                {t('cancel')}
-              </button>
-              <button
-                onClick={handleAddTrip}
-                className="flex-1 py-4 rounded-2xl text-sm font-medium"
-                style={{ background: 'var(--accent-sky)', color: 'white' }}
-              >
-                {t('add')}
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
+      {/* Friends Country Modal */}
+      {mounted && selectedFriendCountry && (
+        <CountryFriendsModal
+          isOpen={showFriendsModal}
+          onClose={() => {
+            setShowFriendsModal(false)
+            setSelectedFriendCountry(null)
+          }}
+          countryCode={selectedFriendCountry.code}
+          countryName={selectedFriendCountry.name}
+          getFriendsForCountry={getFriendsForCountryCallback}
+        />
       )}
 
       {/* Toast */}
       {showToast && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] px-6 py-3 rounded-2xl shadow-xl animate-fade-in" style={{ background: 'var(--text-primary)', color: 'white' }}>
+        <div
+          className="fixed top-24 left-1/2 -translate-x-1/2 z-[1000] px-6 py-3 rounded-2xl shadow-xl animate-fade-in"
+          style={{ background: 'var(--text-primary)', color: 'white' }}
+        >
           <i className="fa-solid fa-check mr-2" />
           {showToast}
         </div>
@@ -472,16 +538,6 @@ export default function MapView({ mapContainerId, onFullscreenChange }: MapViewP
         @keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         @keyframes fade-in-centered { from { opacity: 0; transform: translate(-50%, -20px); } to { opacity: 1; transform: translate(-50%, 0); } }
       `}</style>
-
-      {/* Country Detail Modal */}
-      {selectedCountry && (
-        <CountryDetailModal
-          isOpen={showCountryModal}
-          onClose={() => setShowCountryModal(false)}
-          countryCode={selectedCountry.code}
-          countryName={selectedCountry.name}
-        />
-      )}
     </div>
   )
 }

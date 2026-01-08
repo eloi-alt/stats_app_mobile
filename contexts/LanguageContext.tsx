@@ -92,7 +92,7 @@ const translations: Translations = {
 
   // World / Map
   'trips': { en: 'Trips', fr: 'Voyages', es: 'Viajes' },
-  'km2025': { en: 'km 2025', fr: 'km 2025', es: 'km 2025' },
+  'cities': { en: 'Cities', fr: 'Villes', es: 'Ciudades' },
   'visitedCountries': { en: 'Visited Countries', fr: 'Pays visités', es: 'Países visitados' },
   'addNewTrip': { en: 'Add New Trip', fr: 'Ajouter un voyage', es: 'Añadir viaje' },
   'destination': { en: 'Destination', fr: 'Destination', es: 'Destino' },

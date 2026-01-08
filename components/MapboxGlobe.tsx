@@ -3,39 +3,63 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import mapboxgl from 'mapbox-gl'
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { USER_TRIPS, FRIENDS_DATA, COUNTRY_CODES } from '@/data/worldData'
+import { COUNTRY_NAMES, FriendCountryVisit } from '@/hooks/useTravelData'
 
 // --- Configuration ---
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiZWxvaWNhcnJlbGV0IiwiYSI6ImNtanUzY3EyZTJja2UzY3NkZTdtMzBkbHQifQ.o6Xn-vIpPhSr6yloB9AIzw'
 
-// Helper function to get country flag emoji from ISO code
-// Map ISO 3166-1 alpha-3 codes to alpha-2 codes for flag emojis
-const ISO3_TO_ISO2: Record<string, string> = {
-    'FRA': 'FR', 'ESP': 'ES', 'ITA': 'IT', 'GBR': 'GB', 'DEU': 'DE',
-    'USA': 'US', 'CAN': 'CA', 'MEX': 'MX', 'BRA': 'BR', 'ARG': 'AR',
-    'JPN': 'JP', 'CHN': 'CN', 'KOR': 'KR', 'IND': 'IN', 'THA': 'TH',
-    'VNM': 'VN', 'IDN': 'ID', 'MYS': 'MY', 'SGP': 'SG', 'PHL': 'PH',
-    'AUS': 'AU', 'NZL': 'NZ', 'ZAF': 'ZA', 'EGY': 'EG', 'MAR': 'MA',
-    'TUN': 'TN', 'KEN': 'KE', 'TZA': 'TZ', 'GHA': 'GH', 'NGA': 'NG',
-    'RUS': 'RU', 'UKR': 'UA', 'POL': 'PL', 'CZE': 'CZ', 'AUT': 'AT',
-    'CHE': 'CH', 'NLD': 'NL', 'BEL': 'BE', 'DNK': 'DK', 'SWE': 'SE',
-    'NOR': 'NO', 'FIN': 'FI', 'ISL': 'IS', 'IRL': 'IE', 'PRT': 'PT',
-    'GRC': 'GR', 'TUR': 'TR', 'ISR': 'IL', 'ARE': 'AE', 'SAU': 'SA',
-    'QAT': 'QA', 'OMN': 'OM', 'KWT': 'KW', 'JOR': 'JO', 'LBN': 'LB',
-    'CHL': 'CL', 'PER': 'PE', 'COL': 'CO', 'VEN': 'VE', 'ECU': 'EC',
-    'URY': 'UY', 'PRY': 'PY', 'BOL': 'BO', 'CRI': 'CR', 'PAN': 'PA',
-    'CUB': 'CU', 'DOM': 'DO', 'JAM': 'JM', 'TTO': 'TT', 'BHS': 'BS',
-    'HUN': 'HU', 'ROU': 'RO', 'BGR': 'BG', 'HRV': 'HR', 'SRB': 'RS',
-    'SVN': 'SI', 'SVK': 'SK', 'EST': 'EE', 'LVA': 'LV', 'LTU': 'LT',
-    'GEO': 'GE', 'ARM': 'AM', 'AZE': 'AZ', 'KAZ': 'KZ', 'UZB': 'UZ',
-    'PAK': 'PK', 'BGD': 'BD', 'LKA': 'LK', 'NPL': 'NP', 'BTN': 'BT',
-    'MMR': 'MM', 'KHM': 'KH', 'LAO': 'LA', 'MNG': 'MN', 'TWN': 'TW',
-    'HKG': 'HK', 'MAC': 'MO', 'BRN': 'BN', 'MDV': 'MV', 'FJI': 'FJ',
+// Map ISO 2-letter to ISO 3-letter codes for Mapbox
+const ISO2_TO_ISO3: Record<string, string> = {
+    'FR': 'FRA', 'ES': 'ESP', 'IT': 'ITA', 'GB': 'GBR', 'DE': 'DEU',
+    'US': 'USA', 'CA': 'CAN', 'MX': 'MEX', 'BR': 'BRA', 'AR': 'ARG',
+    'JP': 'JPN', 'CN': 'CHN', 'KR': 'KOR', 'IN': 'IND', 'TH': 'THA',
+    'VN': 'VNM', 'ID': 'IDN', 'MY': 'MYS', 'SG': 'SGP', 'PH': 'PHL',
+    'AU': 'AUS', 'NZ': 'NZL', 'ZA': 'ZAF', 'EG': 'EGY', 'MA': 'MAR',
+    'TN': 'TUN', 'KE': 'KEN', 'TZ': 'TZA', 'GH': 'GHA', 'NG': 'NGA',
+    'RU': 'RUS', 'UA': 'UKR', 'PL': 'POL', 'CZ': 'CZE', 'AT': 'AUT',
+    'CH': 'CHE', 'NL': 'NLD', 'BE': 'BEL', 'DK': 'DNK', 'SE': 'SWE',
+    'NO': 'NOR', 'FI': 'FIN', 'IS': 'ISL', 'IE': 'IRL', 'PT': 'PRT',
+    'GR': 'GRC', 'TR': 'TUR', 'IL': 'ISR', 'AE': 'ARE', 'SA': 'SAU',
+    'QA': 'QAT', 'OM': 'OMN', 'KW': 'KWT', 'JO': 'JOR', 'LB': 'LBN',
+    'CL': 'CHL', 'PE': 'PER', 'CO': 'COL', 'VE': 'VEN', 'EC': 'ECU',
+    'UY': 'URY', 'PY': 'PRY', 'BO': 'BOL', 'CR': 'CRI', 'PA': 'PAN',
+    'CU': 'CUB', 'DO': 'DOM', 'JM': 'JAM', 'TT': 'TTO', 'BS': 'BHS',
+    'HU': 'HUN', 'RO': 'ROU', 'BG': 'BGR', 'HR': 'HRV', 'RS': 'SRB',
+    'SI': 'SVN', 'SK': 'SVK', 'EE': 'EST', 'LV': 'LVA', 'LT': 'LTU',
+    'GE': 'GEO', 'AM': 'ARM', 'AZ': 'AZE', 'KZ': 'KAZ', 'UZ': 'UZB',
+    'PK': 'PAK', 'BD': 'BGD', 'LK': 'LKA', 'NP': 'NPL', 'BT': 'BTN',
+    'MM': 'MMR', 'KH': 'KHM', 'LA': 'LAO', 'MN': 'MNG', 'TW': 'TWN',
+    'HK': 'HKG', 'MO': 'MAC', 'BN': 'BRN', 'MV': 'MDV', 'FJ': 'FJI',
+    'AF': 'AFG', 'AL': 'ALB', 'DZ': 'DZA', 'AD': 'AND', 'AO': 'AGO',
+    'AG': 'ATG', 'BA': 'BIH', 'BW': 'BWA', 'BJ': 'BEN', 'BB': 'BRB',
+    'BY': 'BLR', 'BZ': 'BLZ', 'BF': 'BFA', 'BI': 'BDI', 'CM': 'CMR',
+    'CV': 'CPV', 'CF': 'CAF', 'TD': 'TCD', 'KM': 'COM', 'CG': 'COG',
+    'CD': 'COD', 'CY': 'CYP', 'DJ': 'DJI', 'DM': 'DMA', 'SV': 'SLV',
+    'GQ': 'GNQ', 'ER': 'ERI', 'SZ': 'SWZ', 'ET': 'ETH', 'GA': 'GAB',
+    'GM': 'GMB', 'GD': 'GRD', 'GT': 'GTM', 'GN': 'GIN', 'GW': 'GNB',
+    'GY': 'GUY', 'HT': 'HTI', 'HN': 'HND', 'IQ': 'IRQ', 'IR': 'IRN',
+    'KI': 'KIR', 'KP': 'PRK', 'XK': 'XKX', 'KG': 'KGZ', 'LR': 'LBR',
+    'LY': 'LBY', 'LI': 'LIE', 'LU': 'LUX', 'MG': 'MDG', 'MW': 'MWI',
+    'ML': 'MLI', 'MT': 'MLT', 'MH': 'MHL', 'MR': 'MRT', 'MU': 'MUS',
+    'FM': 'FSM', 'MD': 'MDA', 'MC': 'MCO', 'ME': 'MNE', 'MZ': 'MOZ',
+    'NA': 'NAM', 'NR': 'NRU', 'NI': 'NIC', 'NE': 'NER', 'MK': 'MKD',
+    'PW': 'PLW', 'PS': 'PSE', 'PG': 'PNG', 'RW': 'RWA', 'KN': 'KNA',
+    'LC': 'LCA', 'VC': 'VCT', 'WS': 'WSM', 'SM': 'SMR', 'ST': 'STP',
+    'SN': 'SEN', 'SC': 'SYC', 'SL': 'SLE', 'SB': 'SLB', 'SO': 'SOM',
+    'SS': 'SSD', 'SD': 'SDN', 'SR': 'SUR', 'SY': 'SYR', 'TJ': 'TJK',
+    'TL': 'TLS', 'TG': 'TGO', 'TO': 'TON', 'TM': 'TKM', 'TV': 'TUV',
+    'UG': 'UGA', 'VA': 'VAT', 'VU': 'VUT', 'YE': 'YEM', 'ZM': 'ZMB',
+    'ZW': 'ZWE',
 }
 
+// Convert ISO 2 code to ISO 3 for Mapbox layer filtering
+const toIso3 = (iso2: string): string => ISO2_TO_ISO3[iso2.toUpperCase()] || iso2
+
 const getCountryFlag = (isoCode: string): string => {
-    // Convert 3-letter code to 2-letter code if needed
-    const iso2Code = isoCode.length === 3 ? (ISO3_TO_ISO2[isoCode] || isoCode.slice(0, 2)) : isoCode
+    // Use 2-letter code for flag emoji
+    const iso2Code = isoCode.length === 3
+        ? (Object.entries(ISO2_TO_ISO3).find(([, v]) => v === isoCode)?.[0] || isoCode.slice(0, 2))
+        : isoCode
     const codePoints = iso2Code
         .toUpperCase()
         .split('')
@@ -45,74 +69,77 @@ const getCountryFlag = (isoCode: string): string => {
 
 // Home position (Paris/Europe)
 const HOME_CENTER: [number, number] = [2.35, 48.85]
-const HOME_ZOOM = 1.0 // Lower zoom to show full globe
+const HOME_ZOOM = 1.0
 
-// Theme colors from the app
+// Theme colors
 const THEME_COLORS = {
     gold: '#C9A962',
     sage: '#8BA888',
     sky: '#A5C4D4',
-    friend: '#A78BFA', // Light purple for friends
+    friend: '#A78BFA',
+}
+
+interface VisitedCountryData {
+    code: string
+    name: string
+    visitYears?: number[]
 }
 
 interface MapboxGlobeProps {
     height?: string
     onReady?: () => void
     onFullscreenChange?: (isFullscreen: boolean) => void
+    // Supabase data props
+    userCountries?: VisitedCountryData[]
+    friendsCountries?: FriendCountryVisit[]
+    showFriendsMode?: boolean
+    onToggleFriendsMode?: () => void
+    isDemo?: boolean
+    onCountryClick?: (countryCode: string, countryName: string) => void
 }
 
-export default function MapboxGlobe({ height = '342px', onReady, onFullscreenChange }: MapboxGlobeProps) {
+export default function MapboxGlobe({
+    height = '342px',
+    onReady,
+    onFullscreenChange,
+    userCountries = [],
+    friendsCountries = [],
+    showFriendsMode = false,
+    onToggleFriendsMode,
+    isDemo = false,
+    onCountryClick
+}: MapboxGlobeProps) {
     const mapContainerRef = useRef<HTMLDivElement>(null)
     const mapRef = useRef<mapboxgl.Map | null>(null)
     const spinIntervalRef = useRef<NodeJS.Timeout | null>(null)
     const isSpinningRef = useRef(true)
 
+    const [mapInstance, setMapInstance] = useState<mapboxgl.Map | null>(null)
     const [isLoaded, setIsLoaded] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false)
-    const [selectedYear, setSelectedYear] = useState<number>(2026)
-    const [showFriends, setShowFriends] = useState(false)
     const [selectedCountry, setSelectedCountry] = useState<{ code: string, name: string, visitors: { name: string, years: number[] }[] } | null>(null)
     const [isSatelliteView, setIsSatelliteView] = useState(false)
 
-    // Map style URLs
     const SATELLITE_STYLE = 'mapbox://styles/mapbox/satellite-streets-v12'
     const MONOCHROME_STYLE = 'mapbox://styles/mapbox/light-v11'
 
-    // Compute visited countries based on filters
-    const visitedCountries = useMemo(() => {
-        // Collect countries up to the selected year
-        const countries = new Set<string>()
-        USER_TRIPS.forEach(trip => {
-            if (trip.year <= selectedYear) {
-                trip.countries.forEach(c => countries.add(c))
-            }
-        })
-        return Array.from(countries)
-    }, [selectedYear])
+    // Convert userCountries to ISO3 codes for Mapbox
+    const visitedCountriesIso3 = useMemo(() => {
+        const iso3Codes = userCountries.map(c => toIso3(c.code))
+        console.log('[MapboxGlobe] userCountries received:', userCountries.length, userCountries.map(c => c.code))
+        console.log('[MapboxGlobe] ISO3 codes:', iso3Codes)
+        return iso3Codes
+    }, [userCountries])
 
-    // Compute friends visited countries
-    const friendCountries = useMemo(() => {
-        if (!showFriends) return []
-        const countries = new Set<string>()
+    // Convert friendsCountries to ISO3 codes
+    const friendCountriesIso3 = useMemo(() => {
+        if (!showFriendsMode) return []
+        const uniqueCodes = new Set(friendsCountries.map(fc => toIso3(fc.country_code)))
+        return Array.from(uniqueCodes)
+    }, [friendsCountries, showFriendsMode])
 
-        FRIENDS_DATA.forEach(friend => {
-            friend.trips.forEach(trip => {
-                // Friends data also respects the time filter for consistency
-                if (trip.year <= selectedYear) {
-                    trip.countries.forEach(c => countries.add(c))
-                }
-            })
-        })
-
-        // Remove countries already visited by user to avoid clash (or keep for overlap logic)
-        // For now, we'll just show them. Overlap handling is done via layer ordering.
-        return Array.from(countries)
-    }, [showFriends, selectedYear])
-
-    // Fly to home position
     const flyToHome = useCallback(() => {
         if (!mapRef.current) return
-
         mapRef.current.flyTo({
             center: HOME_CENTER,
             zoom: HOME_ZOOM,
@@ -124,16 +151,12 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
         })
     }, [])
 
-    // Start auto-rotation
     const startSpin = useCallback(() => {
         if (spinIntervalRef.current) return
-
         isSpinningRef.current = true
         spinIntervalRef.current = setInterval(() => {
             if (!mapRef.current || !isSpinningRef.current) return
-
             const zoom = mapRef.current.getZoom()
-            // Only spin at low zoom levels (planetary view)
             if (zoom < 4) {
                 const center = mapRef.current.getCenter()
                 center.lng -= 0.15
@@ -146,7 +169,6 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
         }, 1000)
     }, [])
 
-    // Stop auto-rotation
     const stopSpin = useCallback(() => {
         isSpinningRef.current = false
         if (spinIntervalRef.current) {
@@ -155,89 +177,96 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
         }
     }, [])
 
-    // Handle expand/collapse
     const toggleFullscreen = () => {
         const nextState = !isExpanded
         setIsExpanded(nextState)
-
-        // Notify parent of fullscreen state change
         if (onFullscreenChange) {
             onFullscreenChange(nextState)
         }
-
-        // Resize map after transition
         setTimeout(() => {
             if (mapRef.current) {
                 mapRef.current.resize()
-                // Recenter if needed
                 if (!nextState) flyToHome()
             }
         }, 300)
     }
 
-    // Update map filters when state changes
+    // Update map filters when countries change
     useEffect(() => {
-        if (!mapRef.current || !isLoaded) return
+        console.log('[MapboxGlobe] Layer update effect triggered', {
+            isLoaded,
+            visitedCountriesIso3,
+            mapExists: !!mapRef.current
+        })
 
+        if (!mapRef.current || !isLoaded) return
         const map = mapRef.current
+
+        console.log('[MapboxGlobe] Updating layers with', visitedCountriesIso3.length, 'countries')
 
         // Update User Layer
         if (map.getLayer('visited-countries-fill')) {
-            map.setFilter('visited-countries-fill', ['in', 'iso_3166_1_alpha_3', ...visitedCountries])
+            if (visitedCountriesIso3.length > 0) {
+                map.setFilter('visited-countries-fill', ['in', 'iso_3166_1_alpha_3', ...visitedCountriesIso3])
+                map.setLayoutProperty('visited-countries-fill', 'visibility', 'visible')
+                console.log('[MapboxGlobe] Set filter for visited-countries-fill:', visitedCountriesIso3)
+            } else {
+                map.setLayoutProperty('visited-countries-fill', 'visibility', 'none')
+            }
         }
         if (map.getLayer('visited-countries-outline')) {
-            map.setFilter('visited-countries-outline', ['in', 'iso_3166_1_alpha_3', ...visitedCountries])
+            if (visitedCountriesIso3.length > 0) {
+                map.setFilter('visited-countries-outline', ['in', 'iso_3166_1_alpha_3', ...visitedCountriesIso3])
+                map.setLayoutProperty('visited-countries-outline', 'visibility', 'visible')
+            } else {
+                map.setLayoutProperty('visited-countries-outline', 'visibility', 'none')
+            }
         }
 
         // Update Friend Layer
         if (map.getLayer('friends-countries-fill')) {
-            map.setFilter('friends-countries-fill', ['in', 'iso_3166_1_alpha_3', ...friendCountries])
-            map.setLayoutProperty('friends-countries-fill', 'visibility', showFriends ? 'visible' : 'none')
+            if (friendCountriesIso3.length > 0 && showFriendsMode) {
+                map.setFilter('friends-countries-fill', ['in', 'iso_3166_1_alpha_3', ...friendCountriesIso3])
+                map.setLayoutProperty('friends-countries-fill', 'visibility', 'visible')
+            } else {
+                map.setLayoutProperty('friends-countries-fill', 'visibility', 'none')
+            }
         }
-
-    }, [visitedCountries, friendCountries, showFriends, isLoaded])
+    }, [visitedCountriesIso3, friendCountriesIso3, showFriendsMode, isLoaded, mapInstance])
 
     useEffect(() => {
         if (mapRef.current || !mapContainerRef.current) return
 
         mapboxgl.accessToken = MAPBOX_TOKEN
 
-        // Create the map with globe projection
         const map = new mapboxgl.Map({
             container: mapContainerRef.current,
             style: 'mapbox://styles/mapbox/light-v11',
             projection: 'globe' as unknown as mapboxgl.Projection,
             center: HOME_CENTER,
             zoom: HOME_ZOOM,
+            minZoom: 1,  // Prevent zooming out too far
+            maxZoom: 6,  // Limit max zoom for performance (fewer tiles)
             pitch: 0,
             bearing: 0,
-            antialias: true,
+            antialias: false,  // Disable for better performance
             attributionControl: false,
+            fadeDuration: 0,  // Instant layer transitions
         })
 
         mapRef.current = map
+        setMapInstance(map)  // Trigger re-render for layer updates
 
-        // Configure atmosphere when style loads
         map.on('style.load', () => {
-            // Remove fog/atmosphere for clean floating globe effect
             map.setFog(null)
 
-            // Add terrain for 3D relief
-            map.addSource('mapbox-dem', {
-                type: 'raster-dem',
-                url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
-                tileSize: 512,
-                maxzoom: 14,
-            })
-            map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
-
-            // Add country boundaries source
+            // Country boundaries source (lightweight vector tiles)
             map.addSource('country-boundaries', {
                 type: 'vector',
                 url: 'mapbox://mapbox.country-boundaries-v1',
             })
 
-            // --- FRIENDS LAYER (Below User Layer) ---
+            // Friends Layer
             map.addLayer({
                 id: 'friends-countries-fill',
                 type: 'fill',
@@ -247,14 +276,11 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                     'fill-color': THEME_COLORS.friend,
                     'fill-opacity': 0.4,
                 },
-                layout: {
-                    visibility: 'none'
-                },
-                filter: ['in', 'iso_3166_1_alpha_3', ...friendCountries],
+                layout: { visibility: 'none' },
+                filter: ['in', 'iso_3166_1_alpha_3', ''],
             })
 
-            // --- USER LAYER ---
-            // Add highlight layer for visited countries
+            // User Layer
             map.addLayer({
                 id: 'visited-countries-fill',
                 type: 'fill',
@@ -264,10 +290,10 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                     'fill-color': THEME_COLORS.gold,
                     'fill-opacity': 0.5,
                 },
-                filter: ['in', 'iso_3166_1_alpha_3', ...visitedCountries],
+                layout: { visibility: 'none' },
+                filter: ['in', 'iso_3166_1_alpha_3', ''],
             })
 
-            // Add outline for visited countries
             map.addLayer({
                 id: 'visited-countries-outline',
                 type: 'line',
@@ -278,63 +304,57 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                     'line-width': 1.5,
                     'line-opacity': 0.8,
                 },
-                filter: ['in', 'iso_3166_1_alpha_3', ...visitedCountries],
+                layout: { visibility: 'none' },
+                filter: ['in', 'iso_3166_1_alpha_3', ''],
             })
 
-            // Add click handler for countries (after layers are created)
+            // Click handler
             map.on('click', (e) => {
                 const features = map.queryRenderedFeatures(e.point, {
                     layers: ['visited-countries-fill', 'friends-countries-fill']
                 })
 
                 if (features.length > 0) {
-                    const countryCode = features[0].properties?.iso_3166_1_alpha_3
-                    const countryName = Object.keys(COUNTRY_CODES).find(key => COUNTRY_CODES[key] === countryCode) || countryCode
+                    const countryCodeIso3 = features[0].properties?.iso_3166_1_alpha_3
+                    // Convert ISO3 back to ISO2
+                    const countryCodeIso2 = Object.entries(ISO2_TO_ISO3).find(([, v]) => v === countryCodeIso3)?.[0] || countryCodeIso3
+                    const countryName = COUNTRY_NAMES[countryCodeIso2] || countryCodeIso3
 
-                    // Find who visited this country
-                    const visitors: { name: string, years: number[] }[] = []
+                    if (onCountryClick) {
+                        onCountryClick(countryCodeIso2, countryName)
+                    } else {
+                        // Show internal popup
+                        const visitors: { name: string, years: number[] }[] = []
 
-                    // Check user
-                    const userYears: number[] = []
-                    USER_TRIPS.forEach(trip => {
-                        if (trip.countries.includes(countryCode)) {
-                            userYears.push(trip.year)
+                        // Check user countries
+                        const userCountry = userCountries.find(c => c.code === countryCodeIso2)
+                        if (userCountry?.visitYears && userCountry.visitYears.length > 0) {
+                            visitors.push({ name: 'You', years: userCountry.visitYears })
                         }
-                    })
-                    if (userYears.length > 0) {
-                        visitors.push({ name: 'You', years: userYears.sort((a, b) => b - a) })
-                    }
 
-                    // Check friends
-                    FRIENDS_DATA.forEach(friend => {
-                        const friendYears: number[] = []
-                        friend.trips.forEach(trip => {
-                            if (trip.countries.includes(countryCode)) {
-                                friendYears.push(trip.year)
+                        // Check friends
+                        const friendsForCountry = friendsCountries.filter(fc => fc.country_code === countryCodeIso2)
+                        friendsForCountry.forEach(fc => {
+                            const years = [fc.last_visit_year || fc.first_visit_year].filter(Boolean) as number[]
+                            if (years.length > 0) {
+                                visitors.push({ name: fc.full_name || fc.username, years })
                             }
                         })
-                        if (friendYears.length > 0) {
-                            visitors.push({ name: friend.name, years: friendYears.sort((a, b) => b - a) })
-                        }
-                    })
 
-                    if (visitors.length > 0) {
-                        setSelectedCountry({ code: countryCode, name: countryName, visitors })
+                        if (visitors.length > 0) {
+                            setSelectedCountry({ code: countryCodeIso2, name: countryName, visitors })
+                        }
                     }
                 }
             })
 
             setIsLoaded(true)
             if (onReady) onReady()
-
-            // Start spinning after a short delay
             setTimeout(() => startSpin(), 500)
         })
 
-        // Pause spin on user interaction
         const pauseSpin = () => stopSpin()
         const resumeSpin = () => {
-            // Resume spin after user stops interacting
             setTimeout(() => {
                 if (!mapRef.current) return
                 const zoom = mapRef.current.getZoom()
@@ -348,21 +368,22 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
         map.on('zoomstart', pauseSpin)
         map.on('moveend', resumeSpin)
 
-        // Cleanup on unmount
         return () => {
             stopSpin()
             map.remove()
             mapRef.current = null
         }
-    }, [onReady, startSpin, stopSpin]) // Removed dynamic deps from this effect to prevent map reload
+    }, [onReady, startSpin, stopSpin, userCountries, friendsCountries, onCountryClick])
 
-    // Toggle fog based on fullscreen state
     useEffect(() => {
         if (!mapRef.current || !isLoaded) return
         const map = mapRef.current
 
-        if (isExpanded) {
-            // Restore space atmosphere in fullscreen
+        // Only set fog if style is fully loaded to avoid error
+        if (!map.isStyleLoaded()) return
+
+        // Show space fog in satellite mode (fullscreen or not)
+        if (isSatelliteView) {
             map.setFog({
                 color: 'rgb(5, 5, 20)',
                 'high-color': 'rgb(20, 20, 60)',
@@ -371,34 +392,29 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                 'star-intensity': 0.6
             })
         } else {
-            // Remove fog for transparent background in card view
             map.setFog(null)
         }
-    }, [isExpanded, isLoaded])
+    }, [isExpanded, isLoaded, isSatelliteView])
 
-    // Function to switch map style
     const switchMapStyle = useCallback((toSatellite: boolean) => {
         if (!mapRef.current) return
         const map = mapRef.current
         const newStyle = toSatellite ? SATELLITE_STYLE : MONOCHROME_STYLE
-
         setIsSatelliteView(toSatellite)
         map.setStyle(newStyle)
 
-        // Re-add layers after style loads
         map.once('style.load', () => {
-            // Re-add terrain
-            if (!map.getSource('mapbox-dem')) {
+            // Only load DEM terrain in satellite mode (for 3D effect)
+            if (toSatellite && !map.getSource('mapbox-dem')) {
                 map.addSource('mapbox-dem', {
                     type: 'raster-dem',
                     url: 'mapbox://mapbox.mapbox-terrain-dem-v1',
                     tileSize: 512,
-                    maxzoom: 14,
+                    maxzoom: 10,  // Reduced from 14 for faster loading
                 })
-                map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.5 })
+                map.setTerrain({ source: 'mapbox-dem', exaggeration: 1.2 })  // Reduced exaggeration
             }
 
-            // Re-add country boundaries
             if (!map.getSource('country-boundaries')) {
                 map.addSource('country-boundaries', {
                     type: 'vector',
@@ -406,34 +422,26 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                 })
             }
 
-            // Re-add friend layer
             if (!map.getLayer('friends-countries-fill')) {
                 map.addLayer({
                     id: 'friends-countries-fill',
                     type: 'fill',
                     source: 'country-boundaries',
                     'source-layer': 'country_boundaries',
-                    paint: {
-                        'fill-color': THEME_COLORS.friend,
-                        'fill-opacity': 0.5,
-                    },
-                    layout: { visibility: showFriends ? 'visible' : 'none' },
-                    filter: ['in', 'iso_3166_1_alpha_3', ...friendCountries],
+                    paint: { 'fill-color': THEME_COLORS.friend, 'fill-opacity': 0.5 },
+                    layout: { visibility: showFriendsMode ? 'visible' : 'none' },
+                    filter: ['in', 'iso_3166_1_alpha_3', ...friendCountriesIso3],
                 })
             }
 
-            // Re-add user layers
             if (!map.getLayer('visited-countries-fill')) {
                 map.addLayer({
                     id: 'visited-countries-fill',
                     type: 'fill',
                     source: 'country-boundaries',
                     'source-layer': 'country_boundaries',
-                    paint: {
-                        'fill-color': THEME_COLORS.gold,
-                        'fill-opacity': 0.6,
-                    },
-                    filter: ['in', 'iso_3166_1_alpha_3', ...visitedCountries],
+                    paint: { 'fill-color': THEME_COLORS.gold, 'fill-opacity': 0.6 },
+                    filter: ['in', 'iso_3166_1_alpha_3', ...visitedCountriesIso3],
                 })
             }
 
@@ -443,17 +451,13 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                     type: 'line',
                     source: 'country-boundaries',
                     'source-layer': 'country_boundaries',
-                    paint: {
-                        'line-color': THEME_COLORS.gold,
-                        'line-width': 1.5,
-                        'line-opacity': 0.8,
-                    },
-                    filter: ['in', 'iso_3166_1_alpha_3', ...visitedCountries],
+                    paint: { 'line-color': THEME_COLORS.gold, 'line-width': 1.5, 'line-opacity': 0.8 },
+                    filter: ['in', 'iso_3166_1_alpha_3', ...visitedCountriesIso3],
                 })
             }
 
-            // Re-apply fog based on current state
-            if (isExpanded) {
+            // Space fog only in satellite mode
+            if (toSatellite) {
                 map.setFog({
                     color: 'rgb(5, 5, 20)',
                     'high-color': 'rgb(20, 20, 60)',
@@ -465,7 +469,7 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                 map.setFog(null)
             }
         })
-    }, [SATELLITE_STYLE, MONOCHROME_STYLE, friendCountries, visitedCountries, showFriends, isExpanded])
+    }, [friendCountriesIso3, visitedCountriesIso3, showFriendsMode, isExpanded])
 
     return (
         <div
@@ -476,11 +480,13 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                 left: isExpanded ? 0 : 'auto',
                 width: isExpanded ? '100%' : '100%',
                 height: isExpanded ? '100%' : height,
-                zIndex: isExpanded ? 50 : 1,
-                background: 'transparent'
+                zIndex: isExpanded ? 9999 : 1,
+                // Fullscreen background: white for normal mode, dark space for satellite
+                background: isExpanded
+                    ? (isSatelliteView ? 'rgb(5, 5, 15)' : '#ffffff')
+                    : 'transparent'
             }}
         >
-            {/* Map container */}
             <div
                 ref={mapContainerRef}
                 style={{
@@ -491,7 +497,6 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                 }}
             />
 
-            {/* Loading overlay */}
             {!isLoaded && (
                 <div
                     style={{
@@ -517,10 +522,8 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                 </div>
             )}
 
-            {/* CONTROLS OVERLAY - Only visible when loaded */}
             {isLoaded && (
                 <>
-                    {/* Expand/Collapse Button - Bottom-right above Home button when collapsed, Top-left when expanded */}
                     <button
                         onClick={toggleFullscreen}
                         className={`absolute ${isExpanded ? 'top-4 left-4' : 'bottom-20 right-4'} w-10 h-10 rounded-full flex items-center justify-center bg-white/95 backdrop-blur-md border border-black/5 hover:bg-white transition-all z-10 shadow-lg`}
@@ -533,52 +536,75 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                         )}
                     </button>
 
-                    {/* Fullscreen Controls Panel - Top Right */}
-                    {isExpanded && (
-                        <div className="absolute top-4 right-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-3 shadow-lg animate-in fade-in slide-in-from-right-4 z-10" style={{ width: '180px' }}>
-                            {/* Year Slider */}
-                            <div className="mb-3">
-                                <div className="flex justify-between text-[10px] text-white/80 mb-1.5">
-                                    <span>Year</span>
-                                    <span className="font-bold" style={{ color: THEME_COLORS.gold }}>{selectedYear}</span>
+                    {/* Control Panel - Shown in both normal and fullscreen */}
+                    <div
+                        className="absolute top-3 right-3 rounded-2xl p-3 shadow-lg z-10"
+                        style={{
+                            background: isSatelliteView ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.95)',
+                            backdropFilter: 'blur(20px)',
+                            border: isSatelliteView ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(0,0,0,0.08)',
+                        }}
+                    >
+                        <div className="flex flex-col gap-3">
+                            {/* Satellite Toggle */}
+                            <button
+                                onClick={() => switchMapStyle(!isSatelliteView)}
+                                className="flex items-center justify-between gap-3 w-full"
+                            >
+                                <span
+                                    className="text-xs font-medium flex items-center gap-2"
+                                    style={{ color: isSatelliteView ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.7)' }}
+                                >
+                                    🛰️ Satellite
+                                </span>
+                                <div
+                                    className="w-9 h-5 rounded-full transition-colors relative"
+                                    style={{
+                                        background: isSatelliteView ? THEME_COLORS.gold : 'rgba(0,0,0,0.2)'
+                                    }}
+                                >
+                                    <div
+                                        className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
+                                        style={{ left: isSatelliteView ? '18px' : '2px' }}
+                                    />
                                 </div>
-                                <input
-                                    type="range"
-                                    min="2022"
-                                    max="2026"
-                                    step="1"
-                                    value={selectedYear}
-                                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-                                    className="w-full h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                                    style={{ accentColor: THEME_COLORS.gold }}
-                                />
-                            </div>
+                            </button>
 
-                            {/* Friends Toggle */}
-                            <div className="flex items-center justify-between mb-3">
-                                <span className="text-xs text-white/90">Friends</span>
-                                <button
-                                    onClick={() => setShowFriends(!showFriends)}
-                                    className={`w-9 h-5 rounded-full transition-colors relative ${showFriends ? 'bg-indigo-400/80' : 'bg-white/20'}`}
-                                >
-                                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${showFriends ? 'translate-x-4' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
-
-                            {/* Map Style Toggle (Satellite / Monochrome) */}
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-white/90">Satellite</span>
-                                <button
-                                    onClick={() => switchMapStyle(!isSatelliteView)}
-                                    className={`w-9 h-5 rounded-full transition-colors relative ${isSatelliteView ? 'bg-emerald-400/80' : 'bg-white/20'}`}
-                                >
-                                    <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${isSatelliteView ? 'translate-x-4' : 'translate-x-0'}`} />
-                                </button>
-                            </div>
+                            {/* Friends Toggle - Only show when not in demo mode */}
+                            {!isDemo && onToggleFriendsMode && (
+                                <>
+                                    <div
+                                        className="w-full h-px"
+                                        style={{ background: isSatelliteView ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)' }}
+                                    />
+                                    <button
+                                        onClick={onToggleFriendsMode}
+                                        className="flex items-center justify-between gap-3 w-full"
+                                    >
+                                        <span
+                                            className="text-xs font-medium flex items-center gap-2"
+                                            style={{ color: showFriendsMode ? THEME_COLORS.friend : (isSatelliteView ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.7)') }}
+                                        >
+                                            <i className={`fa-solid ${showFriendsMode ? 'fa-users' : 'fa-user'}`} />
+                                            {showFriendsMode ? 'Amis' : 'Moi seul'}
+                                        </span>
+                                        <div
+                                            className="w-9 h-5 rounded-full transition-colors relative"
+                                            style={{
+                                                background: showFriendsMode ? THEME_COLORS.friend : 'rgba(0,0,0,0.2)'
+                                            }}
+                                        >
+                                            <div
+                                                className="absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all"
+                                                style={{ left: showFriendsMode ? '18px' : '2px' }}
+                                            />
+                                        </div>
+                                    </button>
+                                </>
+                            )}
                         </div>
-                    )}
+                    </div>
 
-                    {/* Home button */}
                     <button
                         onClick={flyToHome}
                         aria-label="Retour à la position d'origine"
@@ -598,14 +624,6 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                             alignItems: 'center',
                             justifyContent: 'center',
                             transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                            e.currentTarget.style.transform = 'scale(1.05)'
-                            e.currentTarget.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.2)'
-                        }}
-                        onMouseLeave={(e) => {
-                            e.currentTarget.style.transform = 'scale(1)'
-                            e.currentTarget.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 0.15)'
                         }}
                     >
                         <svg
@@ -631,27 +649,19 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                     className="fixed inset-0 z-[99999] flex flex-col justify-end"
                     onClick={() => setSelectedCountry(null)}
                 >
-                    {/* Backdrop */}
                     <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
-
-                    {/* Bottom Sheet Content */}
                     <div
                         onClick={(e) => e.stopPropagation()}
-                        className="relative w-full bg-[var(--bg-elevated)] rounded-t-[32px] pb-safe pt-6 px-5 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] max-h-[70vh] overflow-y-auto animate-slide-up"
+                        className="relative w-full bg-[var(--bg-elevated)] rounded-t-[32px] pb-safe pt-6 px-5 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] max-h-[70vh] overflow-y-auto"
                     >
-                        {/* Handle bar */}
                         <div className="w-10 h-1 rounded-full bg-black/10 mx-auto mb-6" />
-
-                        {/* Country Header */}
                         <div className="flex items-center gap-4 mb-6">
                             <div className="text-6xl">{getCountryFlag(selectedCountry.code)}</div>
                             <div>
                                 <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>{selectedCountry.name}</h2>
-                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{selectedCountry.visitors.length} visitor{selectedCountry.visitors.length > 1 ? 's' : ''}</p>
+                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{selectedCountry.visitors.length} visiteur{selectedCountry.visitors.length > 1 ? 's' : ''}</p>
                             </div>
                         </div>
-
-                        {/* Visitors List */}
                         <div className="space-y-4 mb-6">
                             {selectedCountry.visitors.map((visitor, idx) => (
                                 <div key={idx} className="p-4 rounded-2xl" style={{ background: 'var(--bg-secondary)' }}>
@@ -673,8 +683,6 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                                 </div>
                             ))}
                         </div>
-
-                        {/* Navigation Button */}
                         <button
                             onClick={() => {
                                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
@@ -687,35 +695,29 @@ export default function MapboxGlobe({ height = '342px', onReady, onFullscreenCha
                             style={{ background: THEME_COLORS.gold }}
                         >
                             <i className="fa-solid fa-location-dot" />
-                            Go to {selectedCountry.name}
+                            Voir sur Maps
                         </button>
                     </div>
                 </div>
             )}
 
-
             <style jsx>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        .mapbox-globe-container.fullscreen {
-            border-radius: 0;
-        }
-        /* Minimize Mapbox watermark while keeping ToS compliance */
-        .mapbox-globe-container :global(.mapboxgl-ctrl-bottom-left),
-        .mapbox-globe-container :global(.mapboxgl-ctrl-bottom-right) {
-            opacity: 0.3;
-            font-size: 9px;
-        }
-        .mapbox-globe-container :global(.mapboxgl-ctrl-bottom-left):hover,
-        .mapbox-globe-container :global(.mapboxgl-ctrl-bottom-right):hover {
-            opacity: 1;
-        }
-        .mapbox-globe-container :global(.mapboxgl-ctrl-logo) {
-            opacity: 0.2 !important;
-            width: 50px !important;
-        }
-      `}</style>
+                @keyframes spin {
+                    to { transform: rotate(360deg); }
+                }
+                .mapbox-globe-container.fullscreen {
+                    border-radius: 0;
+                }
+                .mapbox-globe-container :global(.mapboxgl-ctrl-bottom-left),
+                .mapbox-globe-container :global(.mapboxgl-ctrl-bottom-right) {
+                    opacity: 0.3;
+                    font-size: 9px;
+                }
+                .mapbox-globe-container :global(.mapboxgl-ctrl-logo) {
+                    opacity: 0.2 !important;
+                    width: 50px !important;
+                }
+            `}</style>
         </div>
     )
 }
