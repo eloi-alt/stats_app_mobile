@@ -8,6 +8,7 @@ interface MissingDataPromptProps {
     moduleColor: string
     missingFields: { key: string; label: string }[]
     onComplete?: () => void
+    onAction?: () => void  // Custom action instead of going to onboarding
 }
 
 export default function MissingDataPrompt({
@@ -15,12 +16,17 @@ export default function MissingDataPrompt({
     moduleIcon,
     moduleColor,
     missingFields,
-    onComplete
+    onComplete,
+    onAction
 }: MissingDataPromptProps) {
     const router = useRouter()
 
     const handleCompleteProfile = () => {
-        router.push('/onboarding')
+        if (onAction) {
+            onAction()
+        } else {
+            router.push('/onboarding')
+        }
         onComplete?.()
     }
 

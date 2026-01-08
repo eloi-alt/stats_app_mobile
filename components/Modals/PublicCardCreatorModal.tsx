@@ -11,7 +11,7 @@ interface PublicCardCreatorModalProps {
     userId?: string
     isDemo?: boolean
     userStats: {
-        physio?: { weight?: number; height?: number; bmi?: number; age?: number }
+        physio?: { weight?: number; height?: number; bmi?: number; age?: number; activityLevel?: number }
         social?: { friendsCount?: number; harmonyScore?: number }
         world?: { countriesVisited?: number; tripsCount?: number }
         career?: { jobTitle?: string; industry?: string; experienceYears?: number }

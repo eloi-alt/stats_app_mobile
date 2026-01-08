@@ -8,6 +8,8 @@ import PublicCardCreatorModal from '../Modals/PublicCardCreatorModal'
 import PublicCardDisplay, { PublicCardCategory } from '../Cards/PublicCardDisplay'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useVisitor } from '@/contexts/VisitorContext'
+import { useProfileData } from '@/hooks/useProfileData'
+import { useTravelData } from '@/hooks/useTravelData'
 import { supabase } from '@/utils/supabase/client'
 import { ThomasMorel } from '@/data/mockData'
 
@@ -46,6 +48,8 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack, userPr
         category: PublicCardCategory
     } | null>(null)
     const { isVisitor } = useVisitor()
+    const profileHookData = useProfileData()
+    const travelData = useTravelData()
 
     // Load existing public card
     useEffect(() => {
@@ -329,28 +333,53 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack, userPr
                             category={existingPublicCard.category}
                             stats={{
                                 physio: {
-                                    weight: currentProfile?.weight || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.weight || 82 : 70),
-                                    height: currentProfile?.height || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.height || 183 : 175),
-                                    bmi: currentProfile?.weight && currentProfile?.height
-                                        ? currentProfile.weight / ((currentProfile.height / 100) ** 2)
-                                        : (isVisitor ? 24.5 : 22.9)
+                                    height: isVisitor
+                                        ? ThomasMorel.moduleA.measurements[0]?.height || 183
+                                        : (profileHookData.profile?.height || currentProfile?.height || 0),
+                                    bmi: isVisitor
+                                        ? 24.5
+                                        : ((profileHookData.profile?.weight && profileHookData.profile?.height)
+                                            ? profileHookData.profile.weight / ((profileHookData.profile.height / 100) ** 2)
+                                            : 0),
+                                    age: isVisitor
+                                        ? 35
+                                        : (profileHookData.profile?.dateOfBirth
+                                            ? Math.floor((Date.now() - new Date(profileHookData.profile.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                                            : undefined),
+                                    activityLevel: isVisitor
+                                        ? 3
+                                        : (profileHookData.profile?.activityLevel || 0)
                                 },
                                 social: {
                                     friendsCount: isVisitor ? 148 : 12,
                                     harmonyScore: harmonyScore
                                 },
                                 world: {
-                                    countriesVisited: isVisitor ? ThomasMorel.moduleB.countriesVisited.length : 5,
-                                    tripsCount: isVisitor ? ThomasMorel.moduleB.trips.length : 8
+                                    countriesVisited: isVisitor
+                                        ? ThomasMorel.moduleB.countriesVisited.length
+                                        : travelData.countries.length,
+                                    tripsCount: isVisitor
+                                        ? ThomasMorel.moduleB.trips.length
+                                        : travelData.totalTrips
                                 },
                                 career: {
-                                    jobTitle: isVisitor ? ThomasMorel.moduleC.career.currentPosition : 'Développeur',
-                                    industry: isVisitor ? ThomasMorel.moduleC.career.industry : 'Tech',
-                                    experienceYears: isVisitor ? ThomasMorel.moduleC.career.totalYearsExperience : 3
+                                    jobTitle: isVisitor
+                                        ? ThomasMorel.moduleC.career.currentPosition
+                                        : (profileHookData.profile?.jobTitle || 'Non renseigné'),
+                                    industry: isVisitor
+                                        ? ThomasMorel.moduleC.career.industry
+                                        : (profileHookData.profile?.industry || 'Non renseigné'),
+                                    experienceYears: isVisitor
+                                        ? ThomasMorel.moduleC.career.totalYearsExperience
+                                        : (profileHookData.profile?.experienceYears || 0)
                                 },
                                 finance: {
-                                    netWorth: isVisitor ? 85000 : 35000,
-                                    savingsRate: isVisitor ? 22 : 15
+                                    netWorth: isVisitor
+                                        ? 85000
+                                        : (profileHookData.profile?.netWorthEstimate || 0),
+                                    savingsRate: isVisitor
+                                        ? 22
+                                        : (profileHookData.profile?.savingsRate || 0)
                                 }
                             }}
                             userName={displayName}
@@ -508,28 +537,53 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack, userPr
                 isDemo={isVisitor}
                 userStats={{
                     physio: {
-                        weight: currentProfile?.weight || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.weight || 82 : 70),
-                        height: currentProfile?.height || (isVisitor ? ThomasMorel.moduleA.measurements[0]?.height || 183 : 175),
-                        bmi: currentProfile?.weight && currentProfile?.height
-                            ? currentProfile.weight / ((currentProfile.height / 100) ** 2)
-                            : (isVisitor ? 24.5 : 22.9)
+                        height: isVisitor
+                            ? ThomasMorel.moduleA.measurements[0]?.height || 183
+                            : (profileHookData.profile?.height || currentProfile?.height || 0),
+                        bmi: isVisitor
+                            ? 24.5
+                            : ((profileHookData.profile?.weight && profileHookData.profile?.height)
+                                ? profileHookData.profile.weight / ((profileHookData.profile.height / 100) ** 2)
+                                : 0),
+                        age: isVisitor
+                            ? 35
+                            : (profileHookData.profile?.dateOfBirth
+                                ? Math.floor((Date.now() - new Date(profileHookData.profile.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000))
+                                : undefined),
+                        activityLevel: isVisitor
+                            ? 3
+                            : (profileHookData.profile?.activityLevel || 0)
                     },
                     social: {
                         friendsCount: isVisitor ? 148 : 12,
                         harmonyScore: harmonyScore
                     },
                     world: {
-                        countriesVisited: isVisitor ? ThomasMorel.moduleB.countriesVisited.length : 5,
-                        tripsCount: isVisitor ? ThomasMorel.moduleB.trips.length : 8
+                        countriesVisited: isVisitor
+                            ? ThomasMorel.moduleB.countriesVisited.length
+                            : travelData.countries.length,
+                        tripsCount: isVisitor
+                            ? ThomasMorel.moduleB.trips.length
+                            : travelData.totalTrips
                     },
                     career: {
-                        jobTitle: isVisitor ? ThomasMorel.moduleC.career.currentPosition : 'Développeur',
-                        industry: isVisitor ? ThomasMorel.moduleC.career.industry : 'Tech',
-                        experienceYears: isVisitor ? ThomasMorel.moduleC.career.totalYearsExperience : 3
+                        jobTitle: isVisitor
+                            ? ThomasMorel.moduleC.career.currentPosition
+                            : (profileHookData.profile?.jobTitle || 'Non renseigné'),
+                        industry: isVisitor
+                            ? ThomasMorel.moduleC.career.industry
+                            : (profileHookData.profile?.industry || 'Non renseigné'),
+                        experienceYears: isVisitor
+                            ? ThomasMorel.moduleC.career.totalYearsExperience
+                            : (profileHookData.profile?.experienceYears || 0)
                     },
                     finance: {
-                        netWorth: isVisitor ? 85000 : 35000,
-                        savingsRate: isVisitor ? 22 : 15
+                        netWorth: isVisitor
+                            ? 85000
+                            : (profileHookData.profile?.netWorthEstimate || 0),
+                        savingsRate: isVisitor
+                            ? 22
+                            : (profileHookData.profile?.savingsRate || 0)
                     }
                 }}
                 userName={displayName}

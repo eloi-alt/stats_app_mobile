@@ -18,6 +18,7 @@ import ViewSheet from '@/components/UI/ViewSheet'
 import ProfileDataGate from '@/components/UI/ProfileDataGate'
 import AssetsModal from '@/components/Modals/AssetsModal'
 import ObjectiveModal from '@/components/Modals/ObjectiveModal'
+import BodyDataEntryModal from '@/components/Modals/BodyDataEntryModal'
 import {
   modules,
   userProfile as demoUserProfile,
@@ -49,6 +50,7 @@ function HomeContent() {
   const [initialContactName, setInitialContactName] = useState<string | null>(null)
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [showPhysioDataModal, setShowPhysioDataModal] = useState(false)
 
   // Create dynamic physioMetrics based on auth state
   // For authenticated users: compute from healthData and profileData
@@ -368,7 +370,7 @@ function HomeContent() {
         </section>
 
         <section id="view-physio" className="view" style={viewStyle('view-physio')}>
-          <ProfileDataGate module="physio">
+          <ProfileDataGate module="physio" onMissingDataAction={() => setShowPhysioDataModal(true)}>
             <PhysioView
               metrics={physioMetrics}
               aiAnalysis={aiAnalysis}
@@ -395,13 +397,11 @@ function HomeContent() {
         </section>
 
         <section id="view-pro" className="view" style={viewStyle('view-pro')}>
-          <ProfileDataGate module="pro">
-            <ProView
-              careerInfo={careerInfo}
-              onAvatarClick={openProfile}
-              onAssetsClick={() => setAssetsModalOpen(true)}
-            />
-          </ProfileDataGate>
+          <ProView
+            careerInfo={careerInfo}
+            onAvatarClick={openProfile}
+            onAssetsClick={() => setAssetsModalOpen(true)}
+          />
         </section>
 
         {/* TabBar with swipe support */}
@@ -443,6 +443,26 @@ function HomeContent() {
           subtitle={objectiveData.subtitle}
           color={objectiveData.color}
         />
+
+        {/* Physio Data Entry Modal - triggered from MissingDataPrompt */}
+        {profileData.profile?.id && (
+          <BodyDataEntryModal
+            isOpen={showPhysioDataModal}
+            onClose={() => setShowPhysioDataModal(false)}
+            userId={profileData.profile.id}
+            currentData={{
+              dateOfBirth: profileData.profile.dateOfBirth || undefined,
+              gender: profileData.profile.gender || undefined,
+              height: profileData.profile.height || undefined,
+              weight: profileData.profile.weight || undefined,
+              activityLevel: profileData.profile.activityLevel || undefined,
+            }}
+            onSave={() => {
+              setShowPhysioDataModal(false)
+              profileData.refetch()
+            }}
+          />
+        )}
       </div>
     </IPhoneWrapper>
   )

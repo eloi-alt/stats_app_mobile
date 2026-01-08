@@ -4,21 +4,21 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '@/utils/supabase/client'
 
 type VisitorContextType = {
-    isVisitor: boolean
-    setIsVisitor: (value: boolean) => void
+    isVisitor: boolean  // Will always be false when authenticated (no visitor mode)
     isLoading: boolean
+    isAuthenticated: boolean
 }
 
 const VisitorContext = createContext<VisitorContextType>({
-    isVisitor: true, // Default to visitor mode until we check auth
-    setIsVisitor: () => { },
+    isVisitor: false, // Default to not visitor - auth required
     isLoading: true,
+    isAuthenticated: false,
 })
 
 export const useVisitor = () => useContext(VisitorContext)
 
 export const VisitorProvider = ({ children }: { children: ReactNode }) => {
-    const [isVisitor, setIsVisitor] = useState(true) // Start as visitor
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
@@ -26,11 +26,10 @@ export const VisitorProvider = ({ children }: { children: ReactNode }) => {
         const checkAuth = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession()
-                // Only set isVisitor to false if we have a valid session
-                setIsVisitor(!session)
+                setIsAuthenticated(!!session)
             } catch (error) {
                 console.error('Error checking auth:', error)
-                setIsVisitor(true) // On error, default to visitor
+                setIsAuthenticated(false)
             } finally {
                 setIsLoading(false)
             }
@@ -42,8 +41,7 @@ export const VisitorProvider = ({ children }: { children: ReactNode }) => {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (event, session) => {
                 console.log('[VisitorContext] Auth state changed:', event, !!session)
-                // Update visitor status based on session
-                setIsVisitor(!session)
+                setIsAuthenticated(!!session)
                 setIsLoading(false)
             }
         )
@@ -53,8 +51,12 @@ export const VisitorProvider = ({ children }: { children: ReactNode }) => {
         }
     }, [])
 
+    // isVisitor is now always false - visitor mode removed
+    // Components that check isVisitor will always get false
+    const isVisitor = false
+
     return (
-        <VisitorContext.Provider value={{ isVisitor, setIsVisitor, isLoading }}>
+        <VisitorContext.Provider value={{ isVisitor, isLoading, isAuthenticated }}>
             {children}
         </VisitorContext.Provider>
     )

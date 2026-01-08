@@ -1,19 +1,11 @@
 "use client"
 
 import { useRouter } from 'next/navigation'
-import { useVisitor } from '@/contexts/VisitorContext'
 import { useState } from 'react'
 
 export default function LandingPage() {
     const router = useRouter()
-    const { setIsVisitor } = useVisitor()
     const [isLoading, setIsLoading] = useState<string | null>(null)
-
-    const handleVisitorMode = () => {
-        setIsLoading('visitor')
-        setIsVisitor(true)
-        router.push('/')
-    }
 
     const handleSignIn = () => {
         setIsLoading('signin')
@@ -129,44 +121,6 @@ export default function LandingPage() {
                             </>
                         )}
                     </button>
-
-                    {/* Divider */}
-                    <div className="flex items-center gap-4 py-2">
-                        <div className="flex-1 h-px" style={{ background: 'var(--border-light)' }} />
-                        <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>ou</span>
-                        <div className="flex-1 h-px" style={{ background: 'var(--border-light)' }} />
-                    </div>
-
-                    {/* Visitor Mode */}
-                    <button
-                        onClick={handleVisitorMode}
-                        disabled={isLoading !== null}
-                        className="w-full py-4 rounded-2xl text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2"
-                        style={{
-                            background: 'rgba(139, 168, 136, 0.15)',
-                            color: 'var(--accent-sage)',
-                            border: '1px solid rgba(139, 168, 136, 0.3)',
-                        }}
-                    >
-                        {isLoading === 'visitor' ? (
-                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                        ) : (
-                            <>
-                                <i className="fa-solid fa-eye" />
-                                Mode Visiteur
-                            </>
-                        )}
-                    </button>
-
-                    <p
-                        className="text-xs pt-1"
-                        style={{ color: 'var(--text-tertiary)' }}
-                    >
-                        Explorez l&apos;app avec des données de démonstration
-                    </p>
                 </div>
             </div>
 

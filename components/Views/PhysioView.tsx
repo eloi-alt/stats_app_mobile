@@ -134,9 +134,9 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
           moduleName="Santé"
           moduleIcon="fa-heart-pulse"
           moduleColor="var(--accent-sage)"
-          title="Commencez à suivre votre santé"
-          description="Renseignez vos informations corporelles pour débloquer le suivi de vos métriques santé."
-          actionLabel="Ajouter mes données"
+          title="Module Santé"
+          description="Pour accéder à ce module, veuillez d'abord compléter les informations de votre profil."
+          actionLabel="Compléter mon profil"
           onAction={() => setShowBodyDataModal(true)}
         />
 
@@ -151,6 +151,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
               gender: profileData.profile.gender || undefined,
               height: profileData.profile.height || undefined,
               weight: profileData.profile.weight || undefined,
+              activityLevel: profileData.profile.activityLevel || undefined,
             }}
             onSave={() => {
               setShowToast('Données enregistrées')
@@ -467,12 +468,18 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
                     </div>
                   )}
 
-                  {/* Edit hint */}
-                  <div className="mt-4 pt-3 flex items-center justify-center gap-2" style={{ borderTop: '1px solid var(--border-light)' }}>
-                    <i className="fa-solid fa-pen-to-square text-xs" style={{ color: 'var(--text-muted)' }} />
-                    <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>
-                      Appuyez pour modifier
-                    </span>
+                  {/* Edit button */}
+                  <div className="mt-4 pt-3" style={{ borderTop: '1px solid var(--border-light)' }}>
+                    <button
+                      className="w-full py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-95"
+                      style={{
+                        background: 'var(--accent-sage)',
+                        color: 'white',
+                      }}
+                    >
+                      <i className="fa-solid fa-pen-to-square text-xs" />
+                      <span className="text-sm font-medium">Modifier mes données</span>
+                    </button>
                   </div>
                 </>
               )
@@ -495,6 +502,28 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
             setShowToast(t('saved'))
             setTimeout(() => setShowToast(null), 2000)
             // Refresh health data
+            healthData.refetch?.()
+          }}
+        />
+      )}
+
+      {/* Body Data Entry Modal - Available in main view */}
+      {profileData.profile?.id && (
+        <BodyDataEntryModal
+          isOpen={showBodyDataModal}
+          onClose={() => setShowBodyDataModal(false)}
+          userId={profileData.profile.id}
+          currentData={{
+            dateOfBirth: profileData.profile.dateOfBirth || undefined,
+            gender: profileData.profile.gender || undefined,
+            height: profileData.profile.height || undefined,
+            weight: profileData.profile.weight || undefined,
+            activityLevel: profileData.profile.activityLevel || undefined,
+          }}
+          onSave={() => {
+            setShowToast('Données enregistrées')
+            setTimeout(() => setShowToast(null), 2000)
+            profileData.refetch()
             healthData.refetch?.()
           }}
         />

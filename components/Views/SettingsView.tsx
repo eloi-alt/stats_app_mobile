@@ -4,7 +4,6 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext'
-import { useVisitor } from '@/contexts/VisitorContext'
 import { supabase } from '@/utils/supabase/client'
 
 interface SettingsViewProps {
@@ -12,7 +11,6 @@ interface SettingsViewProps {
 }
 
 export default function SettingsView({ onBack }: SettingsViewProps) {
-    const { isVisitor, setIsVisitor } = useVisitor()
     const router = useRouter()
     const { language, setLanguage, t } = useLanguage()
     const { theme, setTheme } = useTheme()
@@ -28,13 +26,6 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
     const handleSignOut = async () => {
         setIsSigningOut(true)
         try {
-            if (isVisitor) {
-                // Demo mode: just exit visitor mode and redirect to landing
-                setIsVisitor(false)
-                router.push('/landing')
-                return
-            }
-            // Authenticated user: sign out from Supabase
             await supabase.auth.signOut()
             router.push('/landing')
         } catch (error) {

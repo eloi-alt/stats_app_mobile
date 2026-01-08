@@ -13,6 +13,7 @@ interface BodyDataEntryModalProps {
         gender?: string
         height?: number
         weight?: number
+        activityLevel?: number
     }
     onSave: (data: any) => void
 }
@@ -33,6 +34,7 @@ export default function BodyDataEntryModal({
         gender: currentData.gender || '',
         height: currentData.height || 170,
         weight: currentData.weight || 70,
+        activityLevel: currentData.activityLevel || 2,
     })
     const [isSaving, setIsSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -44,6 +46,7 @@ export default function BodyDataEntryModal({
             gender: currentData.gender || '',
             height: currentData.height || 170,
             weight: currentData.weight || 70,
+            activityLevel: currentData.activityLevel || 2,
         })
         setError(null)
     }, [currentData, isOpen])
@@ -89,6 +92,7 @@ export default function BodyDataEntryModal({
             const updateData: any = {
                 height: formData.height,
                 weight: formData.weight,
+                activity_level: formData.activityLevel,
                 updated_at: new Date().toISOString()
             }
 
@@ -259,6 +263,36 @@ export default function BodyDataEntryModal({
                                 min={30}
                                 max={300}
                             />
+                        </div>
+                    </div>
+
+                    {/* Training Frequency */}
+                    <div>
+                        <label className="text-xs font-medium mb-2 block" style={{ color: 'var(--text-tertiary)' }}>
+                            Fréquence d'entraînement
+                        </label>
+                        <div className="grid grid-cols-5 gap-1">
+                            {[
+                                { value: 0, label: 'Jamais', icon: 'fa-couch' },
+                                { value: 1, label: '1-2x/sem', icon: 'fa-person-walking' },
+                                { value: 2, label: '3-4x/sem', icon: 'fa-dumbbell' },
+                                { value: 3, label: '5-6x/sem', icon: 'fa-fire' },
+                                { value: 4, label: 'Quotidien', icon: 'fa-bolt' },
+                            ].map((option) => (
+                                <button
+                                    key={option.value}
+                                    onClick={() => setFormData(prev => ({ ...prev, activityLevel: option.value }))}
+                                    className="py-2 px-1 rounded-xl text-center transition-all flex flex-col items-center gap-1"
+                                    style={{
+                                        background: formData.activityLevel === option.value ? 'var(--accent-sage)' : 'var(--bg-secondary)',
+                                        color: formData.activityLevel === option.value ? 'white' : 'var(--text-secondary)',
+                                        border: formData.activityLevel === option.value ? 'none' : '1px solid var(--border-light)',
+                                    }}
+                                >
+                                    <i className={`fa-solid ${option.icon} text-sm`} />
+                                    <span className="text-[9px] font-medium">{option.label}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
 

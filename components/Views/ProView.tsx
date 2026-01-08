@@ -6,12 +6,14 @@ import Navbar from '../Navbar'
 import CareerGoalModal from '../Modals/CareerGoalModal'
 import SkillEndorsementModal from '../Modals/SkillEndorsementModal'
 import FinancialProjectionsModal from '../Modals/FinancialProjectionsModal'
+import CareerDataEntryModal from '../Modals/CareerDataEntryModal'
 import EmptyModuleState from '../UI/EmptyModuleState'
 import { CareerInfo, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useVisitor } from '@/contexts/VisitorContext'
 import { useFinancialData } from '@/hooks/useFinancialData'
 import { useProfileData } from '@/hooks/useProfileData'
+import { supabase } from '@/utils/supabase/client'
 
 interface ProViewProps {
   careerInfo: CareerInfo
@@ -31,7 +33,16 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
   const [showCareerGoalModal, setShowCareerGoalModal] = useState(false)
   const [showSkillEndorsementModal, setShowSkillEndorsementModal] = useState(false)
   const [showFinancialModal, setShowFinancialModal] = useState(false)
+  const [showCareerDataModal, setShowCareerDataModal] = useState(false)
   const [showToast, setShowToast] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+
+  // Get current user ID
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setUserId(data.user.id)
+    })
+  }, [])
 
   // Pattern mounted pour éviter les erreurs SSR
   useEffect(() => {
@@ -41,13 +52,39 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
   const skills = ThomasMorel.moduleC.career.skills
   const achievements = ThomasMorel.moduleD.achievements.filter(a => a.category === 'career')
 
+  // Get profile data (moved up so displayData can use it)
+  const profile: any = profileData.profile
+
+  // Compute display values - use real data for authenticated users, demo for visitors
+  const displayData = {
+    jobTitle: !isVisitor && profile?.jobTitle ? profile.jobTitle : careerInfo.currentPosition,
+    company: !isVisitor && profile?.company ? profile.company : ThomasMorel.moduleC.career.company,
+    industry: !isVisitor && profile?.industry ? profile.industry : careerInfo.specialty,
+    experienceYears: !isVisitor && profile?.experienceYears ? `${profile.experienceYears} ans` : careerInfo.experience,
+    annualIncome: !isVisitor && profile?.annualIncome ? profile.annualIncome : ThomasMorel.moduleC.revenus.totalGrossAnnual,
+    netWorthEstimate: !isVisitor && profile?.netWorthEstimate ? profile.netWorthEstimate : ThomasMorel.moduleC.revenus.totalNetAnnual,
+    savingsRate: !isVisitor && profile?.savingsRate ? profile.savingsRate : 20,
+    currency: !isVisitor && profile?.currency ? profile.currency : 'EUR',
+  }
+
+  // Format currency helper
+  const formatMoney = (value: number, currency: string): string => {
+    const symbol = currency === 'EUR' ? '€' : currency === 'USD' ? '$' : currency === 'GBP' ? '£' : currency
+    if (value >= 1000000) {
+      return `${(value / 1000000).toFixed(1)}M${symbol}`
+    }
+    if (value >= 1000) {
+      return `${Math.round(value / 1000)}k${symbol}`
+    }
+    return `${value}${symbol}`
+  }
+
   const handleAction = (message: string) => {
     setShowToast(message)
     setTimeout(() => setShowToast(null), 2000)
   }
 
   // Check if user has required job data
-  const profile: any = profileData.profile
   const hasJobData = isVisitor || (
     (profile?.job_title || profile?.jobTitle) &&
     profile?.industry
@@ -94,8 +131,32 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
           title="Configurez votre profil professionnel"
           description="Renseignez votre poste actuel et vos objectifs de carrière pour débloquer les projections et le suivi de votre progression professionnelle."
           actionLabel="Compléter mon profil"
-          actionHref="/onboarding"
+          onAction={() => setShowCareerDataModal(true)}
         />
+
+        {/* Career Data Entry Modal for empty state */}
+        {userId && (
+          <CareerDataEntryModal
+            isOpen={showCareerDataModal}
+            onClose={() => setShowCareerDataModal(false)}
+            userId={userId}
+            currentData={{
+              jobTitle: '',
+              company: '',
+              industry: '',
+              experienceYears: 0,
+              annualIncome: 0,
+              savingsRate: 20,
+              netWorthEstimate: 0,
+              currency: 'EUR',
+            }}
+            onSave={() => {
+              handleAction('Profil professionnel créé')
+              profileData.refetch()
+              financialData.refetch()
+            }}
+          />
+        )}
       </div>
     )
   }
@@ -112,12 +173,22 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
 
       {/* Current position card */}
       <div
-        className="rounded-3xl p-6 mb-4"
+        className="rounded-3xl p-6 mb-4 relative"
         style={{
           background: 'linear-gradient(135deg, rgba(201, 169, 98, 0.08) 0%, rgba(212, 196, 168, 0.04) 100%)',
           border: '1px solid rgba(201, 169, 98, 0.15)',
         }}
       >
+        {/* Edit button */}
+        {!isVisitor && userId && (
+          <button
+            onClick={() => setShowCareerDataModal(true)}
+            className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105"
+            style={{ background: 'rgba(201, 169, 98, 0.15)' }}
+          >
+            <i className="fa-solid fa-pen text-xs" style={{ color: 'var(--accent-gold)' }} />
+          </button>
+        )}
         <div
           className="text-[9px] uppercase tracking-[0.2em] font-medium mb-2"
           style={{ color: 'var(--accent-gold)' }}
@@ -128,7 +199,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
           className="text-2xl font-light text-display mb-3"
           style={{ color: 'var(--text-primary)' }}
         >
-          {careerInfo.currentPosition}
+          {displayData.jobTitle}
         </div>
         <div className="flex flex-wrap gap-2">
           <span
@@ -138,7 +209,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
               color: 'var(--accent-gold)',
             }}
           >
-            {careerInfo.experience}
+            {displayData.experienceYears}
           </span>
           <span
             className="py-1.5 px-3 rounded-full text-[10px] font-medium"
@@ -147,7 +218,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
               color: 'var(--text-secondary)',
             }}
           >
-            {careerInfo.specialty}
+            {displayData.industry}
           </span>
           <span
             className="py-1.5 px-3 rounded-full text-[10px] font-medium"
@@ -156,7 +227,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
               color: 'var(--accent-sage)',
             }}
           >
-            {ThomasMorel.moduleC.career.company}
+            {displayData.company}
           </span>
         </div>
       </div>
@@ -341,7 +412,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
             style={{ background: 'rgba(201, 169, 98, 0.06)' }}
           >
             <div className="text-xl font-light text-display" style={{ color: 'var(--accent-gold)' }}>
-              {Math.round(ThomasMorel.moduleC.revenus.totalNetAnnual / 1000)}k€
+              {formatMoney(displayData.netWorthEstimate, displayData.currency)}
             </div>
             <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
               {t('netWorth')}
@@ -352,7 +423,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
             style={{ background: 'rgba(139, 168, 136, 0.06)' }}
           >
             <div className="text-xl font-light text-display" style={{ color: 'var(--accent-sage)' }}>
-              {Math.round(ThomasMorel.moduleC.revenus.totalGrossAnnual / 1000)}k€
+              {formatMoney(displayData.annualIncome, displayData.currency)}
             </div>
             <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: 'var(--text-muted)' }}>
               {t('incomeYear')}
@@ -536,6 +607,31 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
         isOpen={showFinancialModal}
         onClose={() => setShowFinancialModal(false)}
       />
+
+      {/* Career Data Entry Modal */}
+      {userId && (
+        <CareerDataEntryModal
+          isOpen={showCareerDataModal}
+          onClose={() => setShowCareerDataModal(false)}
+          userId={userId}
+          currentData={{
+            jobTitle: profile?.jobTitle || profile?.job_title || '',
+            company: profile?.company || '',
+            industry: profile?.industry || '',
+            experienceYears: profile?.experienceYears || profile?.experience_years || 0,
+            annualIncome: profile?.annualIncome || profile?.annual_income || 0,
+            savingsRate: profile?.savingsRate || profile?.savings_rate || 20,
+            netWorthEstimate: profile?.netWorthEstimate || profile?.net_worth_estimate || 0,
+            currency: profile?.currency || 'EUR',
+          }}
+          onSave={() => {
+            handleAction('Profil professionnel mis à jour')
+            // Trigger refetch of profile and financial data
+            profileData.refetch()
+            financialData.refetch()
+          }}
+        />
+      )}
     </div>
   )
 }

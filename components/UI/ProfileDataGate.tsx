@@ -11,6 +11,7 @@ interface ProfileDataGateProps {
     children: ReactNode
     module: ModuleType
     fallbackComponent?: ReactNode
+    onMissingDataAction?: () => void  // Custom action when data is missing
 }
 
 const MODULE_CONFIG: Record<ModuleType, {
@@ -50,7 +51,7 @@ const MODULE_CONFIG: Record<ModuleType, {
     }
 }
 
-export default function ProfileDataGate({ children, module, fallbackComponent }: ProfileDataGateProps) {
+export default function ProfileDataGate({ children, module, fallbackComponent, onMissingDataAction }: ProfileDataGateProps) {
     const profileData = useProfileData()
     const { isVisitor } = useVisitor()
     const config = MODULE_CONFIG[module]
@@ -99,6 +100,7 @@ export default function ProfileDataGate({ children, module, fallbackComponent }:
                 moduleIcon={config.icon}
                 moduleColor={config.color}
                 missingFields={missingFields}
+                onAction={onMissingDataAction}
             />
         )
     }

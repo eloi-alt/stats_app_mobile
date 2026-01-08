@@ -10,6 +10,7 @@ export interface PublicCardStats {
         height?: number
         bmi?: number
         age?: number
+        activityLevel?: number
     }
     social?: {
         friendsCount?: number
@@ -72,17 +73,16 @@ export default function PublicCardDisplay({
         }
     }, [size])
 
+    const getActivityLabel = (level?: number) => {
+        const labels = ['Sédentaire', '1-2x/sem', '3-4x/sem', '5-6x/sem', 'Quotidien']
+        return labels[level ?? 0] || 'Non défini'
+    }
+
     const renderPhysioStats = () => {
         const data = stats.physio
         if (!data) return null
         return (
             <div className="grid grid-cols-2 gap-2">
-                {data.weight && (
-                    <div className="text-center">
-                        <div className="text-xl font-light">{data.weight}</div>
-                        <div className="text-[10px] opacity-80">kg</div>
-                    </div>
-                )}
                 {data.height && (
                     <div className="text-center">
                         <div className="text-xl font-light">{data.height}</div>
@@ -99,6 +99,12 @@ export default function PublicCardDisplay({
                     <div className="text-center">
                         <div className="text-xl font-light">{data.age}</div>
                         <div className="text-[10px] opacity-80">ans</div>
+                    </div>
+                )}
+                {data.activityLevel !== undefined && (
+                    <div className="text-center">
+                        <div className="text-sm font-medium">{getActivityLabel(data.activityLevel)}</div>
+                        <div className="text-[10px] opacity-80">entraînement</div>
                     </div>
                 )}
             </div>
