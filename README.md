@@ -91,10 +91,10 @@ The application is divided into 5 core modules, each representing a pillar of th
 - **Categories:** Physical, Mental, Social, Exploration rewards.
 - **Progress Tracking:** XP bars for leveling up different life areas.
 
-### � Module E: Social (TrueCircle)
+### 👥 Module E: Social (TrueCircle)
 *Dunbar's Number visualization and relationship management.*
-- **The Sphere:** A 3D "Liquid Glass" sphere visualizing social proximity. Inner nodes = closer friends.
-- **Dunbar Circles:** Categorization of contacts (Intimates, Close Friends, Casual, Acquaintances).
+- **The Sphere:** A 3D "Liquid Glass" sphere visualizing social proximity.
+- **Two-Tier System:** Categorization into **Inner Circle** (Proche) and **Friends** (Amis).
 - **Interactions:** Tracking "Time Since Last Contact" to prompt reconnections.
 - **Rankings:** Leaderboards for social activity and fitness comparisons.
 - **iOS Roadmap:** **SceneKit** or **Metal** for rendering the 3D sphere natively with 60fps performance.
@@ -166,6 +166,11 @@ STATS implements a **modern gesture-based navigation system** that enhances the 
 │   ├── ProfileView.tsx          # User Profile (ViewSheet)
 │   └── SettingsView.tsx         # App Settings (ViewSheet)
 ├── Modals/                      # Sheet overlays (Detail views)
+│   ├── UserSearchModal.tsx      # Find users and send requests
+│   ├── FriendProfileModal.tsx   # Friend details and management
+│   ├── CompareWithFriendModal.tsx
+│   ├── HarmonyHistoryModal.tsx
+│   └── [Other feature-specific modals...]
 ├── Cards/                       # Reusable widgets (StatCard, PhysioCard)
 ├── UI/                          # Atomic design elements (Buttons, Headers)
 └── Visualizations/              # Three.js/Canvas complex renderings
@@ -189,10 +194,8 @@ STATS implements a **modern gesture-based navigation system** that enhances the 
 └── useProfileData.ts            # User profile, avatar, username
 
 /data                            # 🌐 VISITOR MODE DATA SOURCE
-├── mockData.ts                  # Main demo profile (Jeffrey)
-├── demoHealthData.ts            # 30 days of sample health records
-├── demoSocialData.ts            # Demo contacts and social graph
-└── demoTravelData.ts            # Demo trips and countries
+├── mockData.ts                  # Main demo profile (Jeffrey) and all Demo Data
+└── worldData.ts                 # ISO codes and global travel data
 
 /utils
 └── supabase/

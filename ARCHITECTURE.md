@@ -43,6 +43,8 @@ New users see **0% for all modules** with "Aucune donnée" subtitle until they a
 │   └── SettingsView.tsx    # App Settings (ViewSheet overlay)
 ├── Modals/                 # Detail Views (Sheet Presentations)
 │   ├── Modal.tsx           # Reusable accessible modal base
+│   ├── UserSearchModal.tsx # Search & Add Friends
+│   ├── FriendProfileModal.tsx # Friend management
 │   ├── HarmonyHistoryModal.tsx
 │   ├── CareerGoalModal.tsx
 │   └── CountryDetailModal.tsx
@@ -263,19 +265,18 @@ public.body_measurements
   - muscle_mass (numeric) -- kg
 
 -- Social module tables
-public.contacts
+public.friendships
   - id (uuid, primary key)
   - user_id (uuid, references auth.users)
-  - name (text)
-  - category (text) -- 'intimate', 'close', 'casual', 'acquaintance'
-  - last_interaction (date)
-  - trust_level (integer) -- 1-10
+  - friend_id (uuid, references auth.users)
+  - rank (text) -- 'cercle_proche' | 'amis'
+  - created_at (timestamp)
 
-public.connections
+public.friend_requests
   - id (uuid, primary key)
-  - user_id (uuid, references auth.users)
-  - connected_user_id (uuid, references auth.users)
-  - status (text) -- 'pending', 'accepted', 'blocked'
+  - sender_id (uuid, references auth.users)
+  - receiver_id (uuid, references auth.users)
+  - status (text) -- 'pending', 'accepted', 'declined'
   - created_at (timestamp)
 
 -- Travel module tables
@@ -533,10 +534,11 @@ public.friend_requests
   - created_at (timestamp)
 
 public.friendships
+  - id (uuid, primary key)
   - user_id (uuid, references auth.users)
   - friend_id (uuid, references auth.users)
+  - rank (text) -- 'cercle_proche' | 'amis'
   - created_at (timestamp)
-  - PRIMARY KEY (user_id, friend_id)
 ```
 
 **Hook: `useFriendRequests()`**

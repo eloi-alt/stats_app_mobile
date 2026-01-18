@@ -186,11 +186,11 @@ export default function CompareWithFriendModal({
                         style={{ background: 'rgba(139, 168, 136, 0.08)' }}
                     >
                         <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            You&apos;re ahead in{' '}
+                            {t('aheadIn')}{' '}
                             <span style={{ color: 'var(--accent-sage)', fontWeight: 500 }}>
                                 {categories.filter(c => userStats[c.key as keyof typeof userStats] > friendStats[c.key as keyof typeof friendStats]).length}
                             </span>
-                            {' '}of 5 categories
+                            {' '}{t('ofCategories')}
                         </span>
                     </div>
                 </>

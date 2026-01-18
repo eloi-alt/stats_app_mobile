@@ -69,7 +69,7 @@ graph TD
     C --> G[Load DEMO_TRIPS]
     
     D --> H[Query: SELECT * FROM sleep_records WHERE user_id = ...]
-    D --> I[Query: SELECT * FROM contacts WHERE user_id = ...]
+    D --> I[Query: SELECT * FROM friendships WHERE user_id = ...]
     D --> J[Query: SELECT * FROM trips WHERE user_id = ...]
     
     E --> K[Render UI with Demo Data]
@@ -149,11 +149,8 @@ export function useHealthData() {
 
 ```
 /data/
-├── mockData.ts           # Main user profile (Jeffrey)
-├── demoHealthData.ts     # Sleep, sport, nutrition records
-├── demoSocialData.ts     # Contacts, social graph
-├── demoTravelData.ts     # Countries, trips
-└── demoFinancialData.ts  # Assets, career goals
+├── mockData.ts           # Main user profile (Jeffrey) containing health, social, finance
+├── worldData.ts          # Travel data and friend trips
 ```
 
 **Format:** TypeScript constants exported as arrays/objects
@@ -183,7 +180,7 @@ Supabase PostgreSQL Database
 ├── public.profiles         # User metadata (username, avatar)
 ├── public.sleep_records    # Health data
 ├── public.sport_sessions   # Workouts
-├── public.contacts         # Social connections
+├── public.friendships      # Social connections
 ├── public.trips            # Travel history
 └── public.assets           # Financial data
 ```

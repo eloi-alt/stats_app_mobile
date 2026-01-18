@@ -102,8 +102,8 @@ public.profiles          # Métadonnées utilisateur (username, avatar)
 public.sleep_records     # Enregistrements de sommeil
 public.sport_sessions    # Séances de sport
 public.body_measurements # Mesures corporelles
-public.contacts          # Contacts sociaux
-public.connections       # Demandes d'ami/connexions
+public.friendships       # Relations amis (Cercle proche / Amis)
+public.friend_requests   # Demandes d'amis
 public.countries         # Pays visités
 public.trips             # Historique de voyages
 public.assets            # Portfolio financier

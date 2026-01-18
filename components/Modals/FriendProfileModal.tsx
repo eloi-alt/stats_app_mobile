@@ -6,6 +6,7 @@ import PublicCardDisplay, { PublicCardCategory, PublicCardStats } from '../Cards
 import { supabase } from '@/utils/supabase/client'
 import { useFriendContextOptional } from '@/contexts/FriendContext'
 import haptics from '@/utils/haptics'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface UserProfile {
     id: string
@@ -35,6 +36,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
     const [isLoading, setIsLoading] = useState(false)
     const [requestStatus, setRequestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
     const [requestError, setRequestError] = useState<string | null>(null)
+    const { t } = useLanguage()
 
     const friendContext = useFriendContextOptional()
 
@@ -115,7 +117,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
         }
         if (profile.firstName) return profile.firstName
         if (profile.username) return profile.username
-        return 'Utilisateur'
+        return t('user')
     }
 
     const handleAddFriend = async () => {
@@ -242,7 +244,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                     }}
                                 >
                                     <i className="fa-solid fa-star text-xs" />
-                                    {userProfile.harmonyScore}% Harmonie
+                                    {userProfile.harmonyScore}% {t('harmony')}
                                 </div>
                             )}
                         </div>
@@ -255,7 +257,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                     className="text-[10px] uppercase tracking-[0.2em] font-medium mb-2 text-center"
                                     style={{ color: 'var(--text-tertiary)' }}
                                 >
-                                    Proximité
+                                    {t('proximity')}
                                 </div>
                                 <div className="flex gap-2 mb-4">
                                     <button
@@ -279,7 +281,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                         }}
                                     >
                                         <i className="fa-solid fa-star mr-2" />
-                                        Ami proche
+                                        {t('closeFriend')}
                                     </button>
                                     <button
                                         onClick={async () => {
@@ -302,7 +304,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                         }}
                                     >
                                         <i className="fa-solid fa-user mr-2" />
-                                        Ami
+                                        {t('amis')}
                                     </button>
                                 </div>
 
@@ -320,7 +322,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                         }}
                                     >
                                         <i className={`fa-solid ${friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche' ? 'fa-star' : 'fa-user-check'}`} />
-                                        {friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche' ? 'Cercle Proche' : 'Ami'}
+                                        {friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche' ? t('closeFriend') : t('amis')}
                                     </div>
                                 </div>
                             </div>
@@ -333,7 +335,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                     className="text-xs uppercase tracking-widest mb-3"
                                     style={{ color: 'var(--text-muted)' }}
                                 >
-                                    Carte Publique
+                                    {t('publicCard')}
                                 </p>
                                 <PublicCardDisplay
                                     imageUrl={publicCard.imageUrl}
@@ -363,13 +365,13 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                     className="text-sm"
                                     style={{ color: 'var(--text-secondary)' }}
                                 >
-                                    Pas de carte publique
+                                    {t('noPublicCard')}
                                 </p>
                                 <p
                                     className="text-xs mt-1"
                                     style={{ color: 'var(--text-muted)' }}
                                 >
-                                    Cet utilisateur n&apos;a pas encore créé de carte
+                                    {t('noPublicCardDesc')}
                                 </p>
                             </div>
                         )}
@@ -401,12 +403,13 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                                 border: '1px solid var(--border-light)'
                                             }}
                                         >
-                                            Fermer
+
+                                            {t('close')}
                                         </button>
                                         <button
                                             onClick={async () => {
                                                 if (!userProfile) return
-                                                if (confirm('Voulez-vous vraiment supprimer cet ami ?')) {
+                                                if (confirm(t('confirmDeleteFriend'))) {
                                                     haptics.medium()
                                                     const result = await friendContext.deleteFriend(userProfile.id)
                                                     if (result.success) {
@@ -425,7 +428,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                             }}
                                         >
                                             <i className="fa-solid fa-user-minus mr-2" />
-                                            Supprimer de mes amis
+                                            {t('removeFriend')}
                                         </button>
                                     </div>
                                 ) : relationshipStatus === 'pending_sent' || requestStatus === 'sent' ? (
@@ -436,69 +439,76 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                             color: 'var(--accent-lavender)'
                                         }}
                                     >
-                                        <i className="fa-solid fa-clock mr-2" />
-                                        Demande envoyée
-                                    </div>
-                                ) : relationshipStatus === 'pending_received' ? (
-                                    <div
-                                        className="w-full py-4 rounded-2xl text-sm font-medium text-center"
-                                        style={{
-                                            background: 'rgba(201, 169, 98, 0.1)',
-                                            color: 'var(--accent-gold)'
-                                        }}
-                                    >
-                                        <i className="fa-solid fa-inbox mr-2" />
-                                        A envoyé une demande
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={handleAddFriend}
-                                        disabled={requestStatus === 'sending'}
-                                        className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-95"
-                                        style={{
-                                            background: 'var(--accent-sage)',
-                                            color: 'white',
-                                            opacity: requestStatus === 'sending' ? 0.7 : 1
-                                        }}
-                                    >
-                                        {requestStatus === 'sending' ? (
-                                            <>
-                                                <i className="fa-solid fa-spinner fa-spin mr-2" />
-                                                Envoi...
-                                            </>
+                                        <div
+                                            className="w-full py-4 rounded-2xl text-sm font-medium text-center"
+                                            style={{
+                                                background: 'rgba(184, 165, 212, 0.1)',
+                                                color: 'var(--accent-lavender)'
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-clock mr-2" />
+                                            {t('requestSent')}
+                                        </div>
+                                        ) : relationshipStatus === 'pending_received' ? (
+                                        <div
+                                            className="w-full py-4 rounded-2xl text-sm font-medium text-center"
+                                            style={{
+                                                background: 'rgba(201, 169, 98, 0.1)',
+                                                color: 'var(--accent-gold)'
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-inbox mr-2" />
+                                            {t('hasSentRequest')}
+                                        </div>
                                         ) : (
-                                            <>
-                                                <i className="fa-solid fa-user-plus mr-2" />
-                                                Ajouter en ami
-                                            </>
-                                        )}
-                                    </button>
+                                        <button
+                                            onClick={handleAddFriend}
+                                            disabled={requestStatus === 'sending'}
+                                            className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-95"
+                                            style={{
+                                                background: 'var(--accent-sage)',
+                                                color: 'white',
+                                                opacity: requestStatus === 'sending' ? 0.7 : 1
+                                            }}
+                                        >
+                                            {requestStatus === 'sending' ? (
+                                                <>
+                                                    <i className="fa-solid fa-spinner fa-spin mr-2" />
+                                                    {t('sending')}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i className="fa-solid fa-user-plus mr-2" />
+                                                    {t('addFriend')}
+                                                </>
+                                            )}
+                                        </button>
                                 )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* User not found */}
+                        {!isLoading && !userProfile && (
+                            <div className="text-center py-16">
+                                <div
+                                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                                    style={{ background: 'var(--bg-secondary)' }}
+                                >
+                                    <i
+                                        className="fa-solid fa-user-slash text-xl"
+                                        style={{ color: 'var(--text-muted)' }}
+                                    />
+                                </div>
+                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                    {t('userNotFound')}
+                                </p>
                             </div>
                         )}
-                    </>
-                )}
-
-                {/* User not found */}
-                {!isLoading && !userProfile && (
-                    <div className="text-center py-16">
-                        <div
-                            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
-                            style={{ background: 'var(--bg-secondary)' }}
-                        >
-                            <i
-                                className="fa-solid fa-user-slash text-xl"
-                                style={{ color: 'var(--text-muted)' }}
-                            />
-                        </div>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            Utilisateur non trouvé
-                        </p>
                     </div>
-                )}
-            </div>
 
-            <style jsx>{`
+                <style jsx>{`
                 @keyframes slide-up {
                     from { transform: translateY(100%); }
                     to { transform: translateY(0); }
@@ -507,7 +517,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                     animation: slide-up 0.3s ease-out;
                 }
             `}</style>
-        </div>,
-        document.body
-    )
+            </div>,
+            document.body
+            )
 }

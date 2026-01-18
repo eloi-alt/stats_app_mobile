@@ -152,30 +152,15 @@ FLUX DE DONNÉES:
 ```
 📁 /data/
 ├── 📄 mockData.ts
-│   ├── userProfile (Jeffrey)
-│   ├── harmonyScore
-│   └── achievements
+│   ├── ThomasMorel (Jeffrey Persona)
+│   ├── moduleA (Health: Sleep, Sport, Nutrition)
+│   ├── moduleC (Finance: Assets, Career)
+│   └── Performance (Global & Module Scores)
 │
-├── 📄 demoHealthData.ts
-│   ├── DEMO_SLEEP_RECORDS (30 jours)
-│   ├── DEMO_SPORT_SESSIONS
-│   ├── DEMO_BODY_MEASUREMENTS
-│   └── DEMO_NUTRITION_LOGS
-│
-├── 📄 demoSocialData.ts
-│   ├── DEMO_CONTACTS (TrueCircle)
-│   ├── DEMO_CONNECTIONS
-│   └── DEMO_RANKINGS
-│
-├── 📄 demoTravelData.ts
-│   ├── DEMO_COUNTRIES (visités)
-│   ├── DEMO_TRIPS
-│   └── DEMO_LOCATIONS
-│
-└── 📄 demoFinancialData.ts
-    ├── DEMO_ASSETS (patrimoine)
-    ├── DEMO_CAREER_GOALS
-    └── DEMO_SKILLS
+└── 📄 worldData.ts
+    ├── USER_TRIPS (Eloi/Demo Trips)
+    ├── FRIENDS_DATA (Travel profiles for friends)
+    └── COUNTRY_CODES (ISO mappings)
 ```
 
 ---
@@ -205,14 +190,14 @@ FLUX DE DONNÉES:
 │   ├── activity_type, duration
 │   └── distance, calories
 │
-├── 👥 public.contacts
-│   ├── id, user_id, name
-│   ├── category (intimate/close/casual)
-│   └── last_interaction
+├── 👥 public.friendships
+│   ├── id, user_id, friend_id
+│   ├── rank (proche/amis)
+│   └── created_at
 │
-├── 🔗 public.connections
-│   ├── id, user_id
-│   ├── connected_user_id
+├── 🔗 public.friend_requests
+│   ├── id, sender_id
+│   ├── receiver_id
 │   └── status (pending/accepted)
 │
 ├── 🌍 public.countries
@@ -371,7 +356,7 @@ export function useModuleData() {
 
 ```
 ✅ useHealthData()     → sleep_records, sport_sessions, body_measurements
-✅ useSocialData()     → contacts, connections, rankings
+✅ useSocialData()     → friendships, friend_requests, rankings
 ✅ useTravelData()     → countries, trips, locations
 ✅ useFinancialData()  → assets, career_goals, skills
 ✅ useProfileData()    → profiles (username, avatar)
@@ -603,7 +588,7 @@ STATS_APP/
 │
 ├── /hooks                          # 🔀 HOOKS DUAL-MODE
 │   ├── useHealthData.ts            # 💤 Données santé
-│   ├── useSocialData.ts            # 👥 Données social
+│   ├── useSocialData.ts            # 👥 Données social (friendships)
 │   ├── useTravelData.ts            # 🌍 Données voyages
 │   ├── useFinancialData.ts         # 💰 Données finance
 │   └── useProfileData.ts           # 👤 Profil utilisateur
@@ -611,7 +596,7 @@ STATS_APP/
 ├── /data                           # 🌐 DONNÉES MODE VISITEUR
 │   ├── mockData.ts                 # Profil Jeffrey
 │   ├── demoHealthData.ts           # Sommeil, sport, nutrition
-│   ├── demoSocialData.ts           # Contacts, connexions
+│   ├── demoSocialData.ts           # Friendships, requests
 │   ├── demoTravelData.ts           # Pays, voyages
 │   └── demoFinancialData.ts        # Actifs, carrière
 │

@@ -6,6 +6,7 @@ import PublicCardDisplay, { PublicCardCategory, PublicCardStats } from '../Cards
 import { supabase } from '@/utils/supabase/client'
 import { useFriendRequests } from '@/hooks/useFriendRequests'
 import haptics from '@/utils/haptics'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface UserSearchResult {
     id: string
@@ -43,6 +44,7 @@ export default function UserSearchModal({
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
     const [requestStatus, setRequestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
     const [requestError, setRequestError] = useState<string | null>(null)
+    const { t } = useLanguage()
 
     // Get current user
     useEffect(() => {
@@ -189,7 +191,7 @@ export default function UserSearchModal({
         }
         if (user.firstName) return user.firstName
         if (user.username) return user.username
-        return 'Utilisateur'
+        return t('user')
     }
 
     // Get relationship status for selected user
@@ -221,7 +223,8 @@ export default function UserSearchModal({
                     style={{ color: 'var(--text-secondary)' }}
                 >
                     <i className="fa-solid fa-chevron-left" />
-                    <span>Retour aux résultats</span>
+                    <i className="fa-solid fa-chevron-left" />
+                    <span>{t('backToResults')}</span>
                 </button>
 
                 {/* Loading */}
@@ -281,7 +284,8 @@ export default function UserSearchModal({
                                 }}
                             >
                                 <i className="fa-solid fa-star text-xs" />
-                                {selectedUser.harmonyScore}% Harmonie
+                                <i className="fa-solid fa-star text-xs" />
+                                {selectedUser.harmonyScore}% {t('harmony')}
                             </div>
                         )}
                     </div>
@@ -294,7 +298,7 @@ export default function UserSearchModal({
                             className="text-xs uppercase tracking-widest mb-3"
                             style={{ color: 'var(--text-muted)' }}
                         >
-                            Carte Publique
+                            {t('publicCard')}
                         </p>
                         <PublicCardDisplay
                             imageUrl={selectedUserCard.imageUrl}
@@ -324,13 +328,13 @@ export default function UserSearchModal({
                             className="text-sm"
                             style={{ color: 'var(--text-secondary)' }}
                         >
-                            Pas de carte publique
+                            {t('noPublicCard')}
                         </p>
                         <p
                             className="text-xs mt-1"
                             style={{ color: 'var(--text-muted)' }}
                         >
-                            Cet utilisateur n'a pas encore créé de carte
+                            {t('noPublicCardDesc')}
                         </p>
                     </div>
                 )}
@@ -359,7 +363,7 @@ export default function UserSearchModal({
                                         className="text-[10px] uppercase tracking-[0.2em] font-medium mb-2 text-center"
                                         style={{ color: 'var(--text-tertiary)' }}
                                     >
-                                        Proximité
+                                        {t('proximity')}
                                     </div>
                                     <div className="flex gap-2 mb-4">
                                         <button
@@ -384,7 +388,7 @@ export default function UserSearchModal({
                                             }}
                                         >
                                             <i className="fa-solid fa-star mr-2" />
-                                            Ami proche
+                                            {t('closeFriend')}
                                         </button>
                                         <button
                                             onClick={async () => {
@@ -408,7 +412,7 @@ export default function UserSearchModal({
                                             }}
                                         >
                                             <i className="fa-solid fa-user mr-2" />
-                                            Ami
+                                            {t('amis')}
                                         </button>
                                     </div>
                                 </div>
@@ -426,14 +430,14 @@ export default function UserSearchModal({
                                     }}
                                 >
                                     <i className={`fa-solid ${getFriendRank(selectedUser?.id || '') === 'cercle_proche' ? 'fa-star' : 'fa-check'} mr-2`} />
-                                    {getFriendRank(selectedUser?.id || '') === 'cercle_proche' ? 'Cercle Proche' : 'Déjà amis'}
+                                    {getFriendRank(selectedUser?.id || '') === 'cercle_proche' ? t('closeFriend') : t('alreadyFriends')}
                                 </div>
 
                                 {/* Delete Friend Button */}
                                 <button
                                     onClick={async () => {
                                         if (!selectedUser) return
-                                        if (confirm('Voulez-vous vraiment supprimer cet ami ?')) {
+                                        if (confirm(t('confirmDeleteFriend'))) {
                                             haptics.medium()
                                             const result = await deleteFriend(selectedUser.id)
                                             if (result.success) {
@@ -453,7 +457,7 @@ export default function UserSearchModal({
                                     }}
                                 >
                                     <i className="fa-solid fa-user-minus mr-2" />
-                                    Supprimer de mes amis
+                                    {t('removeFriend')}
                                 </button>
                             </div>
                         ) : relationshipStatus === 'pending_sent' || requestStatus === 'sent' ? (
@@ -465,7 +469,7 @@ export default function UserSearchModal({
                                 }}
                             >
                                 <i className="fa-solid fa-clock mr-2" />
-                                Demande envoyée
+                                {t('requestSent')}
                             </div>
                         ) : (
                             <button
@@ -481,12 +485,12 @@ export default function UserSearchModal({
                                 {requestStatus === 'sending' ? (
                                     <>
                                         <i className="fa-solid fa-spinner fa-spin mr-2" />
-                                        Envoi...
+                                        {t('sending')}
                                     </>
                                 ) : (
                                     <>
                                         <i className="fa-solid fa-user-plus mr-2" />
-                                        Ajouter en ami
+                                        {t('addFriend')}
                                     </>
                                 )}
                             </button>
@@ -503,7 +507,7 @@ export default function UserSearchModal({
     const renderSearchView = () => (
         <div className="px-2">
             <h2 className="text-lg font-medium mb-4" style={{ color: 'var(--text-primary)' }}>
-                Rechercher un utilisateur
+                {t('searchUser')}
             </h2>
 
             <div className="relative mb-4">
@@ -517,7 +521,7 @@ export default function UserSearchModal({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Nom d'utilisateur, prénom ou nom..."
+                    placeholder={t('searchPlaceholder')}
                     className="w-full pl-11 pr-4 py-3 rounded-xl text-sm"
                     style={{
                         background: 'var(--bg-secondary)',
@@ -628,10 +632,10 @@ export default function UserSearchModal({
                         />
                     </div>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        Aucun utilisateur trouvé
+                        {t('noUserFound')}
                     </p>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                        Essayez un autre nom d'utilisateur
+                        {t('tryAnotherUsername')}
                     </p>
                 </div>
             )}
@@ -648,10 +652,10 @@ export default function UserSearchModal({
                         />
                     </div>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        Recherchez des utilisateurs
+                        {t('searchUsersCTA')}
                     </p>
                     <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                        Par nom d'utilisateur, prénom ou nom
+                        {t('searchUsersDesc')}
                     </p>
                 </div>
             )}
