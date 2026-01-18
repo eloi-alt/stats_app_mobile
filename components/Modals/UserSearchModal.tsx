@@ -348,19 +348,113 @@ export default function UserSearchModal({
                     </div>
                 )}
 
-                {/* Add Friend Button - contextual */}
+                {/* Friend Actions - contextual */}
                 {!isLoadingCard && currentUserId && (
                     <div className="mt-6">
                         {relationshipStatus === 'friends' ? (
-                            <div
-                                className="w-full py-4 rounded-2xl text-sm font-medium text-center"
-                                style={{
-                                    background: 'rgba(139, 168, 136, 0.1)',
-                                    color: 'var(--accent-sage)'
-                                }}
-                            >
-                                <i className="fa-solid fa-check mr-2" />
-                                Déjà amis
+                            <div className="space-y-4">
+                                {/* Rank Selector */}
+                                <div>
+                                    <div
+                                        className="text-[10px] uppercase tracking-[0.2em] font-medium mb-2 text-center"
+                                        style={{ color: 'var(--text-tertiary)' }}
+                                    >
+                                        Proximité
+                                    </div>
+                                    <div className="flex gap-2 mb-4">
+                                        <button
+                                            onClick={async () => {
+                                                if (selectedUser && getFriendRank(selectedUser.id) !== 'cercle_proche') {
+                                                    haptics.medium()
+                                                    await updateFriendRank(selectedUser.id, 'cercle_proche')
+                                                    await refetch()
+                                                }
+                                            }}
+                                            className="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all active:scale-95"
+                                            style={{
+                                                background: getFriendRank(selectedUser?.id || '') === 'cercle_proche'
+                                                    ? 'var(--accent-gold)'
+                                                    : 'var(--glass-bg)',
+                                                color: getFriendRank(selectedUser?.id || '') === 'cercle_proche'
+                                                    ? 'white'
+                                                    : 'var(--text-secondary)',
+                                                border: '1px solid ' + (getFriendRank(selectedUser?.id || '') === 'cercle_proche'
+                                                    ? 'transparent'
+                                                    : 'var(--border-light)')
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-star mr-2" />
+                                            Ami proche
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                if (selectedUser && getFriendRank(selectedUser.id) !== 'amis') {
+                                                    haptics.medium()
+                                                    await updateFriendRank(selectedUser.id, 'amis')
+                                                    await refetch()
+                                                }
+                                            }}
+                                            className="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all active:scale-95"
+                                            style={{
+                                                background: getFriendRank(selectedUser?.id || '') === 'amis'
+                                                    ? 'var(--accent-sage)'
+                                                    : 'var(--glass-bg)',
+                                                color: getFriendRank(selectedUser?.id || '') === 'amis'
+                                                    ? 'white'
+                                                    : 'var(--text-secondary)',
+                                                border: '1px solid ' + (getFriendRank(selectedUser?.id || '') === 'amis'
+                                                    ? 'transparent'
+                                                    : 'var(--border-light)')
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-user mr-2" />
+                                            Ami
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Current Status Badge */}
+                                <div
+                                    className="w-full py-3 rounded-2xl text-sm font-medium text-center"
+                                    style={{
+                                        background: getFriendRank(selectedUser?.id || '') === 'cercle_proche'
+                                            ? 'rgba(201, 169, 98, 0.1)'
+                                            : 'rgba(139, 168, 136, 0.1)',
+                                        color: getFriendRank(selectedUser?.id || '') === 'cercle_proche'
+                                            ? 'var(--accent-gold)'
+                                            : 'var(--accent-sage)'
+                                    }}
+                                >
+                                    <i className={`fa-solid ${getFriendRank(selectedUser?.id || '') === 'cercle_proche' ? 'fa-star' : 'fa-check'} mr-2`} />
+                                    {getFriendRank(selectedUser?.id || '') === 'cercle_proche' ? 'Cercle Proche' : 'Déjà amis'}
+                                </div>
+
+                                {/* Delete Friend Button */}
+                                <button
+                                    onClick={async () => {
+                                        if (!selectedUser) return
+                                        if (confirm('Voulez-vous vraiment supprimer cet ami ?')) {
+                                            haptics.medium()
+                                            const result = await deleteFriend(selectedUser.id)
+                                            if (result.success) {
+                                                haptics.success()
+                                                await refetch()
+                                                handleBackToResults()
+                                            } else {
+                                                haptics.error()
+                                                setRequestError(result.error || 'Erreur lors de la suppression')
+                                            }
+                                        }
+                                    }}
+                                    className="w-full py-3 rounded-xl text-sm font-medium transition-all active:scale-95"
+                                    style={{
+                                        background: 'rgba(220, 80, 80, 0.1)',
+                                        color: '#DC5050'
+                                    }}
+                                >
+                                    <i className="fa-solid fa-user-minus mr-2" />
+                                    Supprimer de mes amis
+                                </button>
                             </div>
                         ) : relationshipStatus === 'pending_sent' || requestStatus === 'sent' ? (
                             <div

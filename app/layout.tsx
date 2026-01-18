@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { VisitorProvider } from '@/contexts/VisitorContext'
 import { AuthProvider } from '@/contexts/AuthContext'
 import LiquidBackground from '@/components/LiquidBackground'
+import FriendWrapper from '@/components/FriendWrapper'
 
 export const metadata: Metadata = {
   title: 'STATS | Ultimate Edition v2',
@@ -62,10 +63,12 @@ export default function RootLayout({
           <VisitorProvider>
             <ThemeProvider>
               <LanguageProvider>
-                <LiquidBackground />
-                <main className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden w-full relative" style={{ zIndex: 1 }}>
-                  {children}
-                </main>
+                <FriendWrapper>
+                  <LiquidBackground />
+                  <main className="flex min-h-screen flex-col items-center justify-center overflow-x-hidden w-full relative" style={{ zIndex: 1 }}>
+                    {children}
+                  </main>
+                </FriendWrapper>
               </LanguageProvider>
             </ThemeProvider>
           </VisitorProvider>
@@ -74,3 +77,4 @@ export default function RootLayout({
     </html>
   )
 }
+

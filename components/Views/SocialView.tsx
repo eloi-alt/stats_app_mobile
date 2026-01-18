@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Navbar from '../Navbar'
 import SocialSphere3D from '../SocialSphere3D'
 import ComparisonCard from '../Cards/ComparisonCard'
@@ -14,6 +14,8 @@ import { Contact, ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useVisitor } from '@/contexts/VisitorContext'
 import { useSocialData } from '@/hooks/useSocialData'
+import { useFriendContextOptional } from '@/contexts/FriendContext'
+import haptics from '@/utils/haptics'
 
 interface ComparisonDataItem {
   width: number
@@ -47,6 +49,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
   const { t } = useLanguage()
   const { isVisitor } = useVisitor()
   const socialData = useSocialData()
+  const friendContext = useFriendContextOptional()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [comparisonType, setComparisonType] = useState<'friends' | 'country' | 'world'>('friends')
   const [selectedContact, setSelectedContact] = useState<ContactDetailModal | null>(null)
@@ -94,6 +97,14 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
     setShowInteraction(`${action} ${contactName}...`)
     setTimeout(() => setShowInteraction(null), 2000)
   }
+
+  // Open a friend's public profile (if they have a linked Supabase account)
+  const openFriendProfile = useCallback((userId: string | undefined) => {
+    if (userId && friendContext) {
+      haptics.light()
+      friendContext.openFriendProfile(userId)
+    }
+  }, [friendContext])
 
   // Show empty state for authenticated users without any friends
   const showEmptyState = !isVisitor && !socialData.isLoading && !socialData.hasAnyFriends && contacts.length === 0
@@ -175,15 +186,14 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
       <div className="relative w-full mb-8 pointer-events-auto" style={{ height: '450px' }}>
         <SocialSphere3D
           userAvatar={ThomasMorel.identity.avatar}
-          contacts={ThomasMorel.moduleE.contacts
-            .filter(c => c.dunbarPriority === 'inner_circle')
-            .map(c => ({
-              id: c.id,
-              name: c.name,
-              relationshipType: 'close_friend',
-              avatar: c.avatar
-            }))
-          }
+          contacts={socialData.innerCircleFriends.map(f => ({
+            id: f.friend_id,
+            name: f.profile?.first_name && f.profile?.last_name
+              ? `${f.profile.first_name} ${f.profile.last_name}`
+              : f.profile?.username || 'Ami',
+            relationshipType: 'close_friend' as const,
+            avatar: f.profile?.avatar_url || ''
+          }))}
         />
 
         {/* TC Button - Opens full TrueCircle visualization */}

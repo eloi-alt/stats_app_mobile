@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { FriendCountryVisit, COUNTRY_NAMES } from '@/hooks/useTravelData'
+import { useFriendContextOptional } from '@/contexts/FriendContext'
 import FriendCountryCard from '../Cards/FriendCountryCard'
+import haptics from '@/utils/haptics'
 
 interface CountryFriendsModalProps {
     isOpen: boolean
@@ -34,6 +36,8 @@ export default function CountryFriendsModal({
     const [isLoading, setIsLoading] = useState(true)
     const [mounted, setMounted] = useState(false)
 
+    const friendContext = useFriendContextOptional()
+
     useEffect(() => {
         setMounted(true)
     }, [])
@@ -46,6 +50,14 @@ export default function CountryFriendsModal({
                 .finally(() => setIsLoading(false))
         }
     }, [isOpen, countryCode, getFriendsForCountry])
+
+    // Handle clicking a friend card to open their profile
+    const handleFriendClick = useCallback((userId: string) => {
+        if (friendContext && userId) {
+            haptics.light()
+            friendContext.openFriendProfile(userId)
+        }
+    }, [friendContext])
 
     if (!mounted || !isOpen) return null
 
@@ -104,7 +116,7 @@ export default function CountryFriendsModal({
                         <div className="text-center py-12">
                             <i className="fa-solid fa-users text-4xl mb-4 block" style={{ color: 'var(--text-tertiary)', opacity: 0.3 }} />
                             <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-                                Aucun ami n'a visité ce pays
+                                Aucun ami n&apos;a visité ce pays
                             </p>
                             <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
                                 Invitez vos amis à rejoindre STATS !
@@ -125,13 +137,14 @@ export default function CountryFriendsModal({
                                 </span>
                             </div>
 
-                            {/* Friends grid */}
+                            {/* Friends grid - now with click handlers */}
                             <div className="grid grid-cols-2 gap-3">
                                 {friends.map((friend) => (
                                     <FriendCountryCard
                                         key={`${friend.user_id}-${friend.country_code}`}
                                         friend={friend}
                                         countryName={COUNTRY_NAMES[friend.country_code] || friend.country_code}
+                                        onClick={() => handleFriendClick(friend.user_id)}
                                     />
                                 ))}
                             </div>
@@ -143,3 +156,4 @@ export default function CountryFriendsModal({
         document.body
     )
 }
+

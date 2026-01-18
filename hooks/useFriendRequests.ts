@@ -241,6 +241,50 @@ export function useFriendRequests(userId?: string) {
         return { success: true }
     }, [userId, fetchPendingRequests])
 
+    // Delete friend (bidirectional)
+    const deleteFriend = useCallback(async (friendId: string): Promise<{ success: boolean; error?: string }> => {
+        if (!userId) return { success: false, error: 'Not authenticated' }
+
+        // Delete both directions of friendship
+        const { error } = await supabase
+            .from('friendships')
+            .delete()
+            .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+
+        if (error) {
+            console.error('[FriendRequests] Error deleting friendship:', error)
+            return { success: false, error: 'Erreur lors de la suppression' }
+        }
+
+        await fetchFriendships()
+        return { success: true }
+    }, [userId, fetchFriendships])
+
+    // Update friend rank (bidirectional)
+    const updateFriendRank = useCallback(async (friendId: string, newRank: 'cercle_proche' | 'amis'): Promise<{ success: boolean; error?: string }> => {
+        if (!userId) return { success: false, error: 'Not authenticated' }
+
+        // Update both directions of friendship
+        const { error } = await supabase
+            .from('friendships')
+            .update({ rank: newRank })
+            .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
+
+        if (error) {
+            console.error('[FriendRequests] Error updating rank:', error)
+            return { success: false, error: 'Erreur lors de la mise à jour' }
+        }
+
+        await fetchFriendships()
+        return { success: true }
+    }, [userId, fetchFriendships])
+
+    // Get friend rank
+    const getFriendRank = useCallback((friendId: string): 'cercle_proche' | 'amis' | null => {
+        const friendship = friends.find(f => f.friendId === friendId)
+        return friendship?.rank ?? null
+    }, [friends])
+
     // Check if user is already a friend or has pending request
     const getRelationshipStatus = useCallback((targetUserId: string): 'none' | 'friends' | 'pending_sent' | 'pending_received' => {
         if (friends.some(f => f.friendId === targetUserId)) {
@@ -283,6 +327,9 @@ export function useFriendRequests(userId?: string) {
         sendFriendRequest,
         acceptFriendRequest,
         rejectFriendRequest,
+        deleteFriend,
+        updateFriendRank,
+        getFriendRank,
         getRelationshipStatus,
         refetch: async () => {
             await Promise.all([

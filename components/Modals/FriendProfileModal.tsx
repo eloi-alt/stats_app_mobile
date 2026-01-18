@@ -1,0 +1,513 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
+import PublicCardDisplay, { PublicCardCategory, PublicCardStats } from '../Cards/PublicCardDisplay'
+import { supabase } from '@/utils/supabase/client'
+import { useFriendContextOptional } from '@/contexts/FriendContext'
+import haptics from '@/utils/haptics'
+
+interface UserProfile {
+    id: string
+    username: string | null
+    firstName: string | null
+    lastName: string | null
+    avatarUrl: string | null
+    harmonyScore: number | null
+}
+
+interface PublicCard {
+    imageUrl: string
+    category: PublicCardCategory
+    stats: PublicCardStats
+}
+
+interface FriendProfileModalProps {
+    isOpen: boolean
+    userId: string | null
+    onClose: () => void
+}
+
+export default function FriendProfileModal({ isOpen, userId, onClose }: FriendProfileModalProps) {
+    const [mounted, setMounted] = useState(false)
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null)
+    const [publicCard, setPublicCard] = useState<PublicCard | null>(null)
+    const [isLoading, setIsLoading] = useState(false)
+    const [requestStatus, setRequestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+    const [requestError, setRequestError] = useState<string | null>(null)
+
+    const friendContext = useFriendContextOptional()
+
+    useEffect(() => {
+        setMounted(true)
+    }, [])
+
+    // Load user profile when userId changes
+    useEffect(() => {
+        if (!userId || !isOpen) {
+            setUserProfile(null)
+            setPublicCard(null)
+            setRequestStatus('idle')
+            setRequestError(null)
+            return
+        }
+
+        loadUserProfile(userId)
+    }, [userId, isOpen])
+
+    const loadUserProfile = async (id: string) => {
+        setIsLoading(true)
+        setRequestStatus('idle')
+        setRequestError(null)
+
+        try {
+            // Load user profile
+            const { data: profileData, error: profileError } = await supabase
+                .from('profiles')
+                .select('id, username, first_name, last_name, avatar_url, harmony_score')
+                .eq('id', id)
+                .single()
+
+            if (profileError || !profileData) {
+                console.error('[FriendProfileModal] Error loading profile:', profileError)
+                setUserProfile(null)
+                setIsLoading(false)
+                return
+            }
+
+            setUserProfile({
+                id: profileData.id,
+                username: profileData.username,
+                firstName: profileData.first_name,
+                lastName: profileData.last_name,
+                avatarUrl: profileData.avatar_url,
+                harmonyScore: profileData.harmony_score
+            })
+
+            // Load public card
+            const { data: cardData, error: cardError } = await supabase
+                .from('public_cards')
+                .select('image_url, category, stats_snapshot')
+                .eq('user_id', id)
+                .single()
+
+            if (!cardError && cardData) {
+                const category = cardData.category as PublicCardCategory
+                const statsSnapshot = cardData.stats_snapshot || {}
+                setPublicCard({
+                    imageUrl: cardData.image_url,
+                    category: category,
+                    stats: { [category]: statsSnapshot }
+                })
+            } else {
+                setPublicCard(null)
+            }
+        } catch (err) {
+            console.error('[FriendProfileModal] Error:', err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const getDisplayName = (profile: UserProfile): string => {
+        if (profile.firstName && profile.lastName) {
+            return `${profile.firstName} ${profile.lastName}`
+        }
+        if (profile.firstName) return profile.firstName
+        if (profile.username) return profile.username
+        return 'Utilisateur'
+    }
+
+    const handleAddFriend = async () => {
+        if (!userProfile || !friendContext) return
+
+        setRequestStatus('sending')
+        setRequestError(null)
+        haptics.medium()
+
+        const result = await friendContext.sendFriendRequest(userProfile.id)
+
+        if (result.success) {
+            setRequestStatus('sent')
+            haptics.success()
+            await friendContext.refetch()
+        } else {
+            setRequestStatus('error')
+            setRequestError(result.error || 'Erreur inconnue')
+            haptics.error()
+        }
+    }
+
+    const handleClose = useCallback(() => {
+        onClose()
+    }, [onClose])
+
+    // Get relationship status
+    const relationshipStatus = userProfile && friendContext
+        ? friendContext.getRelationshipStatus(userProfile.id)
+        : 'none'
+
+    if (!mounted || !isOpen || !userId) return null
+
+    return createPortal(
+        <div
+            className="fixed inset-0 z-[99999] flex items-end justify-center"
+            onClick={handleClose}
+        >
+            {/* Backdrop */}
+            <div
+                className="absolute inset-0 backdrop-blur-md"
+                style={{ background: 'rgba(0, 0, 0, 0.4)' }}
+            />
+
+            {/* Modal */}
+            <div
+                onClick={(e) => e.stopPropagation()}
+                className="relative w-full max-w-lg rounded-t-[32px] pb-safe pt-6 px-5 animate-slide-up"
+                style={{
+                    background: 'var(--bg-elevated)',
+                    maxHeight: '90vh',
+                    overflowY: 'auto',
+                    boxShadow: '0 -8px 40px rgba(0, 0, 0, 0.15)'
+                }}
+            >
+                {/* Handle */}
+                <div className="w-10 h-1 rounded-full bg-black/10 mx-auto mb-6" />
+
+                {/* Close button */}
+                <button
+                    onClick={handleClose}
+                    className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
+                    style={{ background: 'rgba(0, 0, 0, 0.04)', color: 'var(--text-tertiary)' }}
+                >
+                    <i className="fa-solid fa-xmark text-sm" />
+                </button>
+
+                {/* Loading */}
+                {isLoading && (
+                    <div className="flex items-center justify-center py-16">
+                        <div
+                            className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+                            style={{ borderColor: 'var(--accent-lavender) transparent transparent transparent' }}
+                        />
+                    </div>
+                )}
+
+                {/* User Profile */}
+                {!isLoading && userProfile && (
+                    <>
+                        {/* Header */}
+                        <div className="text-center mb-6">
+                            <div
+                                className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden"
+                                style={{
+                                    background: userProfile.avatarUrl ? 'transparent' : 'var(--bg-secondary)'
+                                }}
+                            >
+                                {userProfile.avatarUrl ? (
+                                    <img
+                                        src={userProfile.avatarUrl}
+                                        alt={getDisplayName(userProfile)}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center">
+                                        <i
+                                            className="fa-solid fa-user text-2xl"
+                                            style={{ color: 'var(--text-muted)' }}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <h3
+                                className="text-lg font-medium"
+                                style={{ color: 'var(--text-primary)' }}
+                            >
+                                {getDisplayName(userProfile)}
+                            </h3>
+                            {userProfile.username && (
+                                <p
+                                    className="text-sm"
+                                    style={{ color: 'var(--text-tertiary)' }}
+                                >
+                                    @{userProfile.username}
+                                </p>
+                            )}
+                            {userProfile.harmonyScore !== null && userProfile.harmonyScore > 0 && (
+                                <div
+                                    className="inline-flex items-center gap-1 px-3 py-1 rounded-full mt-2 text-sm"
+                                    style={{
+                                        background: 'rgba(139, 168, 136, 0.1)',
+                                        color: 'var(--accent-sage)'
+                                    }}
+                                >
+                                    <i className="fa-solid fa-star text-xs" />
+                                    {userProfile.harmonyScore}% Harmonie
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Friend Management */}
+                        {relationshipStatus === 'friends' && friendContext && (
+                            <div className="mb-6">
+                                {/* Rank Selector */}
+                                <div
+                                    className="text-[10px] uppercase tracking-[0.2em] font-medium mb-2 text-center"
+                                    style={{ color: 'var(--text-tertiary)' }}
+                                >
+                                    Proximité
+                                </div>
+                                <div className="flex gap-2 mb-4">
+                                    <button
+                                        onClick={async () => {
+                                            if (userProfile && friendContext.getFriendRank(userProfile.id) !== 'cercle_proche') {
+                                                haptics.medium()
+                                                await friendContext.updateFriendRank(userProfile.id, 'cercle_proche')
+                                            }
+                                        }}
+                                        className="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all active:scale-95"
+                                        style={{
+                                            background: friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche'
+                                                ? 'var(--accent-gold)'
+                                                : 'var(--glass-bg)',
+                                            color: friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche'
+                                                ? 'white'
+                                                : 'var(--text-secondary)',
+                                            border: '1px solid ' + (friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche'
+                                                ? 'transparent'
+                                                : 'var(--border-light)')
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-star mr-2" />
+                                        Ami proche
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            if (userProfile && friendContext.getFriendRank(userProfile.id) !== 'amis') {
+                                                haptics.medium()
+                                                await friendContext.updateFriendRank(userProfile.id, 'amis')
+                                            }
+                                        }}
+                                        className="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all active:scale-95"
+                                        style={{
+                                            background: friendContext.getFriendRank(userProfile?.id || '') === 'amis'
+                                                ? 'var(--accent-sage)'
+                                                : 'var(--glass-bg)',
+                                            color: friendContext.getFriendRank(userProfile?.id || '') === 'amis'
+                                                ? 'white'
+                                                : 'var(--text-secondary)',
+                                            border: '1px solid ' + (friendContext.getFriendRank(userProfile?.id || '') === 'amis'
+                                                ? 'transparent'
+                                                : 'var(--border-light)')
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-user mr-2" />
+                                        Ami
+                                    </button>
+                                </div>
+
+                                {/* Current rank badge */}
+                                <div className="flex justify-center mb-4">
+                                    <div
+                                        className="px-4 py-2 rounded-full text-sm flex items-center gap-2"
+                                        style={{
+                                            background: friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche'
+                                                ? 'rgba(201, 169, 98, 0.15)'
+                                                : 'rgba(139, 168, 136, 0.15)',
+                                            color: friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche'
+                                                ? 'var(--accent-gold)'
+                                                : 'var(--accent-sage)'
+                                        }}
+                                    >
+                                        <i className={`fa-solid ${friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche' ? 'fa-star' : 'fa-user-check'}`} />
+                                        {friendContext.getFriendRank(userProfile?.id || '') === 'cercle_proche' ? 'Cercle Proche' : 'Ami'}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Public Card */}
+                        {publicCard && (
+                            <div className="flex flex-col items-center mb-6">
+                                <p
+                                    className="text-xs uppercase tracking-widest mb-3"
+                                    style={{ color: 'var(--text-muted)' }}
+                                >
+                                    Carte Publique
+                                </p>
+                                <PublicCardDisplay
+                                    imageUrl={publicCard.imageUrl}
+                                    category={publicCard.category}
+                                    stats={publicCard.stats}
+                                    userName={getDisplayName(userProfile)}
+                                    username={userProfile.username || undefined}
+                                    avatarUrl={userProfile.avatarUrl || undefined}
+                                    size="large"
+                                />
+                            </div>
+                        )}
+
+                        {/* No Public Card */}
+                        {!publicCard && (
+                            <div className="text-center py-8">
+                                <div
+                                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                                    style={{ background: 'var(--bg-secondary)' }}
+                                >
+                                    <i
+                                        className="fa-solid fa-id-card text-xl"
+                                        style={{ color: 'var(--text-muted)' }}
+                                    />
+                                </div>
+                                <p
+                                    className="text-sm"
+                                    style={{ color: 'var(--text-secondary)' }}
+                                >
+                                    Pas de carte publique
+                                </p>
+                                <p
+                                    className="text-xs mt-1"
+                                    style={{ color: 'var(--text-muted)' }}
+                                >
+                                    Cet utilisateur n&apos;a pas encore créé de carte
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Error message */}
+                        {requestError && (
+                            <div
+                                className="mt-4 p-3 rounded-xl text-center"
+                                style={{ background: 'rgba(220, 80, 80, 0.1)' }}
+                            >
+                                <p className="text-sm" style={{ color: '#DC5050' }}>
+                                    <i className="fa-solid fa-circle-exclamation mr-2" />
+                                    {requestError}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Action Button */}
+                        {friendContext && (
+                            <div className="mt-6 mb-4">
+                                {relationshipStatus === 'friends' ? (
+                                    <div className="space-y-3">
+                                        <button
+                                            onClick={handleClose}
+                                            className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-95"
+                                            style={{
+                                                background: 'var(--glass-bg)',
+                                                color: 'var(--text-primary)',
+                                                border: '1px solid var(--border-light)'
+                                            }}
+                                        >
+                                            Fermer
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                if (!userProfile) return
+                                                if (confirm('Voulez-vous vraiment supprimer cet ami ?')) {
+                                                    haptics.medium()
+                                                    const result = await friendContext.deleteFriend(userProfile.id)
+                                                    if (result.success) {
+                                                        haptics.success()
+                                                        handleClose()
+                                                    } else {
+                                                        haptics.error()
+                                                        setRequestError(result.error || 'Erreur lors de la suppression')
+                                                    }
+                                                }
+                                            }}
+                                            className="w-full py-3 rounded-xl text-sm font-medium transition-all active:scale-95"
+                                            style={{
+                                                background: 'rgba(220, 80, 80, 0.1)',
+                                                color: '#DC5050'
+                                            }}
+                                        >
+                                            <i className="fa-solid fa-user-minus mr-2" />
+                                            Supprimer de mes amis
+                                        </button>
+                                    </div>
+                                ) : relationshipStatus === 'pending_sent' || requestStatus === 'sent' ? (
+                                    <div
+                                        className="w-full py-4 rounded-2xl text-sm font-medium text-center"
+                                        style={{
+                                            background: 'rgba(184, 165, 212, 0.1)',
+                                            color: 'var(--accent-lavender)'
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-clock mr-2" />
+                                        Demande envoyée
+                                    </div>
+                                ) : relationshipStatus === 'pending_received' ? (
+                                    <div
+                                        className="w-full py-4 rounded-2xl text-sm font-medium text-center"
+                                        style={{
+                                            background: 'rgba(201, 169, 98, 0.1)',
+                                            color: 'var(--accent-gold)'
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-inbox mr-2" />
+                                        A envoyé une demande
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={handleAddFriend}
+                                        disabled={requestStatus === 'sending'}
+                                        className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-95"
+                                        style={{
+                                            background: 'var(--accent-sage)',
+                                            color: 'white',
+                                            opacity: requestStatus === 'sending' ? 0.7 : 1
+                                        }}
+                                    >
+                                        {requestStatus === 'sending' ? (
+                                            <>
+                                                <i className="fa-solid fa-spinner fa-spin mr-2" />
+                                                Envoi...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fa-solid fa-user-plus mr-2" />
+                                                Ajouter en ami
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {/* User not found */}
+                {!isLoading && !userProfile && (
+                    <div className="text-center py-16">
+                        <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                            style={{ background: 'var(--bg-secondary)' }}
+                        >
+                            <i
+                                className="fa-solid fa-user-slash text-xl"
+                                style={{ color: 'var(--text-muted)' }}
+                            />
+                        </div>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            Utilisateur non trouvé
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            <style jsx>{`
+                @keyframes slide-up {
+                    from { transform: translateY(100%); }
+                    to { transform: translateY(0); }
+                }
+                .animate-slide-up {
+                    animation: slide-up 0.3s ease-out;
+                }
+            `}</style>
+        </div>,
+        document.body
+    )
+}

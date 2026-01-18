@@ -11,6 +11,7 @@ import {
     Notification,
 } from '@/data/notificationData'
 import { useFriendRequests, FriendRequest } from '@/hooks/useFriendRequests'
+import { useFriendContextOptional } from '@/contexts/FriendContext'
 import { supabase } from '@/utils/supabase/client'
 import haptics from '@/utils/haptics'
 
@@ -293,6 +294,92 @@ function EmptyState({ icon, title, subtitle }: { icon: string; title: string; su
     )
 }
 
+// Clickable avatar component for friend requests
+function ClickableAvatar({
+    userId,
+    avatarUrl,
+    name,
+    request
+}: {
+    userId: string
+    avatarUrl?: string
+    name?: string
+    request: FriendRequest
+}) {
+    const friendContext = useFriendContextOptional()
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (friendContext) {
+            haptics.light()
+            friendContext.openFriendProfile(userId)
+        }
+    }
+
+    return (
+        <button
+            onClick={handleClick}
+            className="relative flex-shrink-0 cursor-pointer transition-opacity hover:opacity-80 active:opacity-60"
+            style={{ background: 'transparent', border: 'none', padding: 0 }}
+            type="button"
+        >
+            {avatarUrl ? (
+                <img
+                    src={avatarUrl}
+                    alt={name}
+                    className="w-12 h-12 rounded-full object-cover"
+                    style={{ border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
+                />
+            ) : (
+                <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center"
+                    style={{ background: 'var(--bg-secondary)' }}
+                >
+                    <i className="fa-solid fa-user text-lg" style={{ color: 'var(--text-muted)' }} />
+                </div>
+            )}
+            <div
+                className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
+                style={{ background: 'var(--accent-rose)' }}
+            >
+                <i className="fa-solid fa-user-plus text-[8px] text-white" />
+            </div>
+        </button>
+    )
+}
+
+// Clickable name component
+function ClickableName({
+    userId,
+    name,
+    className = ''
+}: {
+    userId: string
+    name: string
+    className?: string
+}) {
+    const friendContext = useFriendContextOptional()
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (friendContext) {
+            haptics.light()
+            friendContext.openFriendProfile(userId)
+        }
+    }
+
+    return (
+        <button
+            onClick={handleClick}
+            className={`cursor-pointer transition-opacity hover:opacity-80 active:opacity-60 ${className}`}
+            style={{ background: 'transparent', border: 'none', padding: 0, color: 'var(--text-primary)', textAlign: 'left' }}
+            type="button"
+        >
+            {name}
+        </button>
+    )
+}
+
 // Friend request item with accept/reject buttons
 function FriendRequestItem({
     request,
@@ -323,39 +410,21 @@ function FriendRequestItem({
             style={{ background: 'rgba(212, 165, 165, 0.08)' }}
         >
             <div className="flex items-center gap-3">
-                {/* Avatar */}
-                <div className="relative flex-shrink-0">
-                    {request.senderAvatarUrl ? (
-                        <img
-                            src={request.senderAvatarUrl}
-                            alt={request.senderName}
-                            className="w-12 h-12 rounded-full object-cover"
-                            style={{ border: '2px solid white', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}
-                        />
-                    ) : (
-                        <div
-                            className="w-12 h-12 rounded-full flex items-center justify-center"
-                            style={{ background: 'var(--bg-secondary)' }}
-                        >
-                            <i className="fa-solid fa-user text-lg" style={{ color: 'var(--text-muted)' }} />
-                        </div>
-                    )}
-                    <div
-                        className="absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center"
-                        style={{ background: 'var(--accent-rose)' }}
-                    >
-                        <i className="fa-solid fa-user-plus text-[8px] text-white" />
-                    </div>
-                </div>
+                {/* Avatar - Clickable */}
+                <ClickableAvatar
+                    userId={request.senderId}
+                    avatarUrl={request.senderAvatarUrl}
+                    name={request.senderName}
+                    request={request}
+                />
 
-                {/* Content */}
+                {/* Content - Clickable name */}
                 <div className="flex-1 min-w-0">
-                    <p
-                        className="text-sm font-medium truncate"
-                        style={{ color: 'var(--text-primary)' }}
-                    >
-                        {request.senderName}
-                    </p>
+                    <ClickableName
+                        userId={request.senderId}
+                        name={request.senderName || 'Utilisateur'}
+                        className="text-sm font-medium truncate block"
+                    />
                     {request.senderUsername && (
                         <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
                             @{request.senderUsername}

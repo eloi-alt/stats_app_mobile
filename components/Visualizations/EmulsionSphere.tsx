@@ -49,11 +49,11 @@ function getHarmonyColor(score: number): THREE.Color {
     // 100% = Vert émeraude harmonieux
 
     const harmonyPalette = [
-        new THREE.Color('#e53935'), // 0%  - Rouge intense
-        new THREE.Color('#fb8c00'), // 25% - Orange
-        new THREE.Color('#fdd835'), // 50% - Jaune doré
-        new THREE.Color('#7cb342'), // 75% - Vert lime
-        new THREE.Color('#00897b'), // 100% - Vert émeraude/teal
+        new THREE.Color('#ff1744'), // 0%  - Rouge vif saturé
+        new THREE.Color('#ff6d00'), // 25% - Orange électrique
+        new THREE.Color('#ffea00'), // 50% - Jaune vif
+        new THREE.Color('#76ff03'), // 75% - Vert lime néon
+        new THREE.Color('#1de9b6'), // 100% - Turquoise vibrant
     ];
 
     // Interpolation entre les couleurs de la palette
@@ -229,7 +229,7 @@ const LiquidBlob: React.FC<LiquidBlobProps> = ({
                 clearcoat={1.0}
                 clearcoatRoughness={0.1}
                 radius={1}
-                envMapIntensity={1.0}
+                envMapIntensity={1.8}
             />
         </mesh>
     );
@@ -274,57 +274,11 @@ export default function EmulsionSphere({ number, onClick }: EmulsionSphereProps)
                 {/* Éclairage de base */}
                 <ambientLight intensity={0.4} />
 
-                {/* Environnement avec Lightformers */}
-                <Environment resolution={256} background={false}>
-                    <Lightformer
-                        form="rect"
-                        intensity={2}
-                        color="white"
-                        position={[0, 5, -2]}
-                        scale={[10, 3, 1]}
-                        target={[0, 0, 0]}
-                    />
-                    <Lightformer
-                        form="circle"
-                        intensity={0.8}
-                        color="#f0f0ff"
-                        position={[-5, 0, -2]}
-                        scale={[4, 4, 1]}
-                        target={[0, 0, 0]}
-                    />
-                    <Lightformer
-                        form="circle"
-                        intensity={0.5}
-                        color="#fff5f0"
-                        position={[5, 1, -1]}
-                        scale={[3, 3, 1]}
-                        target={[0, 0, 0]}
-                    />
-                    <Lightformer
-                        form="ring"
-                        intensity={3.5}
-                        color="#fff0dd"
-                        position={[0, 0, -10]}
-                        scale={[8, 8, 1]}
-                        target={[0, 0, 0]}
-                    />
-                    <Lightformer
-                        form="rect"
-                        intensity={0.5}
-                        color="#e8e8ff"
-                        position={[0, -4, 0]}
-                        rotation={[Math.PI / 2, 0, 0]}
-                        scale={[15, 10, 1]}
-                    />
-                    <Lightformer
-                        form="rect"
-                        intensity={1.5}
-                        color="#ffffff"
-                        position={[8, 2, 5]}
-                        scale={[2, 8, 1]}
-                        target={[0, 0, 0]}
-                    />
-                </Environment>
+                {/* Environnement HDR - Rosendal Park Sunset */}
+                <Environment
+                    files="/rosendal_park_sunset_puresky_4k.exr"
+                    background={false}
+                />
 
                 {/* 
                     Sphère - Couleur basée sur l'harmonie de l'utilisateur
