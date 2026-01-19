@@ -1,7 +1,10 @@
 // Harmony Calculator with Historical Data and Degressive Coefficients
+// Enhanced with AI-powered analysis via Groq
 // Coefficients: Friends (0.5) > National (0.3) > Worldwide (0.2)
 
-import { ThomasMorel } from '@/data/mockData'
+import { ThomasMorel, userGoals } from '@/data/mockData'
+import { getAIHarmonyData, clearAICache } from '@/utils/harmonyAI'
+import type { HarmonyAIResponse } from '@/lib/groq'
 
 export interface HarmonyHistoryPoint {
   date: string
@@ -552,3 +555,125 @@ export function generateExpandedAIReport(): ExpandedAIReport {
     longtermVision: 'D\'ici 2027, vise : 30 pays visités, 500k€ patrimoine, startup lancée, 10 relations proches. Tu es à 60% de ce chemin.'
   }
 }
+
+// =============================================================================
+// AI-Powered Harmony Analysis
+// =============================================================================
+
+// Cache for AI result
+let cachedAIResult: HarmonyAIResponse | null = null
+let isLoadingAI = false
+
+/**
+ * Get AI-powered Harmony analysis
+ * Returns cached result if available, otherwise triggers async calculation
+ */
+export async function getAIHarmonyAnalysis(forceRefresh = false): Promise<HarmonyAIResponse | null> {
+  if (!forceRefresh && cachedAIResult) {
+    return cachedAIResult
+  }
+
+  if (isLoadingAI) {
+    return cachedAIResult
+  }
+
+  try {
+    isLoadingAI = true
+    cachedAIResult = await getAIHarmonyData(ThomasMorel, userGoals, forceRefresh)
+    return cachedAIResult
+  } catch (error) {
+    console.error('Failed to get AI Harmony analysis:', error)
+    return null
+  } finally {
+    isLoadingAI = false
+  }
+}
+
+/**
+ * Get cached AI result without triggering new calculation
+ */
+export function getCachedAIResult(): HarmonyAIResponse | null {
+  return cachedAIResult
+}
+
+/**
+ * Check if AI analysis is currently loading
+ */
+export function isAILoading(): boolean {
+  return isLoadingAI
+}
+
+/**
+ * Clear all AI caches
+ */
+export function clearAllAICaches(): void {
+  cachedAIResult = null
+  clearAICache()
+}
+
+/**
+ * Get AI-powered comprehensive harmony data
+ * Combines traditional metrics with AI insights
+ */
+export interface AIEnhancedHarmonyData {
+  // Traditional metrics
+  objectives: HarmonyObjective[]
+  dimensionScores: DimensionScores
+  alignmentScore: number
+  aiInsight: string
+  weights: { [key in HarmonyDimension]: number }
+  lastUpdated: string
+  // AI-powered additions (v3 format)
+  aiAnalysis: HarmonyAIResponse | null
+  isAILoading: boolean
+  tier: string
+  trend: string
+  trendDetail: string
+  archetype: string
+  archetypeDescription: string
+  conseils: Array<{
+    priority: number
+    type: string
+    pillar: string
+    conseil: string
+    impact_attendu: string
+    timeline: string
+  }>
+  warnings: Array<{
+    severity: string
+    message: string
+  }>
+  objectiveAdjustments: Array<{
+    pillar: string
+    current_objective: string
+    recommended_adjustment: string
+    new_target: string
+    justification: string
+  }>
+}
+
+export async function getAIEnhancedHarmonyData(forceRefresh = false): Promise<AIEnhancedHarmonyData> {
+  // Get traditional data
+  const traditionalData = getHarmonyData()
+
+  // Get AI analysis (async)
+  const aiAnalysis = await getAIHarmonyAnalysis(forceRefresh)
+
+  // Merge data with new v3 format
+  return {
+    ...traditionalData,
+    aiAnalysis,
+    isAILoading: isLoadingAI,
+    tier: aiAnalysis?.harmony_score?.tier || 'En Construction',
+    trend: aiAnalysis?.harmony_score?.trend || 'Convergence',
+    trendDetail: aiAnalysis?.harmony_score?.trend_detail || '',
+    archetype: aiAnalysis?.archetype?.name || 'Profil en analyse',
+    archetypeDescription: aiAnalysis?.archetype?.description || '',
+    conseils: aiAnalysis?.conseils || [],
+    warnings: aiAnalysis?.warnings || [],
+    objectiveAdjustments: aiAnalysis?.objective_adjustments || [],
+  }
+}
+
+// Re-export AI types for convenience
+export type { HarmonyAIResponse }

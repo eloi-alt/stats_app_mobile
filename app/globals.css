@@ -1,3 +1,6 @@
+/* Google Fonts - MUST be before @tailwind directives for Safari compatibility */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -6,8 +9,6 @@
    STATS - THEME SPIRITUEL & DARK MODE COMPLET
    Basé sur iOS Human Interface Guidelines 2025
    ============================================================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap');
 
 /* ============================================================================
    1. PALETTE PRIMITIVE (Les ingrédients bruts)

@@ -439,76 +439,69 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                                             color: 'var(--accent-lavender)'
                                         }}
                                     >
-                                        <div
-                                            className="w-full py-4 rounded-2xl text-sm font-medium text-center"
-                                            style={{
-                                                background: 'rgba(184, 165, 212, 0.1)',
-                                                color: 'var(--accent-lavender)'
-                                            }}
-                                        >
-                                            <i className="fa-solid fa-clock mr-2" />
-                                            {t('requestSent')}
-                                        </div>
-                                        ) : relationshipStatus === 'pending_received' ? (
-                                        <div
-                                            className="w-full py-4 rounded-2xl text-sm font-medium text-center"
-                                            style={{
-                                                background: 'rgba(201, 169, 98, 0.1)',
-                                                color: 'var(--accent-gold)'
-                                            }}
-                                        >
-                                            <i className="fa-solid fa-inbox mr-2" />
-                                            {t('hasSentRequest')}
-                                        </div>
-                                        ) : (
-                                        <button
-                                            onClick={handleAddFriend}
-                                            disabled={requestStatus === 'sending'}
-                                            className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-95"
-                                            style={{
-                                                background: 'var(--accent-sage)',
-                                                color: 'white',
-                                                opacity: requestStatus === 'sending' ? 0.7 : 1
-                                            }}
-                                        >
-                                            {requestStatus === 'sending' ? (
-                                                <>
-                                                    <i className="fa-solid fa-spinner fa-spin mr-2" />
-                                                    {t('sending')}
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <i className="fa-solid fa-user-plus mr-2" />
-                                                    {t('addFriend')}
-                                                </>
-                                            )}
-                                        </button>
-                                )}
+                                        <i className="fa-solid fa-clock mr-2" />
+                                        {t('requestSent')}
                                     </div>
+                                ) : relationshipStatus === 'pending_received' ? (
+                                    <div
+                                        className="w-full py-4 rounded-2xl text-sm font-medium text-center"
+                                        style={{
+                                            background: 'rgba(201, 169, 98, 0.1)',
+                                            color: 'var(--accent-gold)'
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-inbox mr-2" />
+                                        {t('hasSentRequest')}
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={handleAddFriend}
+                                        disabled={requestStatus === 'sending'}
+                                        className="w-full py-4 rounded-2xl text-sm font-medium transition-all active:scale-95"
+                                        style={{
+                                            background: 'var(--accent-sage)',
+                                            color: 'white',
+                                            opacity: requestStatus === 'sending' ? 0.7 : 1
+                                        }}
+                                    >
+                                        {requestStatus === 'sending' ? (
+                                            <>
+                                                <i className="fa-solid fa-spinner fa-spin mr-2" />
+                                                {t('sending')}
+                                            </>
+                                        ) : (
+                                            <>
+                                                <i className="fa-solid fa-user-plus mr-2" />
+                                                {t('addFriend')}
+                                            </>
+                                        )}
+                                    </button>
                                 )}
-                            </>
-                        )}
-
-                        {/* User not found */}
-                        {!isLoading && !userProfile && (
-                            <div className="text-center py-16">
-                                <div
-                                    className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
-                                    style={{ background: 'var(--bg-secondary)' }}
-                                >
-                                    <i
-                                        className="fa-solid fa-user-slash text-xl"
-                                        style={{ color: 'var(--text-muted)' }}
-                                    />
-                                </div>
-                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    {t('userNotFound')}
-                                </p>
                             </div>
                         )}
-                    </div>
+                    </>
+                )}
 
-                <style jsx>{`
+                {/* User not found */}
+                {!isLoading && !userProfile && (
+                    <div className="text-center py-16">
+                        <div
+                            className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3"
+                            style={{ background: 'var(--bg-secondary)' }}
+                        >
+                            <i
+                                className="fa-solid fa-user-slash text-xl"
+                                style={{ color: 'var(--text-muted)' }}
+                            />
+                        </div>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            {t('userNotFound')}
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            <style jsx>{`
                 @keyframes slide-up {
                     from { transform: translateY(100%); }
                     to { transform: translateY(0); }
@@ -517,7 +510,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                     animation: slide-up 0.3s ease-out;
                 }
             `}</style>
-            </div>,
-            document.body
-            )
+        </div>,
+        document.body
+    )
 }

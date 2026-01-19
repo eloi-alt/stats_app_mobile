@@ -20,20 +20,38 @@ const themeInitScript = `
     var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     var isDark = saved === 'dark' || (saved === 'system' && prefersDark);
     
+    // Apply theme to html element immediately (always available)
     if (isDark) {
       document.documentElement.setAttribute('data-theme', 'dark');
-      document.body.classList.add('dark-mode');
     }
     
-    // Add no-transitions class initially to prevent flash
-    document.body.classList.add('no-transitions');
-    
-    // Remove no-transitions after a short delay
-    requestAnimationFrame(function() {
+    // Function to apply body classes (deferred until body exists)
+    function applyBodyClasses() {
+      if (!document.body) return;
+      
+      if (isDark) {
+        document.body.classList.add('dark-mode');
+      }
+      
+      // Add no-transitions class initially to prevent flash
+      document.body.classList.add('no-transitions');
+      
+      // Remove no-transitions after a short delay
       requestAnimationFrame(function() {
-        document.body.classList.remove('no-transitions');
+        requestAnimationFrame(function() {
+          if (document.body) {
+            document.body.classList.remove('no-transitions');
+          }
+        });
       });
-    });
+    }
+    
+    // Try to apply immediately if body exists, otherwise wait for DOMContentLoaded
+    if (document.body) {
+      applyBodyClasses();
+    } else {
+      document.addEventListener('DOMContentLoaded', applyBodyClasses);
+    }
   } catch(e) {
     console.warn('Theme initialization failed:', e);
   }

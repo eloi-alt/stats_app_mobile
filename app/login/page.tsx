@@ -296,6 +296,20 @@ function LoginForm() {
                             required
                             autoComplete={isSignUp ? 'new-password' : 'current-password'}
                         />
+                        {!isSignUp && (
+                            <a
+                                href="/forgot-password"
+                                style={{
+                                    fontSize: '13px',
+                                    color: 'var(--accent-gold)',
+                                    textDecoration: 'none',
+                                    marginTop: '4px',
+                                    display: 'inline-block'
+                                }}
+                            >
+                                Mot de passe oublié ?
+                            </a>
+                        )}
                     </div>
 
                     {error && <div className="error">{error}</div>}

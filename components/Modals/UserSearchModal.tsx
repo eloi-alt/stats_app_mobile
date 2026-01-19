@@ -56,7 +56,7 @@ export default function UserSearchModal({
     }, [])
 
     // Friend requests hook
-    const { sendFriendRequest, getRelationshipStatus, refetch } = useFriendRequests(currentUserId || undefined)
+    const { sendFriendRequest, getRelationshipStatus, getFriendRank, updateFriendRank, deleteFriend, refetch } = useFriendRequests(currentUserId || undefined)
 
     // Debounced search
     useEffect(() => {

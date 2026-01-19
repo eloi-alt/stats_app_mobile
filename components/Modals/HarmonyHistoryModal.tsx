@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Modal from './Modal'
 import BottomSheet from '../UI/BottomSheet'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -12,7 +12,9 @@ import {
   generateExpandedAIReport,
   HarmonyDimension,
   HarmonyObjective,
-  DetailedHistoryPoint
+  DetailedHistoryPoint,
+  getAIHarmonyAnalysis,
+  HarmonyAIResponse
 } from '@/utils/harmonyCalculator'
 
 interface HarmonyHistoryModalProps {
@@ -59,6 +61,12 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
   const [localObjectives, setLocalObjectives] = useState<HarmonyObjective[]>([])
   const [showTrendAnalysis, setShowTrendAnalysis] = useState(false)
   const [showExpandedReport, setShowExpandedReport] = useState(false)
+  const [showAIDiagnosis, setShowAIDiagnosis] = useState(false)
+
+  // AI State
+  const [aiAnalysis, setAiAnalysis] = useState<HarmonyAIResponse | null>(null)
+  const [isAILoading, setIsAILoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
 
   const harmonyData = useMemo(() => getHarmonyData(), [])
 
@@ -70,6 +78,31 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
 
   // Expanded AI report
   const expandedReport = useMemo(() => generateExpandedAIReport(), [])
+
+  // Load AI analysis when modal opens
+  const loadAIAnalysis = useCallback(async (forceRefresh = false) => {
+    if (isAILoading) return
+
+    setIsAILoading(true)
+    setAiError(null)
+
+    try {
+      const result = await getAIHarmonyAnalysis(forceRefresh)
+      setAiAnalysis(result)
+    } catch (error) {
+      console.error('AI analysis error:', error)
+      setAiError('Analyse IA indisponible')
+    } finally {
+      setIsAILoading(false)
+    }
+  }, [isAILoading])
+
+  // Trigger AI analysis when modal opens
+  useEffect(() => {
+    if (isOpen && !aiAnalysis && !isAILoading) {
+      loadAIAnalysis()
+    }
+  }, [isOpen, aiAnalysis, isAILoading, loadAIAnalysis])
 
   // Initialize local objectives from harmonyData
   useMemo(() => {
@@ -208,7 +241,7 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
                   boxShadow: activeTab === tab ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
                 }}
               >
-                {tab === 'score' ? 'Évolution' : tab === 'objectives' ? 'Objectifs' : 'Guide IA'}
+                {tab === 'score' ? 'Évolution' : tab === 'objectives' ? 'Objectifs' : 'Conseils'}
               </button>
             ))}
           </div>
@@ -374,41 +407,275 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
 
           {activeTab === 'insights' && (
             <div className="space-y-4">
-              {/* AI Insight Card - Expandable */}
-              <div
-                className="p-4 rounded-2xl cursor-pointer transition-all hover:scale-[1.01]"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(184, 165, 212, 0.15) 0%, rgba(165, 196, 212, 0.15) 100%)',
-                  border: '1px solid var(--glass-border)'
-                }}
-                onClick={() => setShowExpandedReport(true)}
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}>
-                    <i className="fa-solid fa-wand-magic-sparkles text-sm" style={{ color: 'var(--accent-lavender)' }} />
+              {/* AI Status Badge */}
+              {aiAnalysis && (
+                <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="px-2 py-1 rounded-full text-xs font-medium"
+                      style={{
+                        background: aiAnalysis.harmony_score.tier === 'Souverain' ? 'rgba(0, 137, 123, 0.15)' :
+                          aiAnalysis.harmony_score.tier === 'Aligné' ? 'rgba(124, 179, 66, 0.15)' :
+                            aiAnalysis.harmony_score.tier === 'En Construction' ? 'rgba(253, 216, 53, 0.15)' :
+                              'rgba(251, 140, 0, 0.15)',
+                        color: aiAnalysis.harmony_score.tier === 'Souverain' ? '#00897b' :
+                          aiAnalysis.harmony_score.tier === 'Aligné' ? '#7cb342' :
+                            aiAnalysis.harmony_score.tier === 'En Construction' ? '#fdd835' :
+                              '#fb8c00',
+                      }}
+                    >
+                      {aiAnalysis.harmony_score.tier}
+                    </div>
+                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                      <i className={`fa-solid ${aiAnalysis.harmony_score.trend === 'Convergence' ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down'} mr-1`} />
+                      {aiAnalysis.harmony_score.trend_detail || aiAnalysis.harmony_score.trend}
+                    </span>
                   </div>
-                  <span className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
-                    Guide IA
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    Score: {aiAnalysis.harmony_score.value}%
                   </span>
-                  <i className="fa-solid fa-expand ml-auto text-xs" style={{ color: 'var(--text-muted)' }} />
                 </div>
-                <p className="text-sm leading-relaxed" style={{ color: 'var(--text-primary)' }}>
-                  {harmonyData.aiInsight}
-                </p>
-                <p className="text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>
-                  Cliquer pour voir le rapport complet →
-                </p>
-              </div>
+              )}
+
+              {/* Warnings */}
+              {aiAnalysis?.warnings && aiAnalysis.warnings.length > 0 && (
+                <div className="space-y-2">
+                  {aiAnalysis.warnings.map((warning, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-xl flex items-start gap-2"
+                      style={{
+                        background: warning.severity === 'Critique' ? 'rgba(229, 57, 53, 0.15)' :
+                          warning.severity === 'Alerte' ? 'rgba(251, 140, 0, 0.15)' :
+                            warning.severity === 'Attention' ? 'rgba(253, 216, 53, 0.15)' :
+                              'rgba(165, 196, 212, 0.15)',
+                      }}
+                    >
+                      <i className={`fa-solid ${warning.severity === 'Critique' ? 'fa-circle-exclamation' : warning.severity === 'Alerte' ? 'fa-triangle-exclamation' : 'fa-info-circle'} text-xs mt-0.5`}
+                        style={{
+                          color: warning.severity === 'Critique' ? '#e53935' :
+                            warning.severity === 'Alerte' ? '#fb8c00' :
+                              warning.severity === 'Attention' ? '#fdd835' : '#A5C4D4'
+                        }}
+                      />
+                      <p className="text-xs" style={{ color: 'var(--text-primary)' }}>{warning.message}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* AI Archetype Card */}
+              {aiAnalysis?.archetype && (
+                <div
+                  className="p-4 rounded-2xl cursor-pointer transition-all hover:scale-[1.01]"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(184, 165, 212, 0.2) 0%, rgba(201, 169, 98, 0.1) 100%)',
+                    border: '1px solid var(--glass-border)'
+                  }}
+                  onClick={() => setShowAIDiagnosis(true)}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <i className="fa-solid fa-brain text-sm" style={{ color: 'var(--accent-lavender)' }} />
+                    <span className="text-xs font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>
+                      Ton Archétype
+                    </span>
+                  </div>
+                  <p className="text-base font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+                    {aiAnalysis.archetype.name || 'Analyse en cours...'}
+                  </p>
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                    {aiAnalysis.archetype.description || ''}
+                  </p>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {aiAnalysis.archetype.forces?.slice(0, 2).map((force, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-full text-[10px]" style={{ background: 'rgba(139, 168, 136, 0.2)', color: '#8BA888' }}>
+                        ✓ {force}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Loading State */}
+              {isAILoading && (
+                <div className="p-4 rounded-2xl text-center" style={{ background: 'var(--glass-bg)' }}>
+                  <i className="fa-solid fa-spinner fa-spin text-lg mb-2" style={{ color: 'var(--accent-lavender)' }} />
+                  <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Analyse IA en cours...</p>
+                </div>
+              )}
+
+              {/* Error State */}
+              {aiError && !isAILoading && (
+                <div className="p-4 rounded-2xl" style={{ background: 'rgba(229, 57, 53, 0.1)' }}>
+                  <p className="text-xs text-center" style={{ color: '#e53935' }}>{aiError}</p>
+                  <button
+                    className="mt-2 text-xs w-full py-2 rounded-lg"
+                    style={{ background: 'var(--glass-bg)', color: 'var(--text-primary)' }}
+                    onClick={() => loadAIAnalysis(true)}
+                  >
+                    Réessayer
+                  </button>
+                </div>
+              )}
+
+              {/* Pillar Scores Grid */}
+              {aiAnalysis?.pillar_scores && (
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'vitality', label: 'Vitalité', icon: 'fa-heart-pulse', color: '#8BA888', data: aiAnalysis.pillar_scores.vitality },
+                    { key: 'sovereignty', label: 'Souveraineté', icon: 'fa-coins', color: '#C9A962', data: aiAnalysis.pillar_scores.sovereignty },
+                    { key: 'connection', label: 'Connexion', icon: 'fa-users', color: '#D4A5A5', data: aiAnalysis.pillar_scores.connection },
+                    { key: 'expansion', label: 'Expansion', icon: 'fa-rocket', color: '#A5C4D4', data: aiAnalysis.pillar_scores.expansion },
+                  ].map(({ key, label, icon, color, data }) => (
+                    <div key={key} className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <i className={`fa-solid ${icon} text-xs`} style={{ color }} />
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{label}</span>
+                        <span
+                          className="ml-auto px-1.5 py-0.5 rounded-full text-[10px]"
+                          style={{
+                            background: data.status === 'Excellent' ? 'rgba(0, 137, 123, 0.15)' :
+                              data.status === 'Bon' ? 'rgba(124, 179, 66, 0.15)' :
+                                data.status === 'Moyen' ? 'rgba(253, 216, 53, 0.15)' :
+                                  'rgba(251, 140, 0, 0.15)',
+                            color: data.status === 'Excellent' ? '#00897b' :
+                              data.status === 'Bon' ? '#7cb342' :
+                                data.status === 'Moyen' ? '#fdd835' : '#fb8c00',
+                          }}
+                        >
+                          {data.score}%
+                        </span>
+                      </div>
+                      <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>{data.key_metric}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Conseils (Prioritized Recommendations) */}
+              {aiAnalysis?.conseils && aiAnalysis.conseils.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
+                    <i className="fa-solid fa-lightbulb mr-1" style={{ color: 'var(--accent-gold)' }} />
+                    Conseils Prioritaires
+                  </div>
+                  {aiAnalysis.conseils.slice(0, 3).map((conseil, idx) => (
+                    <div
+                      key={idx}
+                      className="p-3 rounded-xl"
+                      style={{
+                        background: conseil.type === 'ACTION' ? 'rgba(139, 168, 136, 0.12)' : 'rgba(201, 169, 98, 0.12)',
+                        border: `1px solid ${conseil.type === 'ACTION' ? 'rgba(139, 168, 136, 0.3)' : 'rgba(201, 169, 98, 0.3)'}`
+                      }}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <span
+                          className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-medium"
+                          style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+                        >
+                          {conseil.priority}
+                        </span>
+                        <span
+                          className="px-1.5 py-0.5 rounded-full text-[10px] uppercase"
+                          style={{
+                            background: conseil.type === 'ACTION' ? 'rgba(124, 179, 66, 0.2)' : 'rgba(201, 169, 98, 0.2)',
+                            color: conseil.type === 'ACTION' ? '#7cb342' : '#C9A962'
+                          }}
+                        >
+                          {conseil.type === 'ACTION' ? 'Agir' : 'Ajuster Objectif'}
+                        </span>
+                        <span className="ml-auto text-[10px]" style={{ color: 'var(--text-muted)' }}>{conseil.timeline}</span>
+                      </div>
+                      <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+                        {conseil.conseil}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px]" style={{ color: 'var(--text-muted)' }}>
+                        <span><i className="fa-solid fa-bullseye mr-1" />{conseil.pillar}</span>
+                        <span className="ml-auto" style={{ color: '#8BA888' }}>{conseil.impact_attendu}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Objective Adjustments */}
+              {aiAnalysis?.objective_adjustments && aiAnalysis.objective_adjustments.length > 0 && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium uppercase tracking-wide mb-2" style={{ color: 'var(--text-muted)' }}>
+                    <i className="fa-solid fa-sliders mr-1" style={{ color: 'var(--accent-coral)' }} />
+                    Ajustements d'Objectifs Suggérés
+                  </div>
+                  {aiAnalysis.objective_adjustments.map((adj, idx) => (
+                    <div key={idx} className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{adj.pillar}</span>
+                        <span
+                          className="ml-auto px-1.5 py-0.5 rounded-full text-[10px]"
+                          style={{
+                            background: adj.recommended_adjustment === 'Augmenter' ? 'rgba(124, 179, 66, 0.2)' :
+                              adj.recommended_adjustment === 'Réduire' ? 'rgba(201, 169, 98, 0.2)' : 'rgba(165, 196, 212, 0.2)',
+                            color: adj.recommended_adjustment === 'Augmenter' ? '#7cb342' :
+                              adj.recommended_adjustment === 'Réduire' ? '#C9A962' : '#A5C4D4'
+                          }}
+                        >
+                          <i className={`fa-solid ${adj.recommended_adjustment === 'Augmenter' ? 'fa-arrow-up' : adj.recommended_adjustment === 'Réduire' ? 'fa-arrow-down' : 'fa-equals'} mr-1`} />
+                          {adj.recommended_adjustment}
+                        </span>
+                      </div>
+                      <p className="text-[10px] mb-1" style={{ color: 'var(--text-muted)' }}>
+                        {adj.current_objective} → <strong style={{ color: 'var(--text-primary)' }}>{adj.new_target}</strong>
+                      </p>
+                      <p className="text-[10px]" style={{ color: 'var(--text-secondary)' }}>{adj.justification}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Trend Cards */}
+              {aiAnalysis && (
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                    <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>Cette semaine</div>
+                    <div className="flex items-center gap-1">
+                      <i className={`fa-solid ${aiAnalysis.weekly_trend.direction === 'Amélioration' ? 'fa-arrow-up' : aiAnalysis.weekly_trend.direction === 'Dégradation' ? 'fa-arrow-down' : 'fa-minus'} text-xs`}
+                        style={{
+                          color: aiAnalysis.weekly_trend.direction === 'Amélioration' ? '#7cb342' :
+                            aiAnalysis.weekly_trend.direction === 'Dégradation' ? '#e53935' : '#A5C4D4'
+                        }}
+                      />
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {aiAnalysis.weekly_trend.delta > 0 ? '+' : ''}{aiAnalysis.weekly_trend.delta} pts
+                      </span>
+                    </div>
+                    <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>{aiAnalysis.weekly_trend.insight}</p>
+                  </div>
+                  <div className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                    <div className="text-[10px] uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>Ce mois</div>
+                    <div className="flex items-center gap-1">
+                      <i className={`fa-solid ${aiAnalysis.monthly_trend.direction === 'Amélioration' ? 'fa-arrow-up' : aiAnalysis.monthly_trend.direction === 'Dégradation' ? 'fa-arrow-down' : 'fa-minus'} text-xs`}
+                        style={{
+                          color: aiAnalysis.monthly_trend.direction === 'Amélioration' ? '#7cb342' :
+                            aiAnalysis.monthly_trend.direction === 'Dégradation' ? '#e53935' : '#A5C4D4'
+                        }}
+                      />
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {aiAnalysis.monthly_trend.delta > 0 ? '+' : ''}{aiAnalysis.monthly_trend.delta} pts
+                      </span>
+                    </div>
+                    <p className="text-[10px] mt-1" style={{ color: 'var(--text-muted)' }}>{aiAnalysis.monthly_trend.insight}</p>
+                  </div>
+                </div>
+              )}
 
               {/* Quick actions */}
               <div className="grid grid-cols-2 gap-2">
                 <button
                   className="p-3 rounded-xl text-left transition-all hover:scale-[1.02]"
                   style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
-                  onClick={() => setShowTrendAnalysis(true)}
+                  onClick={() => setShowAIDiagnosis(true)}
                 >
-                  <i className="fa-solid fa-chart-line text-xs mb-1" style={{ color: 'var(--accent-sage)' }} />
-                  <div className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Analyser tendances</div>
+                  <i className="fa-solid fa-stethoscope text-xs mb-1" style={{ color: 'var(--accent-lavender)' }} />
+                  <div className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>Diagnostic Complet</div>
                 </button>
                 <button
                   className="p-3 rounded-xl text-left transition-all hover:scale-[1.02]"
@@ -597,6 +864,175 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
           </div>
         </div>
       </BottomSheet>
+
+      {/* AI Systemic Diagnosis Sheet */}
+      <BottomSheet
+        isOpen={showAIDiagnosis}
+        onClose={() => setShowAIDiagnosis(false)}
+        initialHeight="75vh"
+        maxHeight="90vh"
+        showCloseButton={true}
+      >
+        <div className="px-2">
+          <h3 className="text-lg font-light text-display mb-4" style={{ color: 'var(--text-primary)' }}>
+            <i className="fa-solid fa-brain mr-2" style={{ color: 'var(--accent-lavender)' }} />
+            Diagnostic Systémique IA
+          </h3>
+
+          {aiAnalysis && (
+            <>
+              {/* Archetype */}
+              {aiAnalysis?.archetype && (
+                <div className="p-4 rounded-2xl mb-4" style={{
+                  background: 'linear-gradient(135deg, rgba(184, 165, 212, 0.15) 0%, rgba(201, 169, 98, 0.1) 100%)'
+                }}>
+                  <div className="text-xs uppercase tracking-wide font-medium mb-2" style={{ color: 'var(--text-muted)' }}>
+                    Ton Archétype
+                  </div>
+                  <p className="text-xl font-medium mb-2" style={{ color: 'var(--text-primary)' }}>
+                    {aiAnalysis.archetype.name || 'Analyse en cours...'}
+                  </p>
+                  <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
+                    {aiAnalysis.archetype.description || ''}
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {aiAnalysis.archetype.forces?.map((force, idx) => (
+                      <span key={idx} className="px-2 py-1 rounded-full text-xs" style={{ background: 'rgba(124, 179, 66, 0.15)', color: '#7cb342' }}>
+                        <i className="fa-solid fa-check mr-1" />{force}
+                      </span>
+                    ))}
+                    {aiAnalysis.archetype.faiblesses?.map((faiblesse, idx) => (
+                      <span key={idx} className="px-2 py-1 rounded-full text-xs" style={{ background: 'rgba(229, 57, 53, 0.15)', color: '#e53935' }}>
+                        <i className="fa-solid fa-exclamation mr-1" />{faiblesse}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pillar Assessments */}
+              {aiAnalysis?.pillar_scores && (
+                <>
+                  <h4 className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Analyse par Pilier
+                  </h4>
+                  <div className="space-y-2 mb-4">
+                    {[
+                      { key: 'vitality', label: 'Vitalité', icon: 'fa-heart-pulse', color: '#8BA888', data: aiAnalysis.pillar_scores.vitality },
+                      { key: 'sovereignty', label: 'Souveraineté', icon: 'fa-coins', color: '#C9A962', data: aiAnalysis.pillar_scores.sovereignty },
+                      { key: 'connection', label: 'Connexion', icon: 'fa-users', color: '#D4A5A5', data: aiAnalysis.pillar_scores.connection },
+                      { key: 'expansion', label: 'Expansion', icon: 'fa-rocket', color: '#A5C4D4', data: aiAnalysis.pillar_scores.expansion },
+                    ].filter(item => item.data).map(({ key, label, icon, color, data }) => (
+                      <div key={key} className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <i className={`fa-solid ${icon} text-xs`} style={{ color }} />
+                          <span className="text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{label}</span>
+                          <span
+                            className="ml-auto px-2 py-0.5 rounded-full text-[10px] font-medium"
+                            style={{
+                              background: data?.status === 'Excellent' ? 'rgba(0, 137, 123, 0.15)' :
+                                data?.status === 'Bon' ? 'rgba(124, 179, 66, 0.15)' :
+                                  data?.status === 'Moyen' ? 'rgba(253, 216, 53, 0.15)' :
+                                    data?.status === 'Préoccupant' ? 'rgba(251, 140, 0, 0.15)' : 'rgba(229, 57, 53, 0.15)',
+                              color: data?.status === 'Excellent' ? '#00897b' :
+                                data?.status === 'Bon' ? '#7cb342' :
+                                  data?.status === 'Moyen' ? '#fdd835' :
+                                    data?.status === 'Préoccupant' ? '#fb8c00' : '#e53935',
+                            }}
+                          >
+                            {data?.score ?? 0}% - {data?.status || 'N/A'}
+                          </span>
+                        </div>
+                        <p className="text-xs mb-1" style={{ color: 'var(--text-muted)' }}>{data?.key_metric || ''}</p>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{data?.honest_assessment || ''}</p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Trend Analysis Detail */}
+              {aiAnalysis?.weekly_trend && aiAnalysis?.monthly_trend && (
+                <>
+                  <h4 className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Évolution Temporelle
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                      <div className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>Semaine</div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <i className={`fa-solid ${aiAnalysis.weekly_trend.direction === 'Amélioration' ? 'fa-arrow-up' : aiAnalysis.weekly_trend.direction === 'Dégradation' ? 'fa-arrow-down' : 'fa-minus'}`}
+                          style={{ color: aiAnalysis.weekly_trend.direction === 'Amélioration' ? '#7cb342' : aiAnalysis.weekly_trend.direction === 'Dégradation' ? '#e53935' : '#A5C4D4' }}
+                        />
+                        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {(aiAnalysis.weekly_trend.delta ?? 0) > 0 ? '+' : ''}{aiAnalysis.weekly_trend.delta ?? 0} pts
+                        </span>
+                      </div>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{aiAnalysis.weekly_trend.insight || ''}</p>
+                    </div>
+                    <div className="p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                      <div className="text-xs uppercase tracking-wide mb-1" style={{ color: 'var(--text-muted)' }}>Mois</div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <i className={`fa-solid ${aiAnalysis.monthly_trend.direction === 'Amélioration' ? 'fa-arrow-up' : aiAnalysis.monthly_trend.direction === 'Dégradation' ? 'fa-arrow-down' : 'fa-minus'}`}
+                          style={{ color: aiAnalysis.monthly_trend.direction === 'Amélioration' ? '#7cb342' : aiAnalysis.monthly_trend.direction === 'Dégradation' ? '#e53935' : '#A5C4D4' }}
+                        />
+                        <span className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {(aiAnalysis.monthly_trend.delta ?? 0) > 0 ? '+' : ''}{aiAnalysis.monthly_trend.delta ?? 0} pts
+                        </span>
+                      </div>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{aiAnalysis.monthly_trend.insight || ''}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* Conseils Summary */}
+              {aiAnalysis.conseils && aiAnalysis.conseils.length > 0 && (
+                <>
+                  <h4 className="text-xs uppercase tracking-wide font-medium mb-3" style={{ color: 'var(--text-muted)' }}>
+                    Plan d'Action
+                  </h4>
+                  <div className="space-y-2 mb-4">
+                    {aiAnalysis.conseils.map((conseil, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3 rounded-xl"
+                        style={{
+                          background: conseil.type === 'ACTION' ? 'rgba(139, 168, 136, 0.12)' : 'rgba(201, 169, 98, 0.12)',
+                          border: `1px solid ${conseil.type === 'ACTION' ? 'rgba(139, 168, 136, 0.3)' : 'rgba(201, 169, 98, 0.3)'}`
+                        }}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                            style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+                            {conseil.priority}
+                          </span>
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{conseil.pillar}</span>
+                          <span
+                            className="ml-auto px-2 py-0.5 rounded-full text-[10px]"
+                            style={{
+                              background: conseil.type === 'ACTION' ? 'rgba(124, 179, 66, 0.2)' : 'rgba(201, 169, 98, 0.2)',
+                              color: conseil.type === 'ACTION' ? '#7cb342' : '#C9A962'
+                            }}
+                          >
+                            {conseil.type === 'ACTION' ? 'Agir' : 'Ajuster'}
+                          </span>
+                        </div>
+                        <p className="text-sm mb-1" style={{ color: 'var(--text-primary)' }}>{conseil.conseil}</p>
+                        <div className="flex items-center justify-between text-xs">
+                          <span style={{ color: 'var(--text-muted)' }}><i className="fa-solid fa-clock mr-1" />{conseil.timeline}</span>
+                          <span style={{ color: '#8BA888' }}>{conseil.impact_attendu}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          )}
+        </div>
+      </BottomSheet>
     </>
   )
 }
+

@@ -6,6 +6,7 @@ import Modal from './Modal'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext'
 import { ThomasMorel } from '@/data/mockData'
+import MFASettings from '@/components/Settings/MFASettings'
 
 interface SettingsModalProps {
   isOpen: boolean
@@ -184,6 +185,24 @@ export default function SettingsModal({ isOpen, onClose, onThemeChange }: Settin
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Security Section - MFA */}
+      <div
+        className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
+        style={{ color: 'var(--text-tertiary)' }}
+      >
+        Security
+      </div>
+
+      <div
+        className="rounded-2xl overflow-hidden mb-5"
+        style={{
+          background: 'var(--bg-card)',
+          border: '1px solid var(--border-light)',
+        }}
+      >
+        <MFASettings />
       </div>
 
       {/* Verification Section */}

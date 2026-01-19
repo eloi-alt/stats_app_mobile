@@ -1697,3 +1697,35 @@ export const financeData = {
     vehicles: ThomasMorel.moduleC.patrimoine.vehicles.reduce((sum, v) => sum + v.currentValue, 0),
   },
 };
+
+// ============================================================================
+// USER GOALS for AI Harmony Score Calculation
+// ============================================================================
+
+export const userGoals = {
+  health: {
+    target_weight: 75, // kg - Jeffrey's ideal weight
+    sleep_hours: 8, // hours per night
+    weekly_activity_minutes: 200, // minutes of exercise
+    description: 'Maintain optimal health for longevity and performance',
+  },
+  finance: {
+    net_worth_target: 1000000000, // $1B target
+    monthly_savings: 5000000, // $5M monthly
+    debt_free_date: undefined, // Already debt-free
+    description: 'Expand wealth empire and influence',
+  },
+  social: {
+    close_friends_count: 50, // VIP network
+    weekly_interactions: 20, // High social activity
+    network_size: 'extensive' as const,
+    description: 'Maintain elite social network',
+  },
+  growth: {
+    countries_to_visit: 100, // Global presence
+    skills_to_learn: ['philanthropy', 'scientific patronage'],
+    career_milestone: 'Become leading philanthropist',
+    description: 'Leave lasting legacy through science funding',
+  },
+};
+
