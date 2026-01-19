@@ -2,14 +2,22 @@
 
 import { useState, useMemo } from 'react'
 import Modal from './Modal'
-import { Contact, ThomasMorel } from '@/data/mockData'
+import { ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+
+// Simple contact interface compatible with DisplayContact from SocialView
+interface SimpleContact {
+    id: string
+    avatar: string
+    name: string
+    role?: string
+}
 
 interface CompareWithFriendModalProps {
     isOpen: boolean
     onClose: () => void
-    currentContact: Contact | null
-    allContacts: Contact[]
+    currentContact: SimpleContact | null
+    allContacts: SimpleContact[]
 }
 
 // Mock user stats

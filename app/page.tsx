@@ -23,7 +23,6 @@ import BodyDataEntryModal from '@/components/Modals/BodyDataEntryModal'
 import {
   modules,
   careerInfo,
-  contacts,
   comparisonData,
   aiAnalysis,
   defaultPinConfig,
@@ -511,7 +510,6 @@ function HomeContent() {
 
         <section id="view-social" className="view" style={viewStyle('view-social')}>
           <SocialView
-            contacts={contacts}
             comparisonData={comparisonData}
             onObjectiveClick={handleObjectiveClick}
             initialContactName={initialContactName}

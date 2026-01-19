@@ -10,6 +10,7 @@ import { getUnreadCount } from '@/data/notificationData'
 import haptics from '@/utils/haptics'
 import HarmonyHistoryModal from '../Modals/HarmonyHistoryModal'
 import NotificationPanel from '../NotificationPanel'
+import ModuleDetailModal from '../Modals/ModuleDetailModal'
 import ModuleChart from '../Cards/ModuleChart'
 import dynamic from 'next/dynamic'
 import CanvasSkeleton from '../Skeletons/CanvasSkeleton'
@@ -54,11 +55,19 @@ const moduleColors: Record<string, { primary: string; light: string; nameKey: st
 // Pull-to-refresh threshold in pixels
 const PULL_THRESHOLD = 80
 
+// Selected module state type
+interface SelectedModule {
+  module: Module
+  colors: { primary: string; light: string; nameKey: string }
+  history: number[]
+  weekLabels: string[]
+  averages: { friends: number; national: number; worldwide: number }
+}
+
 export default function HomeView({
   userProfile,
   modules,
   onAvatarClick,
-  onObjectiveClick,
 }: HomeViewProps) {
   const { t } = useLanguage()
   const scrollContainerRef = useRef<HTMLDivElement>(null)
@@ -66,6 +75,7 @@ export default function HomeView({
   const [notificationPanelOpen, setNotificationPanelOpen] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [notificationsVersion, setNotificationsVersion] = useState(0)
+  const [selectedModule, setSelectedModule] = useState<SelectedModule | null>(null)
 
   // Get unread notification count - reactive to notificationsVersion
   const unreadCount = useMemo(() => getUnreadCount(), [notificationsVersion])
@@ -121,7 +131,6 @@ export default function HomeView({
 
   const handleTouchEnd = useCallback(() => {
     if (pullDistance >= PULL_THRESHOLD && !isRefreshing) {
-      // Trigger refresh
       haptics.medium()
       setIsRefreshing(true)
     }
@@ -129,23 +138,21 @@ export default function HomeView({
     touchStartY.current = 0
   }, [pullDistance, isRefreshing])
 
-  // Handle refresh completion
-  const handleRefreshComplete = useCallback(() => {
-    setIsRefreshing(false)
-    haptics.success()
-    // Here you would typically refetch data from Supabase
-  }, [])
-
-  // Handle card click with haptic
-  const handleCardClick = useCallback((module: Module, colors: { primary: string }) => {
+  // Handle card click - open detail modal
+  const handleCardClick = useCallback((module: Module, colors: typeof moduleColors['A']) => {
     haptics.light()
-    onObjectiveClick(
-      module.title,
-      `${module.percentage}%`,
-      module.detailSubtitle,
-      colors.primary
-    )
-  }, [onObjectiveClick])
+    const history = getModuleHistoryValues(module.id)
+    const historyData = getModuleHistory(module.id)
+    const averages = getModuleAverages(module.id)
+
+    setSelectedModule({
+      module,
+      colors,
+      history,
+      weekLabels: historyData.weeks,
+      averages
+    })
+  }, [])
 
   // Handle harmony modal with haptic
   const handleHarmonyClick = useCallback(() => {
@@ -163,7 +170,6 @@ export default function HomeView({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-
       <Navbar
         onAvatarClick={onAvatarClick}
         onNotificationClick={() => {
@@ -176,36 +182,36 @@ export default function HomeView({
         scrollContainerRef={scrollContainerRef}
       />
 
-      {/* Greeting section */}
-      <div className="text-center mb-8 fade-in">
+      {/* Greeting section - compact */}
+      <div className="text-center mb-5 fade-in">
         <p
-          className="text-sm font-medium tracking-wide mb-1"
+          className="text-sm font-medium tracking-wide mb-0.5"
           style={{ color: 'var(--text-tertiary)' }}
         >
           {greeting},
         </p>
         <h1
-          className="text-3xl font-light text-display mb-2"
+          className="text-2xl font-light text-display mb-1"
           style={{ color: 'var(--text-primary)' }}
         >
           {firstName}
         </h1>
         <p
-          className="text-xs tracking-wide"
+          className="text-[10px] tracking-wide"
           style={{ color: 'var(--text-muted)' }}
         >
           {t('week')} {currentWeek} • {currentYear}
         </p>
       </div>
 
-      {/* Main performance 3D Sphere with pull-to-refresh */}
+      {/* Main performance 3D Sphere */}
       <div
-        className="flex justify-center mb-4 emulsion-sphere-wrapper"
+        className="flex justify-center mb-3 emulsion-sphere-wrapper"
         style={{
           transform: pullDistance > 0 ? `translateY(${pullDistance * 0.3}px)` : 'none',
           transition: pullDistance === 0 ? 'transform 0.3s ease-out' : 'none',
           position: 'relative',
-          zIndex: 10100, // Higher than navbar (10001) and avatar (10010)
+          zIndex: 10100,
           overflow: 'visible',
         }}
       >
@@ -230,120 +236,115 @@ export default function HomeView({
         </div>
       )}
 
-      {/* Quick stats - Lowered to give more space to sphere */}
+      {/* Quick stats - Compact */}
       <div
-        className="flex justify-around mb-8 py-4 rounded-2xl mt-0"
+        className="flex justify-around mb-3 py-2.5 rounded-xl"
         style={{ background: 'var(--hover-overlay)' }}
       >
-        <div className="text-center">
+        <div className="text-center px-2">
           <div
-            className="text-2xl font-light text-display"
+            className="text-lg font-light text-display"
             style={{ color: moduleColors[stats.topModule.id]?.primary || 'var(--accent-gold)' }}
           >
             {stats.topModule.percentage}%
           </div>
-          <div className="text-[10px] tracking-wide uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            {t(moduleColors[stats.topModule.id]?.nameKey) || stats.topModule.title}
-          </div>
-          <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+          <div className="text-[8px] tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>
             {t('best')}
           </div>
         </div>
 
         <div className="w-px" style={{ background: 'var(--border-subtle)' }} />
 
-        <div className="text-center">
+        <div className="text-center px-2">
           <div
-            className="text-2xl font-light text-display"
+            className="text-lg font-light text-display"
             style={{ color: 'var(--text-primary)' }}
           >
             {userProfile.connections}
           </div>
-          <div className="text-[10px] tracking-wide uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
+          <div className="text-[8px] tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>
             {t('connections')}
-          </div>
-          <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
-            {t('tracked')}
           </div>
         </div>
 
         <div className="w-px" style={{ background: 'var(--border-subtle)' }} />
 
-        <div className="text-center">
+        <div className="text-center px-2">
           <div
-            className="text-2xl font-light text-display"
+            className="text-lg font-light text-display"
             style={{ color: moduleColors[stats.lowModule.id]?.primary || 'var(--accent-rose)' }}
           >
             {stats.lowModule.percentage}%
           </div>
-          <div className="text-[10px] tracking-wide uppercase mt-1" style={{ color: 'var(--text-tertiary)' }}>
-            {t(moduleColors[stats.lowModule.id]?.nameKey) || stats.lowModule.title}
-          </div>
-          <div className="text-[9px] mt-0.5" style={{ color: 'var(--text-muted)' }}>
+          <div className="text-[8px] tracking-wide uppercase" style={{ color: 'var(--text-muted)' }}>
             {t('toImprove')}
           </div>
         </div>
       </div>
 
-      {/* Spacer to push 'Your Domains' just below the fold */}
-      <div style={{ height: '60px' }} />
-
-      {/* Section title */}
-      <div className="flex items-center gap-3 mb-5 px-1">
+      {/* Section title - compact */}
+      <div className="flex items-center gap-2 mb-2.5 px-1">
         <div className="h-px flex-1" style={{ background: 'var(--border-subtle)' }} />
         <span
-          className="text-sm tracking-[0.15em] uppercase font-semibold"
-          style={{
-            color: 'var(--text-primary)',
-            fontFamily: 'Inter, sans-serif',
-          }}
+          className="text-[10px] tracking-[0.12em] uppercase font-semibold"
+          style={{ color: 'var(--text-tertiary)' }}
         >
           {t('yourDomains')}
         </span>
         <div className="h-px flex-1" style={{ background: 'var(--border-subtle)' }} />
       </div>
 
-      {/* Widgets améliorés - Grille 2 colonnes */}
-      <div className="grid grid-cols-2 gap-3">
+      {/* Compact Module Cards - 2x2 Grid */}
+      <div className="grid grid-cols-2 gap-2">
         {modules.map((module, index) => {
-          const colors = moduleColors[module.id] || { primary: '#C9A962', light: 'rgba(201, 169, 98, 0.1)', name: module.title }
+          const colors = moduleColors[module.id] || { primary: '#C9A962', light: 'rgba(201, 169, 98, 0.1)', nameKey: module.title }
           const history = getModuleHistoryValues(module.id)
           const historyData = getModuleHistory(module.id)
-          const averages = getModuleAverages(module.id)
+
+          // Calculate trend
+          const trend = history.length >= 2
+            ? history[history.length - 1] - history[history.length - 2]
+            : 0
 
           return (
             <div
               key={module.id}
-              className="rounded-2xl p-4 cursor-pointer fade-in transition-all active:scale-[0.98]"
+              className="rounded-2xl p-3 cursor-pointer fade-in transition-all active:scale-[0.97]"
               onClick={() => handleCardClick(module, colors)}
               style={{
-                animationDelay: `${index * 80}ms`,
+                animationDelay: `${index * 50}ms`,
                 background: 'var(--bg-card)',
                 border: '1px solid var(--border-light)',
-                boxShadow: 'var(--shadow-md)',
-                backdropFilter: 'blur(20px)',
-                minHeight: '180px',
+                boxShadow: 'var(--shadow-sm)',
               }}
             >
-              {/* Widget amélioré avec graphique intégré */}
-              <div className="flex flex-col h-full">
-                {/* Header avec icône et score */}
-                <div className="flex items-center justify-between mb-3">
+              {/* Ultra-compact card layout */}
+              <div className="flex flex-col" style={{ minHeight: '100px' }}>
+                {/* Header row: Icon + Title + Score */}
+                <div className="flex items-center gap-2 mb-1.5">
                   <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
                     style={{ background: colors.light }}
                   >
-                    <i className={`${module.icon} text-base`} style={{ color: colors.primary }} />
+                    <i className={`${module.icon} text-xs`} style={{ color: colors.primary }} />
                   </div>
-                  <div className="text-right flex-shrink-0">
+                  <div className="flex-1 min-w-0">
+                    <h3
+                      className="text-[11px] font-medium truncate leading-tight"
+                      style={{ color: 'var(--text-primary)' }}
+                    >
+                      {t(colors.nameKey)}
+                    </h3>
+                  </div>
+                  <div className="flex items-baseline gap-0.5 flex-shrink-0">
                     <span
-                      className="text-2xl font-light text-display leading-none"
+                      className="text-lg font-light text-display leading-none"
                       style={{ color: colors.primary }}
                     >
                       {module.percentage}
                     </span>
                     <span
-                      className="text-xs ml-0.5"
+                      className="text-[9px]"
                       style={{ color: 'var(--text-muted)' }}
                     >
                       %
@@ -351,45 +352,45 @@ export default function HomeView({
                   </div>
                 </div>
 
-                {/* Titre */}
-                <h3
-                  className="text-sm font-medium mb-3"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {t(colors.nameKey)}
-                </h3>
-
-                {/* Graphique principal - Plus grand et visible */}
-                <div className="flex-1 mb-3 flex items-center justify-center" style={{ minHeight: '80px' }}>
+                {/* Sparkline chart */}
+                <div className="flex-1 flex items-center px-0.5" style={{ minHeight: '36px' }}>
                   <ModuleChart
                     data={history}
                     color={colors.primary}
-                    friendsAvg={averages.friends}
-                    nationalAvg={averages.national}
-                    worldwideAvg={averages.worldwide}
-                    height={80}
+                    height={36}
                     weekLabels={historyData.weeks}
+                    compact={true}
+                    showAverages={false}
                   />
                 </div>
 
-                {/* Progress bar compacte en bas */}
-                <div className="bar-bg mt-auto" style={{ height: '4px', borderRadius: '2px' }}>
-                  <div
-                    className="bar-fill transition-all duration-500"
-                    style={{
-                      width: `${module.percentage}%`,
-                      background: `linear-gradient(90deg, ${colors.primary}, ${colors.primary}88)`,
-                      height: '100%',
-                      borderRadius: '2px',
-                    }}
-                  />
-                </div>
-
-                {/* Légende des moyennes - Discrète */}
-                <div className="flex items-center justify-between mt-2 text-[9px]" style={{ color: 'var(--text-tertiary)' }}>
-                  <span>{t('friends')}: {averages.friends}%</span>
-                  <span>•</span>
-                  <span>{t('global')}: {averages.worldwide}%</span>
+                {/* Bottom row: Week label + Trend */}
+                <div className="flex items-center justify-between mt-1 pt-1" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                  <span
+                    className="text-[8px]"
+                    style={{ color: 'var(--text-muted)' }}
+                  >
+                    {historyData.weeks[historyData.weeks.length - 1] || ''}
+                  </span>
+                  {trend !== 0 ? (
+                    <div
+                      className="flex items-center gap-0.5 text-[9px] font-medium px-1.5 py-0.5 rounded-full"
+                      style={{
+                        color: trend > 0 ? 'var(--accent-sage)' : 'var(--accent-rose)',
+                        background: trend > 0 ? 'rgba(139, 168, 136, 0.1)' : 'rgba(212, 165, 165, 0.1)'
+                      }}
+                    >
+                      <i className={`fa-solid ${trend > 0 ? 'fa-arrow-up' : 'fa-arrow-down'} text-[7px]`} />
+                      {Math.abs(trend)}
+                    </div>
+                  ) : (
+                    <div
+                      className="text-[8px] px-1.5 py-0.5 rounded-full"
+                      style={{ color: 'var(--text-muted)', background: 'var(--hover-overlay)' }}
+                    >
+                      —
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -399,6 +400,7 @@ export default function HomeView({
 
       <div className="h-4" />
 
+      {/* Modals */}
       <HarmonyHistoryModal
         isOpen={harmonyModalOpen}
         onClose={() => setHarmonyModalOpen(false)}
@@ -409,7 +411,22 @@ export default function HomeView({
         onClose={() => setNotificationPanelOpen(false)}
         onRefresh={handleNotificationRefresh}
       />
+
+      {/* Module Detail Modal */}
+      {selectedModule && (
+        <ModuleDetailModal
+          isOpen={!!selectedModule}
+          onClose={() => setSelectedModule(null)}
+          title={t(selectedModule.colors.nameKey)}
+          value={`${selectedModule.module.percentage}%`}
+          subtitle={selectedModule.module.detailSubtitle}
+          color={selectedModule.colors.primary}
+          moduleId={selectedModule.module.id}
+          historyData={selectedModule.history}
+          weekLabels={selectedModule.weekLabels}
+          averages={selectedModule.averages}
+        />
+      )}
     </div>
   )
 }
-

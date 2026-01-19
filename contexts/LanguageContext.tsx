@@ -151,6 +151,13 @@ const translations: Translations = {
   'userNotFound': { en: 'User not found', fr: 'Utilisateur non trouvé', es: 'Usuario no encontrado' },
   'aheadIn': { en: 'You\'re ahead in', fr: 'Vous êtes en tête dans', es: 'Estás adelante en' },
   'ofCategories': { en: 'of 5 categories', fr: 'sur 5 catégories', es: 'de 5 categorías' },
+  'buildYourCircle': { en: 'Build your TrueCircle', fr: 'Construisez votre TrueCircle', es: 'Construye tu TrueCircle' },
+  'buildYourCircleDesc': { en: 'Add your first contacts to visualize your social sphere and compare stats with friends.', fr: 'Ajoutez vos premiers contacts pour visualiser votre sphère sociale et comparer vos statistiques avec vos amis.', es: 'Añade tus primeros contactos para visualizar tu esfera social y comparar estadísticas con amigos.' },
+  'searchUsers': { en: 'Search users', fr: 'Rechercher des utilisateurs', es: 'Buscar usuarios' },
+  'inviteFriends': { en: 'Invite friends', fr: 'Inviter des amis', es: 'Invitar amigos' },
+  'inviteText': { en: 'Join me on STATS to track and compare our life stats!', fr: 'Rejoins-moi sur STATS pour suivre et comparer nos statistiques de vie !', es: '¡Únete a mí en STATS para seguir y comparar nuestras estadísticas de vida!' },
+  'closeCircle': { en: 'Close Circle', fr: 'Cercle Proche', es: 'Círculo Cercano' },
+  'friend': { en: 'Friend', fr: 'Ami', es: 'Amigo' },
 
   // Other
   'week': { en: 'Week', fr: 'Semaine', es: 'Semana' },

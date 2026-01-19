@@ -114,6 +114,10 @@
   --glass-border: rgba(0, 0, 0, 0.06);
   --blur-overlay-bg: rgba(255, 255, 255, 0.7);
 
+  /* Modal Handle & Overlay */
+  --handle-bar: rgba(0, 0, 0, 0.1);
+  --overlay-bg: rgba(0, 0, 0, 0.5);
+
   /* Phone Dimensions */
   --phone-width: 400px;
   --phone-height: 850px;
@@ -175,6 +179,10 @@ body.dark-mode {
   --glass-bg: rgba(255, 255, 255, 0.06);
   --glass-border: rgba(255, 255, 255, 0.1);
   --blur-overlay-bg: rgba(0, 0, 0, 0.7);
+
+  /* Modal Handle & Overlay - Dark mode */
+  --handle-bar: rgba(255, 255, 255, 0.2);
+  --overlay-bg: rgba(0, 0, 0, 0.7);
 }
 
 /* ============================================================================

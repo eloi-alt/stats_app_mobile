@@ -55,15 +55,27 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
   // Get profile data (moved up so displayData can use it)
   const profile: any = profileData.profile
 
+  // Check if user has their own financial data (not demo)
+  const hasRealFinancialData = !financialData.isDemo && financialData.hasAnyData
+
   // Compute display values - use real data for authenticated users, demo for visitors
+  // For career data: use profile data if available
+  // For financial data: use real financial data if available, otherwise profile data, otherwise demo
   const displayData = {
     jobTitle: !isVisitor && profile?.jobTitle ? profile.jobTitle : careerInfo.currentPosition,
     company: !isVisitor && profile?.company ? profile.company : ThomasMorel.moduleC.career.company,
     industry: !isVisitor && profile?.industry ? profile.industry : careerInfo.specialty,
     experienceYears: !isVisitor && profile?.experienceYears ? `${profile.experienceYears} ans` : careerInfo.experience,
-    annualIncome: !isVisitor && profile?.annualIncome ? profile.annualIncome : ThomasMorel.moduleC.revenus.totalGrossAnnual,
-    netWorthEstimate: !isVisitor && profile?.netWorthEstimate ? profile.netWorthEstimate : ThomasMorel.moduleC.revenus.totalNetAnnual,
-    savingsRate: !isVisitor && profile?.savingsRate ? profile.savingsRate : 20,
+    // For financial values: prioritize real financial data, then profile data, then demo
+    annualIncome: !isVisitor && profile?.annualIncome
+      ? profile.annualIncome
+      : (isVisitor ? ThomasMorel.moduleC.revenus.totalGrossAnnual : 0),
+    netWorthEstimate: !isVisitor && hasRealFinancialData
+      ? financialData.netWorth
+      : (!isVisitor && profile?.netWorthEstimate
+        ? profile.netWorthEstimate
+        : (isVisitor ? ThomasMorel.moduleC.revenus.totalNetAnnual : 0)),
+    savingsRate: !isVisitor && profile?.savingsRate ? profile.savingsRate : (isVisitor ? 20 : 0),
     currency: !isVisitor && profile?.currency ? profile.currency : 'EUR',
   }
 
@@ -86,7 +98,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
 
   // Check if user has required job data
   const hasJobData = isVisitor || (
-    (profile?.job_title || profile?.jobTitle) &&
+    profile?.jobTitle &&
     profile?.industry
   )
 
@@ -440,16 +452,16 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
           className="fixed inset-0 z-[99999] flex flex-col justify-end"
           onClick={() => setShowSkillsModal(false)}
         >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+          <div className="absolute inset-0 backdrop-blur-md" style={{ background: 'var(--bg-overlay)' }} />
           <div
             onClick={(e) => e.stopPropagation()}
             className="relative w-full bg-[var(--bg-elevated)] rounded-t-[32px] pb-safe pt-6 px-5 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] max-h-[85vh] overflow-y-auto cursor-default animate-slide-up"
           >
-            <div className="w-10 h-1 rounded-full bg-black/10 mx-auto mb-6" />
+            <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: 'var(--handle-bar)' }} />
             <button
               onClick={() => setShowSkillsModal(false)}
               className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: 'rgba(0, 0, 0, 0.04)', color: 'var(--text-tertiary)' }}
+              style={{ background: 'var(--hover-overlay)', color: 'var(--text-tertiary)' }}
             >
               <i className="fa-solid fa-xmark text-sm" />
             </button>
@@ -463,7 +475,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
                 <div
                   key={skill}
                   className="flex items-center justify-between p-3 rounded-xl"
-                  style={{ background: 'rgba(0, 0, 0, 0.02)' }}
+                  style={{ background: 'var(--glass-bg)' }}
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -479,7 +491,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
                       <div
                         key={level}
                         className="w-2 h-2 rounded-full"
-                        style={{ background: level <= (5 - idx % 3) ? 'var(--accent-lavender)' : 'rgba(0, 0, 0, 0.06)' }}
+                        style={{ background: level <= (5 - idx % 3) ? 'var(--accent-lavender)' : 'var(--glass-bg)' }}
                       />
                     ))}
                   </div>
@@ -509,16 +521,16 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
           className="fixed inset-0 z-[99999] flex flex-col justify-end"
           onClick={() => setShowGoalModal(false)}
         >
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+          <div className="absolute inset-0 backdrop-blur-md" style={{ background: 'var(--bg-overlay)' }} />
           <div
             onClick={(e) => e.stopPropagation()}
             className="relative w-full bg-[var(--bg-elevated)] rounded-t-[32px] pb-safe pt-6 px-5 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] max-h-[85vh] overflow-y-auto cursor-default animate-slide-up"
           >
-            <div className="w-10 h-1 rounded-full bg-black/10 mx-auto mb-6" />
+            <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: 'var(--handle-bar)' }} />
             <button
               onClick={() => setShowGoalModal(false)}
               className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-              style={{ background: 'rgba(0, 0, 0, 0.04)', color: 'var(--text-tertiary)' }}
+              style={{ background: 'var(--hover-overlay)', color: 'var(--text-tertiary)' }}
             >
               <i className="fa-solid fa-xmark text-sm" />
             </button>
@@ -563,7 +575,7 @@ export default function ProView({ careerInfo, onAvatarClick, onAssetsClick }: Pr
             <button
               onClick={() => setShowGoalModal(false)}
               className="w-full py-4 rounded-2xl text-sm font-medium"
-              style={{ background: 'rgba(0, 0, 0, 0.04)', color: 'var(--text-secondary)' }}
+              style={{ background: 'var(--hover-overlay)', color: 'var(--text-secondary)' }}
             >
               {t('close')}
             </button>

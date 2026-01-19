@@ -133,12 +133,9 @@ export function useSocialData(): SocialData {
     const friendCount = friends.length
     const hasAnyFriends = friendCount > 0
 
-    // For SocialView 3D sphere: show demo data if no real inner circle
-    const displayInnerCircle = hasRealInnerCircle ? innerCircleFriends : DEMO_INNER_CIRCLE
-
     return {
         friends,
-        innerCircleFriends: displayInnerCircle,
+        innerCircleFriends,
         amiFriends,
         isLoading,
         hasAnyFriends,

@@ -526,8 +526,12 @@ export default function MapboxGlobe({
                 <>
                     <button
                         onClick={toggleFullscreen}
-                        className={`absolute ${isExpanded ? 'top-4 left-4' : 'bottom-20 right-4'} w-10 h-10 rounded-full flex items-center justify-center bg-white/95 backdrop-blur-md border border-black/5 hover:bg-white transition-all z-10 shadow-lg`}
-                        style={{ color: THEME_COLORS.gold }}
+                        className={`absolute ${isExpanded ? 'top-4 left-4' : 'bottom-20 right-4'} w-10 h-10 rounded-full flex items-center justify-center backdrop-blur-md hover:opacity-80 transition-all z-10 shadow-lg`}
+                        style={{
+                            background: 'var(--bg-elevated)',
+                            border: '1px solid var(--border-light)',
+                            color: THEME_COLORS.gold
+                        }}
                     >
                         {isExpanded ? (
                             <i className="fa-solid fa-compress text-sm" />
@@ -649,12 +653,12 @@ export default function MapboxGlobe({
                     className="fixed inset-0 z-[99999] flex flex-col justify-end"
                     onClick={() => setSelectedCountry(null)}
                 >
-                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+                    <div className="absolute inset-0 backdrop-blur-md" style={{ background: 'var(--bg-overlay)' }} />
                     <div
                         onClick={(e) => e.stopPropagation()}
                         className="relative w-full bg-[var(--bg-elevated)] rounded-t-[32px] pb-safe pt-6 px-5 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] max-h-[70vh] overflow-y-auto"
                     >
-                        <div className="w-10 h-1 rounded-full bg-black/10 mx-auto mb-6" />
+                        <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: 'var(--handle-bar)' }} />
                         <div className="flex items-center gap-4 mb-6">
                             <div className="text-6xl">{getCountryFlag(selectedCountry.code)}</div>
                             <div>

@@ -585,19 +585,19 @@ export default function TrueCircle({
     if (isFullscreen) {
         return (
             <div
-                className="fixed inset-0 z-[1000] bg-white"
-                style={{ touchAction: 'none' }}
+                className="fixed inset-0 z-[1000]"
+                style={{ touchAction: 'none', background: 'var(--bg-primary)' }}
             >
                 {/* Close button */}
                 <button
                     className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center"
                     style={{
-                        background: 'rgba(0, 0, 0, 0.1)',
+                        background: 'var(--glass-bg)',
                         backdropFilter: 'blur(10px)',
                     }}
                     onClick={() => setIsFullscreen(false)}
                 >
-                    <i className="fa-solid fa-xmark text-lg" style={{ color: '#333' }} />
+                    <i className="fa-solid fa-xmark text-lg" style={{ color: 'var(--text-primary)' }} />
                 </button>
 
                 <div ref={containerRef} className="w-full h-full">
@@ -618,11 +618,11 @@ export default function TrueCircle({
                 <div
                     className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 rounded-xl"
                     style={{
-                        background: 'rgba(0, 0, 0, 0.5)',
+                        background: 'var(--overlay-bg)',
                         backdropFilter: 'blur(10px)',
                     }}
                 >
-                    <span className="text-xs font-medium text-white">TrueCircle Network</span>
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-inverse)' }}>TrueCircle Network</span>
                 </div>
             </div>
         )
@@ -634,9 +634,9 @@ export default function TrueCircle({
             ref={containerRef}
             className="relative rounded-2xl overflow-hidden cursor-pointer transition-all active:scale-[0.98]"
             style={{
-                background: 'rgba(255, 255, 255, 0.85)',
-                border: '1px solid rgba(0, 0, 0, 0.04)',
-                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.04)',
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border-light)',
+                boxShadow: 'var(--shadow-md)',
                 backdropFilter: 'blur(20px)',
                 height: '200px',
             }}
@@ -660,20 +660,20 @@ export default function TrueCircle({
             <div
                 className="absolute bottom-3 left-3 text-center"
                 style={{
-                    background: 'rgba(0, 0, 0, 0.4)',
+                    background: 'var(--overlay-bg)',
                     backdropFilter: 'blur(8px)',
                     borderRadius: '8px',
                     padding: '6px 12px',
                 }}
             >
-                <span className="text-[10px] font-medium text-white">TrueCircle Network</span>
+                <span className="text-[10px] font-medium" style={{ color: 'var(--text-inverse)' }}>TrueCircle Network</span>
             </div>
 
             {/* Expand button */}
             <button
                 className="absolute bottom-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-95"
                 style={{
-                    background: 'rgba(0, 0, 0, 0.4)',
+                    background: 'var(--overlay-bg)',
                     backdropFilter: 'blur(8px)',
                 }}
                 onClick={(e) => {
@@ -682,7 +682,7 @@ export default function TrueCircle({
                     if (onFullscreenRequest) onFullscreenRequest()
                 }}
             >
-                <i className="fa-solid fa-expand text-white text-xs" />
+                <i className="fa-solid fa-expand text-xs" style={{ color: 'var(--text-inverse)' }} />
             </button>
         </div>
     )

@@ -159,7 +159,7 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
             {/* Backdrop */}
             <div
                 className="absolute inset-0 backdrop-blur-md"
-                style={{ background: 'rgba(0, 0, 0, 0.4)' }}
+                style={{ background: 'var(--bg-overlay)' }}
             />
 
             {/* Modal */}
@@ -174,13 +174,13 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                 }}
             >
                 {/* Handle */}
-                <div className="w-10 h-1 rounded-full bg-black/10 mx-auto mb-6" />
+                <div className="w-10 h-1 rounded-full mx-auto mb-6" style={{ background: 'var(--handle-bar)' }} />
 
                 {/* Close button */}
                 <button
                     onClick={handleClose}
                     className="absolute top-5 right-5 w-8 h-8 rounded-full flex items-center justify-center transition-colors"
-                    style={{ background: 'rgba(0, 0, 0, 0.04)', color: 'var(--text-tertiary)' }}
+                    style={{ background: 'var(--hover-overlay)', color: 'var(--text-tertiary)' }}
                 >
                     <i className="fa-solid fa-xmark text-sm" />
                 </button>

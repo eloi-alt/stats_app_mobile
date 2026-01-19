@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import Navbar from '../Navbar'
 import SocialSphere3D from '../SocialSphere3D'
 import ComparisonCard from '../Cards/ComparisonCard'
@@ -10,7 +10,7 @@ import RankingDetailModal from '../Modals/RankingDetailModal'
 import CompareWithFriendModal from '../Modals/CompareWithFriendModal'
 import EmptyModuleState from '../UI/EmptyModuleState'
 import UserSearchModal from '../Modals/UserSearchModal'
-import { Contact, ThomasMorel } from '@/data/mockData'
+import { ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useVisitor } from '@/contexts/VisitorContext'
 import { useSocialData } from '@/hooks/useSocialData'
@@ -28,8 +28,19 @@ interface ComparisonDataSet {
   sl: ComparisonDataItem
 }
 
+// Contact type for display (derived from Friend data)
+interface DisplayContact {
+  id: string
+  avatar: string
+  name: string
+  role: string
+  lastContact: string
+  lastContactColor: string
+  phone?: string
+  userId?: string
+}
+
 interface SocialViewProps {
-  contacts: Contact[]
   comparisonData: {
     friends: ComparisonDataSet
     country: ComparisonDataSet
@@ -41,11 +52,11 @@ interface SocialViewProps {
 }
 
 interface ContactDetailModal {
-  contact: Contact
+  contact: DisplayContact
   fullContact: typeof ThomasMorel.moduleE.contacts[0] | null
 }
 
-export default function SocialView({ contacts, comparisonData, onObjectiveClick, initialContactName, onClearInitialContact }: SocialViewProps) {
+export default function SocialView({ comparisonData, onObjectiveClick, initialContactName, onClearInitialContact }: SocialViewProps) {
   const { t } = useLanguage()
   const { isVisitor } = useVisitor()
   const socialData = useSocialData()
@@ -66,10 +77,34 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
   const [showCompareModal, setShowCompareModal] = useState(false)
   const [showSearchModal, setShowSearchModal] = useState(false)
 
+  // Transform friends from Supabase to display contacts
+  const displayContacts: DisplayContact[] = useMemo(() => {
+    return socialData.friends.map(friend => {
+      const name = friend.profile?.first_name && friend.profile?.last_name
+        ? `${friend.profile.first_name} ${friend.profile.last_name}`
+        : friend.profile?.username || 'Ami'
+
+      // Calculate days since friendship created
+      const daysSince = Math.floor(
+        (Date.now() - new Date(friend.created_at).getTime()) / (1000 * 60 * 60 * 24)
+      )
+
+      return {
+        id: friend.id,
+        avatar: friend.profile?.avatar_url || '/default-avatar.png',
+        name,
+        role: friend.rank === 'cercle_proche' ? t('closeCircle') : t('friend'),
+        lastContact: `${daysSince}d`,
+        lastContactColor: daysSince > 30 ? 'text-red-400' : 'text-green-400',
+        userId: friend.friend_id,
+      }
+    })
+  }, [socialData.friends, t])
+
   // Handle deep linking for contact
   useEffect(() => {
     if (initialContactName) {
-      const contact = contacts.find(c => c.name.toLowerCase() === initialContactName.toLowerCase())
+      const contact = displayContacts.find(c => c.name.toLowerCase() === initialContactName.toLowerCase())
       if (contact) {
         handleContactClick(contact)
         if (onClearInitialContact) {
@@ -77,7 +112,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         }
       }
     }
-  }, [initialContactName, contacts])
+  }, [initialContactName, displayContacts])
 
   const currentData = comparisonData[comparisonType]
   const dunbarNumbers = ThomasMorel.moduleE.dunbarNumbers
@@ -86,10 +121,10 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
     return ThomasMorel.moduleE.contacts.find(c => c.id === contactId) || null
   }
 
-  const handleContactClick = (contact: Contact) => {
+  const handleContactClick = (contact: DisplayContact) => {
     setSelectedContact({
       contact,
-      fullContact: getFullContact(contact.id),
+      fullContact: null, // Real friends don't have mock fullContact data
     })
   }
 
@@ -107,7 +142,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
   }, [friendContext])
 
   // Show empty state for authenticated users without any friends
-  const showEmptyState = !isVisitor && !socialData.isLoading && !socialData.hasAnyFriends && contacts.length === 0
+  const showEmptyState = !isVisitor && !socialData.isLoading && !socialData.hasAnyFriends
 
   // Loading state
   if (!isVisitor && socialData.isLoading) {
@@ -142,15 +177,33 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
           moduleName="Social"
           moduleIcon="fa-users"
           moduleColor="var(--accent-lavender)"
-          title="Construisez votre TrueCircle"
-          description="Ajoutez vos premiers contacts pour visualiser votre sphère sociale et comparer vos statistiques avec vos amis."
-          actionLabel="Ajouter un contact"
-          onAction={() => {
-            // TODO: Open add contact modal
-          }}
-          secondaryActionLabel="Rechercher des utilisateurs"
+          title={t('buildYourCircle')}
+          description={t('buildYourCircleDesc')}
+          actionLabel={t('searchUsers')}
+          onAction={() => setShowSearchModal(true)}
+          secondaryActionLabel={t('inviteFriends')}
           onSecondaryAction={() => {
-            // TODO: Open search modal
+            // Use native share if available
+            if (navigator.share) {
+              navigator.share({
+                title: 'STATS App',
+                text: t('inviteText'),
+                url: window.location.origin
+              }).catch(() => { })
+            }
+          }}
+        />
+
+        {/* User Search Modal - also needed in empty state */}
+        <UserSearchModal
+          isOpen={showSearchModal}
+          onClose={() => {
+            setShowSearchModal(false)
+            // Refetch social data after closing modal (in case friend was added)
+            socialData.refetch()
+          }}
+          onSelectUser={(user) => {
+            console.log('Selected user:', user)
           }}
         />
       </div>
@@ -353,7 +406,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
             minHeight: '80px'
           }}
         >
-          {contacts.map((contact, index) => (
+          {displayContacts.map((contact, index) => (
             <SwipeableCard
               key={contact.id}
               leftActions={contact.phone ? [
@@ -386,7 +439,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
                 className="p-4 flex items-center gap-4 transition-colors cursor-pointer"
                 style={{
                   background: 'var(--bg-primary)',
-                  borderBottom: index < contacts.length - 1 ? '1px solid var(--border-light)' : 'none',
+                  borderBottom: index < displayContacts.length - 1 ? '1px solid var(--border-light)' : 'none',
                 }}
                 onClick={() => handleContactClick(contact)}
               >
@@ -656,7 +709,7 @@ export default function SocialView({ contacts, comparisonData, onObjectiveClick,
         isOpen={showCompareModal}
         onClose={() => setShowCompareModal(false)}
         currentContact={selectedContact?.contact || null}
-        allContacts={contacts}
+        allContacts={displayContacts}
       />
 
       {/* User Search Modal */}
