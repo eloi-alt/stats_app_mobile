@@ -501,7 +501,6 @@ function HomeContent() {
           <ProfileDataGate module="physio" onMissingDataAction={() => setShowPhysioDataModal(true)}>
             <PhysioView
               metrics={physioMetrics}
-              aiAnalysis={aiAnalysis}
               onAvatarClick={openProfile}
               onCardClick={handleObjectiveClick}
             />

@@ -568,7 +568,7 @@ let isLoadingAI = false
  * Get AI-powered Harmony analysis
  * Returns cached result if available, otherwise triggers async calculation
  */
-export async function getAIHarmonyAnalysis(forceRefresh = false): Promise<HarmonyAIResponse | null> {
+export async function getAIHarmonyAnalysis(forceRefresh = false, language: string = 'fr'): Promise<HarmonyAIResponse | null> {
   if (!forceRefresh && cachedAIResult) {
     return cachedAIResult
   }
@@ -579,7 +579,7 @@ export async function getAIHarmonyAnalysis(forceRefresh = false): Promise<Harmon
 
   try {
     isLoadingAI = true
-    cachedAIResult = await getAIHarmonyData(ThomasMorel, userGoals, forceRefresh)
+    cachedAIResult = await getAIHarmonyData(ThomasMorel, userGoals, forceRefresh, language)
     return cachedAIResult
   } catch (error) {
     console.error('Failed to get AI Harmony analysis:', error)
@@ -652,12 +652,12 @@ export interface AIEnhancedHarmonyData {
   }>
 }
 
-export async function getAIEnhancedHarmonyData(forceRefresh = false): Promise<AIEnhancedHarmonyData> {
+export async function getAIEnhancedHarmonyData(forceRefresh = false, language: string = 'fr'): Promise<AIEnhancedHarmonyData> {
   // Get traditional data
   const traditionalData = getHarmonyData()
 
   // Get AI analysis (async)
-  const aiAnalysis = await getAIHarmonyAnalysis(forceRefresh)
+  const aiAnalysis = await getAIHarmonyAnalysis(forceRefresh, language)
 
   // Merge data with new v3 format
   return {

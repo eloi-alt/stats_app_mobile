@@ -449,6 +449,8 @@ export interface UserProfile {
     objectives: HarmonyObjective[];
     dimensionWeights: { [key in HarmonyDimension]: number };
     lastUpdated: string;
+    dataHash?: string;
+    lastAnalyzedAt?: string;
   };
 }
 

@@ -1,0 +1,104 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2867
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 # AI_OPTIMIZATION_STRATEGY.md\
+\
+__Date__ : 20 janvier 2026\
+__Contexte__ : Optimisation de l'int\'e9gration Groq (Llama) pour l'application STATS.\
+__Documents de r\'e9f\'e9rence__ : `README.md`, `ARCHITECTURE.md`, `GROQ_TECHNICAL_REPORT.md`.\
+\
+---\
+\
+## \uc0\u55356 \u57263  Objectif Ex\'e9cutif\
+\
+L'architecture actuelle (Monolithe Llama 70B) pr\'e9sente un risque critique de scalabilit\'e9 (limite de ~5 requ\'eates/minute et co\'fbt \'e9lev\'e9 par token).\
+**L'objectif est de passer \'e0 une architecture hybride en cascade (Tiered AI)** pour r\'e9duire les co\'fbts de 90% et contourner la limite de TPM (Tokens Per Minute), tout en pr\'e9parant la migration vers l'application native iOS.\
+\
+---\
+\
+## 1. Architecture Hybride & S\'e9lection de Mod\'e8les\
+\
+Nous abandonnons le mod\'e8le unique pour une approche sp\'e9cialis\'e9e afin d'optimiser le budget tokens et la latence.\
+\
+### Le Pattern "Tiered AI"\
+\
+| T\'e2che IA | Mod\'e8le Cible | Fr\'e9quence | R\'f4le Technique |\
+| :--- | :--- | :--- | :--- |\
+| **Calcul Score "Harmony"** | **Llama-3.1-8b-instant** | \'c0 chaque sync (si donn\'e9es modifi\'e9es) | **Moteur Logique**. Calcul rapide des scores, d\'e9tection d'anomalies chiffr\'e9es. Haute capacit\'e9 (~100k TPM). |\
+| **Analyse Hebdomadaire** | **Llama-3.3-70b-versatile** | 1x / semaine (Dimanche) | **Analyste Profond**. Synth\'e8se complexe et corr\'e9lations multi-piliers. Co\'fbt plus \'e9lev\'e9 accept\'e9 pour la qualit\'e9. |\
+| **Interaction Chat** | **Llama-3.1-8b-instant** | \'c0 la demande | **R\'e9ponse Rapide**. Faible latence pour les questions contextuelles simples. |\
+\
+**Impact imm\'e9diat :**\
+* Passage de 12k TPM max \'e0 ~100k TPM pour 90% des appels.\
+* Co\'fbt divis\'e9 par ~10 pour les analyses quotidiennes.\
+\
+---\
+\
+## 2. Optimisation des Tokens & Prompt Engineering\
+\
+Le "System Prompt" actuel consomme ~950 tokens (45% du contexte), principalement \'e0 cause de la d\'e9finition JSON verbeuse.\
+\
+### 2.1 Compression du Sch\'e9ma (TypeScript Validation)\
+Le prompt ne doit pas contenir la d\'e9finition exhaustive du JSON de sortie.\
+* **Action :** Supprimer la d\'e9finition JSON stricte du System Prompt.\
+* **Strat\'e9gie :** Utiliser une approche "One-Shot Example" minimaliste.\
+* **Validation :** Impl\'e9menter **Zod** c\'f4t\'e9 serveur (Edge Function) pour valider et typer la r\'e9ponse du LLM a posteriori.\
+* **Gain :** ~400 tokens \'e9conomis\'e9s par requ\'eate.\
+\
+### 2.2 D\'e9lestage de la Logique (Logic Offloading)\
+L'IA ne doit pas effectuer de calculs math\'e9matiques (moyennes, pourcentages).\
+* **Action :** Pr\'e9-calculer les m\'e9triques en TypeScript ou Swift avant l'envoi au LLM.\
+* **Exemple :**\
+  * *Avant :* Envoyer 7 jours de raw data -> L'IA calcule la moyenne.\
+  * *Apr\'e8s :* Envoyer `\{"avg_sleep": 440, "trend": "-10%"\}`.\
+* **B\'e9n\'e9fice :** R\'e9duit la taille du payload utilisateur et \'e9limine les erreurs de calcul (hallucinations math\'e9matiques).\
+\
+---\
+\
+## 3. Strat\'e9gie de Caching & "Staleness"\
+\
+L'analyse ne doit jamais \'eatre d\'e9clench\'e9e inutilement, respectant l'approche "Offline-First".\
+\
+### Impl\'e9mentation du Hash de Donn\'e9es\
+Cr\'e9er un m\'e9canisme de v\'e9rification de la fra\'eecheur des donn\'e9es dans Supabase.\
+\
+1.  **M\'e9canisme :** G\'e9n\'e9rer un hash (MD5/SHA) des donn\'e9es critiques de l'utilisateur (Sleep + Sport + Social + Finance).\
+2.  **Logique Edge Function :**\
+    ```typescript\
+    if (currentDataHash === lastAnalyzedHash) \{\
+      return cachedAnalysis; // Co\'fbt = 0$, Latence = ms\
+    \} else \{\
+      executeGroqRequest(); // Co\'fbt = $, Latence = s\
+      updateLastAnalyzedHash();\
+    \}\
+    ```\
+3.  **Trigger :** D\'e9sactiver l'analyse automatique au chargement de page (`useEffect`). L'analyse ne se lance que sur action explicite ou modification de donn\'e9es confirm\'e9e.\
+\
+---\
+\
+## 4. Roadmap Technique & Gestion de Charge\
+\
+Pour g\'e9rer les pics d'utilisation (ex: notifications push le soir), l'acc\'e8s direct \'e0 l'API Groq doit \'eatre prot\'e9g\'e9.\
+\
+### 4.1 File d'attente (Queueing)\
+* **Composant :** Int\'e9grer une file d'attente (Redis via Upstash ou BullMQ) entre le Front-end et l'API Groq.\
+* **Fonctionnement :** Les requ\'eates sont mises en file et trait\'e9es s\'e9quentiellement pour respecter strictement la limite de TPM du mod\'e8le utilis\'e9, \'e9vitant les erreurs 429.\
+\
+### 4.2 Transition vers le Natif (iOS)\
+En pr\'e9vision de la version Swift d\'e9crite dans le README :\
+* **CoreML (Apple Neural Engine) :** Pr\'e9voir de d\'e9porter l'analyse des donn\'e9es sensibles directement sur le device utilisateur pour une confidentialit\'e9 totale et un co\'fbt nul.\
+* **API Cloud :** Ne conserver l'appel Groq que pour la g\'e9n\'e9ration de texte cr\'e9atif (synth\'e8se narrative), tandis que l'analyse num\'e9rique reste locale.\
+\
+---\
+\
+## \uc0\u9989  Plan d'Action Imm\'e9diat (Checklist Agent)\
+\
+- [ ] **Switch Model** : Modifier `utils/harmonyAI.ts` pour utiliser `llama-3.1-8b-instant` par d\'e9faut.\
+- [ ] **Prompt Cleanup** : R\'e9\'e9crire le `HARMONY_MASTER_PROMPT` pour retirer la d\'e9finition JSON et la remplacer par un exemple "One-Shot".\
+- [ ] **Install Zod** : Mettre en place la validation du sch\'e9ma de sortie JSON dans l'Edge Function.\
+- [ ] **Database Migration** : Ajouter les colonnes `data_hash` et `last_analyzed_at` \'e0 la table `profiles` ou `daily_stats`.\
+- [ ] **Impl\'e9menter Caching** : Coder la logique de comparaison de hash avant l'appel API.}

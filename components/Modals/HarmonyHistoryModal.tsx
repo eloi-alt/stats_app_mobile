@@ -16,6 +16,9 @@ import {
   getAIHarmonyAnalysis,
   HarmonyAIResponse
 } from '@/utils/harmonyCalculator'
+import PerformanceAreaChart from '../Charts/PerformanceAreaChart'
+import LogarithmicHistoryChart from '../Charts/LogarithmicHistoryChart'
+import DimensionRadarChart from '../Charts/DimensionRadarChart'
 
 interface HarmonyHistoryModalProps {
   isOpen: boolean
@@ -53,7 +56,7 @@ function getPriorityLabel(priority: 'high' | 'medium' | 'low'): { label: string;
 }
 
 export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryModalProps) {
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
   const [activeTab, setActiveTab] = useState<'score' | 'objectives' | 'insights'>('score')
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'year'>('week')
   const [showInfoTooltip, setShowInfoTooltip] = useState(false)
@@ -87,7 +90,7 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
     setAiError(null)
 
     try {
-      const result = await getAIHarmonyAnalysis(forceRefresh)
+      const result = await getAIHarmonyAnalysis(forceRefresh, language)
       setAiAnalysis(result)
     } catch (error) {
       console.error('AI analysis error:', error)
@@ -95,7 +98,7 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
     } finally {
       setIsAILoading(false)
     }
-  }, [isAILoading])
+  }, [isAILoading, language])
 
   // Trigger AI analysis when modal opens
   useEffect(() => {
@@ -111,26 +114,21 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
     }
   }, [harmonyData.objectives])
 
-  // Chart calculations
-  const chartHeight = 160
-  const chartWidth = 280
-  const padding = 20
+  // Chart Data Preparation
+  const evolutionData = useMemo(() => {
+    return history.map(point => ({
+      label: point.label,
+      value: point.value
+    }))
+  }, [history])
 
-  const maxValue = Math.max(...history.map(h => h.value), 100)
-  const minValue = Math.min(...history.map(h => h.value), 0)
-
-  const getX = (index: number) => padding + (index * (chartWidth - 2 * padding) / (history.length - 1))
-  const getY = (value: number) => chartHeight - padding - ((value - minValue) / (maxValue - minValue)) * (chartHeight - 2 * padding)
-
-  const generatePath = (data: DetailedHistoryPoint[]) => {
-    return data.map((point, index) => {
-      const x = getX(index)
-      const y = getY(point.value)
-      return index === 0 ? `M ${x} ${y}` : `L ${x} ${y}`
-    }).join(' ')
-  }
-
-  const userPath = generatePath(history)
+  const radarData = useMemo(() => {
+    return (Object.keys(dimensionConfig) as HarmonyDimension[]).map(dim => ({
+      subject: dimensionConfig[dim].label,
+      A: harmonyData.dimensionScores[dim],
+      fullMark: 100
+    }))
+  }, [harmonyData])
 
   // Use localObjectives for display
   const objectives = localObjectives.length > 0 ? localObjectives : harmonyData.objectives
@@ -268,43 +266,13 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
 
               {/* Dynamic Chart */}
               <div className="rounded-xl p-3" style={{ background: 'var(--glass-bg)' }}>
-                <svg width={chartWidth} height={chartHeight} style={{ overflow: 'visible' }}>
-                  {/* Grid */}
-                  {[25, 50, 75].map((value) => (
-                    <line
-                      key={value}
-                      x1={padding}
-                      y1={getY(value)}
-                      x2={chartWidth - padding}
-                      y2={getY(value)}
-                      stroke="var(--border-light)"
-                      strokeWidth="1"
-                      strokeDasharray="4 4"
-                    />
-                  ))}
-                  {/* User line */}
-                  <path d={userPath} fill="none" stroke={getScoreColor(harmonyData.alignmentScore)} strokeWidth="2.5" />
-                  {/* Points with labels */}
-                  {history.map((point, index) => (
-                    <g key={index}>
-                      <circle
-                        cx={getX(index)}
-                        cy={getY(point.value)}
-                        r="4"
-                        fill={getScoreColor(point.value)}
-                      />
-                      <text
-                        x={getX(index)}
-                        y={chartHeight - 4}
-                        textAnchor="middle"
-                        fontSize="8"
-                        fill="var(--text-muted)"
-                      >
-                        {point.label}
-                      </text>
-                    </g>
-                  ))}
-                </svg>
+                <LogarithmicHistoryChart
+                  data={evolutionData.map(d => d.value)}
+                  weekLabels={evolutionData.map(d => d.label)}
+                  color={getScoreColor(harmonyData.alignmentScore)}
+                  height={220}
+                  scale="log"
+                />
               </div>
 
               {/* Period stats */}
@@ -407,6 +375,18 @@ export default function HarmonyHistoryModal({ isOpen, onClose }: HarmonyHistoryM
 
           {activeTab === 'insights' && (
             <div className="space-y-4">
+              {/* Dimension Balance (Radar) */}
+              <div className="mb-4 p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>
+                <div className="text-xs font-medium uppercase tracking-wide mb-2 text-center" style={{ color: 'var(--text-muted)' }}>
+                  Équilibre
+                </div>
+                <DimensionRadarChart
+                  data={radarData}
+                  color="#B8A5D4"
+                  height={220}
+                />
+              </div>
+
               {/* AI Status Badge */}
               {aiAnalysis && (
                 <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'var(--glass-bg)' }}>

@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import Modal from './Modal'
 import { ThomasMorel } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+import ProjectionAreaChart from '../Charts/ProjectionAreaChart'
 
 interface FinancialProjectionsModalProps {
     isOpen: boolean
@@ -53,19 +54,7 @@ export default function FinancialProjectionsModal({
         return data
     }, [projectionYears, annualGrowth, currentIncome, currentSavings])
 
-    // Generate chart points
-    const chartPoints = useMemo(() => {
-        if (projections.length < 2) return ''
-        const maxAmount = Math.max(...projections.map(p => p.amount))
-        const width = 280
-        const height = 100
-        const points = projections.map((p, i) => {
-            const x = (i / (projections.length - 1)) * width
-            const y = height - (p.amount / maxAmount) * height
-            return `${x},${y}`
-        })
-        return points.join(' ')
-    }, [projections])
+
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} id="financial-projections-modal" title={t('financialOverview')}>
@@ -100,52 +89,11 @@ export default function FinancialProjectionsModal({
                 className="rounded-2xl p-4 mb-4"
                 style={{ background: 'rgba(0, 0, 0, 0.02)' }}
             >
-                <svg viewBox="0 0 280 100" className="w-full h-24">
-                    <defs>
-                        <linearGradient id="projGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="var(--accent-sage)" stopOpacity="0.3" />
-                            <stop offset="100%" stopColor="var(--accent-sage)" stopOpacity="0" />
-                        </linearGradient>
-                    </defs>
-                    {chartPoints && (
-                        <>
-                            <polygon
-                                points={`0,100 ${chartPoints} 280,100`}
-                                fill="url(#projGrad)"
-                            />
-                            <polyline
-                                points={chartPoints}
-                                fill="none"
-                                stroke="var(--accent-sage)"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                            />
-                            {projections.map((p, i) => {
-                                const x = (i / (projections.length - 1)) * 280
-                                const maxAmount = Math.max(...projections.map(pr => pr.amount))
-                                const y = 100 - (p.amount / maxAmount) * 100
-                                return (
-                                    <circle
-                                        key={i}
-                                        cx={x}
-                                        cy={y}
-                                        r="4"
-                                        fill="white"
-                                        stroke="var(--accent-sage)"
-                                        strokeWidth="2"
-                                    />
-                                )
-                            })}
-                        </>
-                    )}
-                </svg>
-                <div className="flex justify-between text-[10px] mt-2" style={{ color: 'var(--text-muted)' }}>
-                    <span>{projections[0]?.year}</span>
-                    <span className="font-medium" style={{ color: 'var(--accent-sage)' }}>
-                        {Math.round(projections[projections.length - 1]?.amount / 1000)}k€
-                    </span>
-                    <span>{projections[projections.length - 1]?.year}</span>
-                </div>
+                <ProjectionAreaChart
+                    data={projections}
+                    color="var(--accent-sage)"
+                    height={100}
+                />
             </div>
 
             {/* Controls */}

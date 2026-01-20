@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import Navbar from '../Navbar'
 import PhysioCard from '../Cards/PhysioCard'
 import BottomSheet from '../UI/BottomSheet'
@@ -16,16 +16,21 @@ import { useProfileData } from '@/hooks/useProfileData'
 
 interface PhysioViewProps {
   metrics: PhysioMetric[]
-  aiAnalysis: {
-    title: string
-    message: string
-  }
   onAvatarClick: () => void
   onCardClick: (title: string, value: string, subtitle: string, color: string) => void
 }
 
-export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardClick }: PhysioViewProps) {
-  const { t } = useLanguage()
+import { getAIHarmonyData } from '@/utils/harmonyAI'
+import { mapHooksToUserProfile } from '@/utils/profileMapper'
+
+interface PhysioViewProps {
+  metrics: PhysioMetric[]
+  onAvatarClick: () => void
+  onCardClick: (title: string, value: string, subtitle: string, color: string) => void
+}
+
+export default function PhysioView({ metrics, onAvatarClick, onCardClick }: PhysioViewProps) {
+  const { t, language } = useLanguage()
   const { isVisitor } = useVisitor()
   const healthData = useHealthData()
   const profileData = useProfileData()
@@ -36,6 +41,78 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
   const [selectedMetricType, setSelectedMetricType] = useState<'sleep' | 'activity' | 'weight' | 'hydration' | 'body' | null>(null)
   const [showToast, setShowToast] = useState<string | null>(null)
   const [aiAnalysisExpanded, setAiAnalysisExpanded] = useState(false)
+
+  // AI State
+  const [aiData, setAiData] = useState<{ title: string, message: string } | null>(null)
+  const [isAiLoading, setIsAiLoading] = useState(false)
+
+  // Load AI Analysis
+  useEffect(() => {
+    // Skip if visitor or no profile
+    if (isVisitor || !profileData.profile) {
+      // Fallback or empty state handled by conditional rendering
+      return
+    }
+
+    const loadAI = async () => {
+      setIsAiLoading(true)
+      try {
+        // Check cache first via service
+        // Need profileData.profile for mapper
+        if (!profileData.profile) return;
+
+        // Map hooks data to UserProfile
+        const fullProfile = mapHooksToUserProfile(profileData.profile, healthData)
+
+        const response = await getAIHarmonyData(fullProfile, undefined, false, language)
+
+        // Extract relevant health/vitality advice
+        // Strict filtering: Only show advice related to Health/Vitality
+        const advice = response.conseils?.find(c =>
+          c.pillar === 'Vitalité' ||
+          c.pillar === 'Santé' ||
+          c.pillar === 'health' ||
+          c.pillar === 'Health'
+        ) || null
+
+        if (advice) {
+          setAiData({
+            title: "Conseil Harmonie",
+            message: advice.conseil
+          })
+        } else {
+          // Determine message based on score if no specific advice
+          const score = response.pillar_scores?.vitality?.score || 50
+          if (score > 75) {
+            setAiData({
+              title: "Excellente Vitalité",
+              message: "Votre vitalité est au top ! Continuez ainsi."
+            })
+          } else if (score < 40) {
+            setAiData({
+              title: "Attention Vitalité",
+              message: "Votre score de vitalité est bas. Pensez à vous reposer."
+            })
+          } else {
+            setAiData({
+              title: "Analyse Disponible",
+              message: response.pillar_scores?.vitality?.honest_assessment || "Consultez votre bilan détaillé."
+            })
+          }
+        }
+      } catch (e) {
+        console.error("AI Load error", e)
+        setAiData({
+          title: "Service indisponible",
+          message: "L'analyse IA n'a pas pu être chargée pour le moment."
+        })
+      } finally {
+        setIsAiLoading(false)
+      }
+    }
+
+    loadAI()
+  }, [profileData.profile, isVisitor])
 
   // Goal-setting modal state
   const [showGoalModal, setShowGoalModal] = useState(false)
@@ -251,7 +328,7 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
                 className="font-medium text-sm"
                 style={{ color: 'var(--text-primary)' }}
               >
-                {aiAnalysis.title}
+                {aiData?.title || (isAiLoading ? "Analyse en cours..." : "Conseil Santé")}
               </div>
               <i
                 className={`fa-solid ${aiAnalysisExpanded ? 'fa-chevron-up' : 'fa-chevron-down'} text-xs transition-transform`}
@@ -266,7 +343,11 @@ export default function PhysioView({ metrics, aiAnalysis, onAvatarClick, onCardC
                 overflow: 'hidden',
               }}
             >
-              {aiAnalysis.message}
+              {isAiLoading ? (
+                <div className="animate-pulse h-4 bg-gray-200 rounded w-3/4"></div>
+              ) : (
+                aiData?.message || "Connectez-vous pour obtenir votre analyse personnalisée."
+              )}
             </div>
             {!aiAnalysisExpanded && (
               <div className="text-[10px] mt-2" style={{ color: 'var(--accent-sage)' }}>

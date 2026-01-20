@@ -6,24 +6,24 @@
 
 ---
 
-## 🔐 Authentication-Only Architecture
+## Authentication-Only Architecture
 
 The STATS App **requires authentication** for all features. Unauthenticated users are redirected to `/landing`.
 
 ### Characteristics
-- 🔒 **Authentication required** - Email/password login via Supabase Auth
-- 🗄️ **Live database connection** - Real-time sync with Supabase PostgreSQL
-- ✏️ **Full CRUD operations** - Users create, read, update, delete their data
-- 🔄 **Multi-device sync** - Data accessible across devices
-- 🛡️ **Row-Level Security (RLS)** - Users can only access their own data
-- 📊 **Dynamic modules** - HomeView percentages computed from real Supabase data
+- **Authentication required** - Email/password login via Supabase Auth
+- **Live database connection** - Real-time sync with Supabase PostgreSQL
+- **Full CRUD operations** - Users create, read, update, delete their data
+- **Multi-device sync** - Data accessible across devices
+- **Row-Level Security (RLS)** - Users can only access their own data
+- **Dynamic modules** - HomeView percentages computed from real Supabase data
 
 ### Empty State for New Users
 New users see **0% for all modules** with "Aucune donnée" subtitle until they add data.
 
 ---
 
-## 📂 Directory Structure (Prototype)
+## Directory Structure (Prototype)
 
 ```
 /app
@@ -46,7 +46,12 @@ New users see **0% for all modules** with "Aucune donnée" subtitle until they a
 │   ├── UserSearchModal.tsx # Search & Add Friends
 │   ├── FriendProfileModal.tsx # Friend management
 │   ├── HarmonyHistoryModal.tsx
+│   ├── LogarithmicHistoryChart.tsx
 │   ├── CareerGoalModal.tsx
+│   ├── UserSearchModal.tsx
+│   ├── FriendProfileModal.tsx
+│   ├── CompareWithFriendModal.tsx
+│   ├── PublicCardCreatorModal.tsx
 │   └── CountryDetailModal.tsx
 ├── Cards/                  # Reusable UI Components
 │   ├── PhysioCard.tsx
@@ -58,11 +63,11 @@ New users see **0% for all modules** with "Aucune donnée" subtitle until they a
     └── BottomSheet.tsx
 
 /contexts
-├── AuthContext.tsx         # 🔑 Authentication state provider (Supabase session)
+├── AuthContext.tsx         # Authentication state provider (Supabase session)
 ├── ThemeContext.tsx        # Dark/Light mode management
 └── LanguageContext.tsx     # i18n (FR/EN)
 
-/hooks                      # 🔀 DUAL-MODE DATA HOOKS
+/hooks                      # DUAL-MODE DATA HOOKS
 ├── useHealthData.ts        # Sleep, Sport, Nutrition data fetching
 ├── useSocialData.ts        # Contacts, Connections, Rankings
 ├── useTravelData.ts        # Countries, Trips
@@ -70,14 +75,14 @@ New users see **0% for all modules** with "Aucune donnée" subtitle until they a
 └── useProfileData.ts       # User profile and avatar
 
 /data
-├── mockData.ts             # 🌐 VISITOR MODE - Demo data source
+├── mockData.ts             # VISITOR MODE - Demo data source
 ├── demoHealthData.ts       # Demo health records
 ├── demoSocialData.ts       # Demo contacts and social graph
 └── demoTravelData.ts       # Demo trips and countries
 
 /utils
 └── supabase/
-    └── client.ts           # 🔐 Supabase client initialization
+    └── client.ts           # Supabase client initialization
 
 /supabase
 ├── functions/              # Edge Functions
@@ -87,7 +92,7 @@ New users see **0% for all modules** with "Aucune donnée" subtitle until they a
 
 ---
 
-## 🏗️ Architectural Patterns
+## Architectural Patterns
 
 ### 1. Authentication Flow
 
@@ -169,18 +174,18 @@ export function useHealthData(): HealthData {
 
   useEffect(() => {
     async function fetchData() {
-      // 1️⃣ Check authentication status
+      // 1⃣ Check authentication status
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        // 🌐 VISITOR MODE - Load demo data
+        //  VISITOR MODE - Load demo data
         setSleepRecords(DEMO_SLEEP_RECORDS)
         setIsDemo(true)
         setIsLoading(false)
         return
       }
 
-      // 🔐 AUTHENTICATED MODE - Fetch from Supabase
+      //  AUTHENTICATED MODE - Fetch from Supabase
       setIsDemo(false)
       const { data, error } = await supabase
         .from('sleep_records')
@@ -209,11 +214,11 @@ export function useHealthData(): HealthData {
 ```
 
 **Pattern Applied to All Hooks:**
-- ✅ `useHealthData()` - Sleep, Sport, Body, Nutrition
-- ✅ `useSocialData()` - Contacts, Connections, Rankings
-- ✅ `useTravelData()` - Countries, Trips, Locations
-- ✅ `useFinancialData()` - Assets, Career Goals, Skills
-- ✅ `useProfileData()` - User profile, avatar, username
+- `useHealthData()` - Sleep, Sport, Body, Nutrition
+- `useSocialData()` - Contacts, Connections, Rankings
+- `useTravelData()` - Countries, Trips, Locations
+- `useFinancialData()` - Assets, Career Goals, Skills
+- `useProfileData()` - User profile, avatar, username
 
 ---
 
@@ -235,7 +240,12 @@ public.profiles
   - full_name (text)
   - avatar_url (text)
   - bio (text)
+  - avatar_url (text)
+  - bio (text)
   - created_at (timestamp)
+  - harmony_analysis_cache (jsonb) -- AI response cache
+  - harmony_last_analyzed_at (timestamptz)
+  - harmony_data_hash (text)
 
 -- Health module tables
 public.sleep_records
@@ -264,7 +274,6 @@ public.body_measurements
   - body_fat (numeric) -- percentage
   - muscle_mass (numeric) -- kg
 
--- Social module tables
 public.friendships
   - id (uuid, primary key)
   - user_id (uuid, references auth.users)
@@ -276,7 +285,7 @@ public.friend_requests
   - id (uuid, primary key)
   - sender_id (uuid, references auth.users)
   - receiver_id (uuid, references auth.users)
-  - status (text) -- 'pending', 'accepted', 'declined'
+  - status (text) -- 'pending', 'accepted', 'rejected'
   - created_at (timestamp)
 
 -- Travel module tables
@@ -333,9 +342,9 @@ CREATE POLICY "Users can only insert their own sleep records"
 ```
 
 **Benefits:**
-- 🛡️ Automatic data isolation - no manual checks needed
-- 🔒 Database-enforced security - impossible to bypass
-- 🚀 Simplified application code - no complex permission logic
+- Automatic data isolation - no manual checks needed
+- Database-enforced security - impossible to bypass
+- Simplified application code - no complex permission logic
 
 ---
 
@@ -362,7 +371,7 @@ CREATE POLICY "Users can only insert their own sleep records"
 
 ---
 
-## 🔄 Data Flow Diagrams
+## Data Flow Diagrams
 
 ### Visitor Mode Flow
 ```
@@ -378,7 +387,7 @@ user === null → Load DEMO_SLEEP_RECORDS
       ↓
 Component Renders with Demo Data
       ↓
-UI shows "👁️ Visitor Mode" indicator
+UI shows " Visitor Mode" indicator
 ```
 
 ### Authenticated Mode Flow
@@ -404,7 +413,7 @@ UI enables Write/Edit buttons
 
 ---
 
-## 🎨 UI Design System
+## UI Design System
 
 - **Styling:** Glassmorphism 2.0 and modern clean UI
 - **Components:**
@@ -417,7 +426,7 @@ UI enables Write/Edit buttons
 
 ---
 
-## 📱 iOS Translation Notes
+## iOS Translation Notes
 
 ### Data Persistence Strategy
 
@@ -462,29 +471,30 @@ if let session = try await supabase.auth.session {
 
 ---
 
-## 🔐 Security & Privacy
+## Security & Privacy
 
 ### Visitor Mode
-- ✅ No personal data stored or transmitted
-- ✅ No authentication credentials required
-- ✅ Safe for public demonstrations
+- No personal data stored or transmitted
+- No authentication credentials required
+- Safe for public demonstrations
 
 ### Authenticated Mode
-- 🔒 **Transport Security:** HTTPS/TLS for all API calls
-- 🔒 **Database Security:** RLS policies enforce user isolation
-- 🔒 **Password Security:** Supabase Auth handles hashing/salting
-- 🔒 **Token Security:** JWT tokens with automatic expiration
-- 🔒 **API Security:** Edge Functions validate JWT before execution
-- 🔒 **Privacy:** User can request data export or deletion (GDPR compliant)
+- **Transport Security:** HTTPS/TLS for all API calls
+- **Database Security:** RLS policies enforce user isolation
+- **Password Security:** Supabase Auth handles hashing/salting
+- **Token Security:** JWT tokens with automatic expiration
+- **API Security:** Edge Functions validate JWT before execution
+- **Privacy:** User can request data export or deletion (GDPR compliant)
 
 ---
 
-## 🚀 Advanced Features (Authenticated Mode Only)
+## Advanced Features (Authenticated Mode Only)
 
 ### Edge Functions
 - **ai-analyst:** Groq-powered AI analysis of user data
   - Analyzes all user metrics (health, social, travel, finance)
   - Returns personalized insights and recommendations
+  - **Multilingual Support:** Generates reports in FR, EN, or ES based on user preference
   - Uses `llama-3.1-8b-instant` model
   - Excludes sensitive PII (name, email, phone) from analysis
 

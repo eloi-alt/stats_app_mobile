@@ -3,6 +3,7 @@
 import Modal from './Modal'
 import { ThomasMorel, financeData } from '@/data/mockData'
 import { useLanguage } from '@/contexts/LanguageContext'
+import PortfolioPieChart from '../Charts/PortfolioPieChart'
 
 interface AssetsModalProps {
   isOpen: boolean
@@ -26,6 +27,7 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
 
   const assets = [
     {
+      name: t('realEstate'),
       labelKey: 'realEstate',
       value: financeData.stock.realEstate,
       color: 'var(--accent-gold)',
@@ -33,6 +35,7 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
       percentage: Math.round((financeData.stock.realEstate / patrimoine.totalAssets) * 100)
     },
     {
+      name: t('financialAssets'),
       labelKey: 'financialAssets',
       value: financeData.stock.financial,
       color: 'var(--accent-sage)',
@@ -40,6 +43,7 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
       percentage: Math.round((financeData.stock.financial / patrimoine.totalAssets) * 100)
     },
     {
+      name: t('vehicles'),
       labelKey: 'vehicles',
       value: financeData.stock.vehicles,
       color: 'var(--accent-sky)',
@@ -47,6 +51,7 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
       percentage: Math.round((financeData.stock.vehicles / patrimoine.totalAssets) * 100)
     },
     {
+      name: t('cash'),
       labelKey: 'cash',
       value: patrimoine.liquidAssets,
       color: 'var(--accent-lavender)',
@@ -110,53 +115,7 @@ export default function AssetsModal({ isOpen, onClose }: AssetsModalProps) {
           border: '1px solid var(--border-light)',
         }}
       >
-        {/* Visual bar */}
-        <div className="flex h-3 rounded-full overflow-hidden mb-4" style={{ background: 'rgba(0,0,0,0.03)' }}>
-          {assets.map((asset, idx) => (
-            <div
-              key={asset.labelKey}
-              className="h-full transition-all duration-500"
-              style={{
-                width: `${asset.percentage}%`,
-                background: asset.color,
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Legend */}
-        <div className="space-y-3">
-          {assets.map((asset) => (
-            <div key={asset.labelKey} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center"
-                  style={{ background: `${asset.color}15` }}
-                >
-                  <i
-                    className={`fa-solid ${asset.icon} text-xs`}
-                    style={{ color: asset.color }}
-                  />
-                </div>
-                <span style={{ color: 'var(--text-primary)' }}>{t(asset.labelKey)}</span>
-              </div>
-              <div className="text-right">
-                <div
-                  className="font-medium"
-                  style={{ color: asset.color }}
-                >
-                  {formatCurrency(asset.value)}
-                </div>
-                <div
-                  className="text-[10px]"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  {asset.percentage}%
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <PortfolioPieChart data={assets} height={300} />
       </div>
 
       {/* Liabilities */}

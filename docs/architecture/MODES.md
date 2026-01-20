@@ -1,68 +1,68 @@
-# 🔀 STATS App: Dual-Mode Architecture
+# STATS App: Dual-Mode Architecture
 
 This document provides a quick reference for understanding the two operational modes of the STATS App.
 
 ---
 
-## 📖 Quick Reference
+## Quick Reference
 
 ### What are the two modes?
 
-1. **🌐 Visitor Mode** - Demo experience with sample data (no login required)
-2. **🔐 Authenticated Mode** - Personalized experience with Supabase backend
+1. ** Visitor Mode** - Demo experience with sample data (no login required)
+2. ** Authenticated Mode** - Personalized experience with Supabase backend
 
 ---
 
-## 🎯 When to Use Each Mode
+## When to Use Each Mode
 
-### 🌐 Visitor Mode
+### Visitor Mode
 
 **Use this mode when:**
-- 👀 Exploring the app for the first time
-- 📱 Demonstrating features without real data
-- 🧪 Testing UI/UX without backend dependencies
-- ✈️ Working offline or without internet access
-- 🎨 Showcasing design and interaction patterns
+- Exploring the app for the first time
+- Demonstrating features without real data
+- Testing UI/UX without backend dependencies
+- Working offline or without internet access
+- Showcasing design and interaction patterns
 
 **Characteristics:**
 ```
-├─ 🔓 No authentication required
-├─ 📦 Static demo data (Jeffrey persona)
-├─ 📴 Fully offline-capable
-├─ 👁️ Read-only interface
-└─ ⚡ Instant load (no network calls)
+├─  No authentication required
+├─  Static demo data (Jeffrey persona)
+├─  Fully offline-capable
+├─  Read-only interface
+└─  Instant load (no network calls)
 ```
 
 ---
 
-### 🔐 Authenticated Mode
+### Authenticated Mode
 
 **Use this mode when:**
-- 👤 Building a personal life tracking system
-- 📊 Storing real data for long-term analytics
-- 🤝 Using social features (connections, comparisons)
-- 🤖 Leveraging AI-powered insights
-- 🔄 Syncing data across multiple devices
+- Building a personal life tracking system
+- Storing real data for long-term analytics
+- Using social features (connections, comparisons)
+- Leveraging AI-powered insights
+- Syncing data across multiple devices
 
 **Characteristics:**
 ```
-├─ 🔐 Email/password authentication (Supabase)
-├─ 🗄️ PostgreSQL database (cloud-hosted)
-├─ ✏️ Full CRUD operations
-├─ 🛡️ Row-Level Security (RLS)
-├─ 🔄 Multi-device sync
-└─ 🤖 AI analyst (Edge Functions)
+├─  Email/password authentication (Supabase)
+├─  PostgreSQL database (cloud-hosted)
+├─  Full CRUD operations
+├─  Row-Level Security (RLS)
+├─  Multi-device sync
+└─  AI analyst (Edge Functions)
 ```
 
 ---
 
-## 🔄 How Mode Detection Works
+## How Mode Detection Works
 
 ```mermaid
 graph TD
     A[App Starts] --> B{Check Auth State}
-    B -->|User = null| C[🌐 VISITOR MODE]
-    B -->|User ≠ null| D[🔐 AUTHENTICATED MODE]
+    B -->|User = null| C[ VISITOR MODE]
+    B -->|User ≠ null| D[ AUTHENTICATED MODE]
     
     C --> E[Load DEMO_SLEEP_RECORDS]
     C --> F[Load DEMO_CONTACTS]
@@ -86,7 +86,7 @@ graph TD
 
 ---
 
-## 🧬 Technical Implementation
+## Technical Implementation
 
 ### AuthContext (Core Decision Point)
 
@@ -96,10 +96,10 @@ const { user, session, loading } = useAuth()
 
 // This is checked in every data hook
 if (user) {
-  // 🔐 AUTHENTICATED MODE
+  //  AUTHENTICATED MODE
   fetchFromSupabase(user.id)
 } else {
-  // 🌐 VISITOR MODE
+  //  VISITOR MODE
   loadDemoData()
 }
 ```
@@ -118,13 +118,13 @@ export function useHealthData() {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        // 🌐 VISITOR MODE
+        //  VISITOR MODE
         setData(DEMO_SLEEP_RECORDS)
         setIsDemo(true)
         return
       }
 
-      // 🔐 AUTHENTICATED MODE
+      //  AUTHENTICATED MODE
       const { data } = await supabase
         .from('sleep_records')
         .select('*')
@@ -143,9 +143,9 @@ export function useHealthData() {
 
 ---
 
-## 🗂️ Data Source Locations
+## Data Source Locations
 
-### 🌐 Visitor Mode Data
+### Visitor Mode Data
 
 ```
 /data/
@@ -172,7 +172,7 @@ export const DEMO_SLEEP_RECORDS: SleepRecord[] = [
 
 ---
 
-### 🔐 Authenticated Mode Data
+### Authenticated Mode Data
 
 ```
 Supabase PostgreSQL Database
@@ -199,38 +199,38 @@ const { data, error } = await supabase
 
 ---
 
-## 🛡️ Security Model
+## Security Model
 
-### 🌐 Visitor Mode
-- ✅ **No security concerns** - Demo data is hardcoded and public
-- ✅ **No PII** - Fictional persona (Jeffrey)
-- ✅ **No network calls** - Zero data transmission
+### Visitor Mode
+- **No security concerns** - Demo data is hardcoded and public
+- **No PII** - Fictional persona (Jeffrey)
+- **No network calls** - Zero data transmission
 
-### 🔐 Authenticated Mode
-- 🔒 **RLS Policies** - Database enforces user data isolation
+### Authenticated Mode
+- **RLS Policies** - Database enforces user data isolation
   ```sql
   CREATE POLICY "Users see only their data"
   ON sleep_records FOR SELECT
   USING (auth.uid() = user_id);
   ```
-- 🔒 **JWT Tokens** - Automatic expiration, auto-refresh
-- 🔒 **HTTPS/TLS** - All API calls encrypted
-- 🔒 **Password Hashing** - Bcrypt (managed by Supabase Auth)
+- **JWT Tokens** - Automatic expiration, auto-refresh
+- **HTTPS/TLS** - All API calls encrypted
+- **Password Hashing** - Bcrypt (managed by Supabase Auth)
 
 ---
 
-## 🎨 UI Indicators
+## UI Indicators
 
 ### How Users Know Which Mode They're In
 
-**🌐 Visitor Mode Indicators:**
+** Visitor Mode Indicators:**
 - Avatar shows "jeffrey.jpg" (demo profile picture)
 - Username displayed as "Jeffrey" or demo name
-- Subtle badge: `👁️ Viewing Demo Data`
+- Subtle badge: ` Viewing Demo Data`
 - "Add Entry" buttons show tooltip: "Login to track your own data"
 - Settings → Profile shows "Sign Up to Create Account"
 
-**🔐 Authenticated Mode Indicators:**
+** Authenticated Mode Indicators:**
 - Avatar shows user's uploaded profile picture
 - Username shows user's chosen username
 - No demo badge
@@ -239,19 +239,19 @@ const { data, error } = await supabase
 
 ---
 
-## 🚀 Performance Comparison
+## Performance Comparison
 
-| Metric                  | 🌐 Visitor Mode         | 🔐 Authenticated Mode   |
+| Metric                  | Visitor Mode         | Authenticated Mode   |
 |-------------------------|-------------------------|-------------------------|
 | **Initial Load**        | ~200ms                  | ~400-800ms              |
 | **Data Fetch**          | 0ms (in-memory)         | 200-500ms (network)     |
-| **Offline Support**     | ✅ Full                  | ⚠️ Cached only          |
-| **Network Dependency**  | ❌ None                  | ✅ Required             |
+| **Offline Support**     | Full                  | Cached only          |
+| **Network Dependency**  | None                  | Required             |
 | **Bundle Impact**       | +50KB (demo data)       | +30KB (Supabase SDK)    |
 
 ---
 
-## 🔄 Migration Path: Visitor → Authenticated
+## Migration Path: Visitor → Authenticated
 
 When a user decides to create an account:
 
@@ -280,7 +280,7 @@ When a user decides to create an account:
 
 ---
 
-## 🧪 Testing Both Modes
+## Testing Both Modes
 
 ### Testing Visitor Mode
 ```bash
@@ -318,7 +318,7 @@ supabase db push
 
 ---
 
-## 📚 Related Documentation
+## Related Documentation
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Complete technical architecture with database schema
 - **[README.md](./README.md)** - Project overview, modules, getting started guide
@@ -326,7 +326,7 @@ supabase db push
 
 ---
 
-## ❓ FAQ
+## FAQ
 
 ### Q: Can I switch modes without losing data?
 **A:** Visitor mode has no persistent data to lose. In Authenticated mode, your data is safely stored in Supabase and will persist across sessions.

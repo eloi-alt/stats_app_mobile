@@ -1,4 +1,4 @@
-# 📚 Documentation Index - STATS App
+# Documentation Index - STATS App
 
 ## Vue d'Ensemble de la Documentation
 
@@ -6,10 +6,10 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
 
 ---
 
-## 🗂️ Documents Disponibles
+## Documents Disponibles
 
-### 1️⃣ **README.md** (Principal)
-- **Langue :** Anglais 🇬🇧
+### 1⃣ **README.md** (Principal)
+- **Langue :** Anglais 
 - **Niveau :** Débutant à Intermédiaire
 - **Objectif :** Vue d'ensemble du projet entier
 - **Contenu :**
@@ -22,12 +22,12 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
   - Instructions pour basculer entre les modes
   - Design system et UX
   
-**👉 Commencez ici si vous découvrez le projet**
+** Commencez ici si vous découvrez le projet**
 
 ---
 
-### 2️⃣ **ARCHITECTURE.md** (Technique Complet)
-- **Langue :** Anglais 🇬🇧
+### 2⃣ **ARCHITECTURE.md** (Technique Complet)
+- **Langue :** Anglais 
 - **Niveau :** Intermédiaire à Avancé
 - **Objectif :** Spécifications techniques complètes
 - **Contenu :**
@@ -42,12 +42,12 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
   - Edge Functions (AI Analyst)
   - Notes de traduction iOS/Swift
   
-**👉 Lisez ceci pour comprendre l'implémentation technique**
+** Lisez ceci pour comprendre l'implémentation technique**
 
 ---
 
-### 3️⃣ **MODES.md** (Guide de Référence Rapide)
-- **Langue :** Anglais 🇬🇧
+### 3⃣ **MODES.md** (Guide de Référence Rapide)
+- **Langue :** Anglais 
 - **Niveau :** Tous niveaux
 - **Objectif :** Reference rapide sur les deux modes
 - **Contenu :**
@@ -62,12 +62,12 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
   - Instructions de test pour les deux modes
   - FAQ
 
-**👉 Consultez ceci comme aide-mémoire ou référence rapide**
+** Consultez ceci comme aide-mémoire ou référence rapide**
 
 ---
 
-### 4️⃣ **ARCHITECTURE_FR.md** (Technique Complet en Français)
-- **Langue :** Français 🇫🇷
+### 4⃣ **ARCHITECTURE_FR.md** (Technique Complet en Français)
+- **Langue :** Français 
 - **Niveau :** Intermédiaire à Avancé
 - **Objectif :** Traduction française complète de l'architecture
 - **Contenu :**
@@ -84,12 +84,12 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
   - Cas d'usage détaillés
   - Questions fréquentes (FAQ)
 
-**👉 Lisez ceci si vous préférez le français pour les détails techniques**
+** Lisez ceci si vous préférez le français pour les détails techniques**
 
 ---
 
-### 5️⃣ **VISUAL_GUIDE.md** (Guide Visuel)
-- **Langue :** Français 🇫🇷
+### 5⃣ **VISUAL_GUIDE.md** (Guide Visuel)
+- **Langue :** Français 
 - **Niveau :** Tous niveaux
 - **Objectif :** Explication visuelle avec diagrammes ASCII
 - **Contenu :**
@@ -104,12 +104,12 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
   - Checklist développeur
   - Concepts clés avec schémas
 
-**👉 Parfait pour les apprenants visuels ou pour une compréhension rapide**
+** Parfait pour les apprenants visuels ou pour une compréhension rapide**
 
 ---
 
-### 6️⃣ **DOCUMENTATION_INDEX.md** (Ce fichier)
-- **Langue :** Français 🇫🇷
+### 6⃣ **DOCUMENTATION_INDEX.md** (Ce fichier)
+- **Langue :** Français 
 - **Niveau :** Tous niveaux
 - **Objectif :** Navigation et vue d'ensemble de la documentation
 - **Contenu :**
@@ -118,17 +118,17 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
   - Parcours de lecture recommandés
   - Matrice de décision
 
-**👉 Utilisez ceci pour naviguer dans la documentation**
+** Utilisez ceci pour naviguer dans la documentation**
 
 ---
 
-## 🧭 Parcours de Lecture Recommandés
+## Parcours de Lecture Recommandés
 
 ### Pour Découvrir le Projet
 
 ```
 1. README.md
-   └─→ Section "🔀 Two Architectures, One Experience"
+   └─→ Section " Two Architectures, One Experience"
        └─→ Tableau comparatif Mode Visiteur vs. Authentifié
 
 2. MODES.md (référence rapide)
@@ -163,7 +163,7 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
        └─→ Row-Level Security (RLS) Policies
 
 2. VISUAL_GUIDE.md
-   └─→ Section "🔐 Sécurité Row-Level Security (RLS)"
+   └─→ Section " Sécurité Row-Level Security (RLS)"
        └─→ Diagrammes "Sans RLS" vs "Avec RLS"
 
 3. MODES.md
@@ -177,11 +177,11 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
 ```
 1. README.md
    └─→ Section "Getting Started (Prototype)"
-       └─→ Sous-section "🌐 Running in Visitor Mode"
-       └─→ Sous-section "🔐 Running in Authenticated Mode"
+       └─→ Sous-section " Running in Visitor Mode"
+       └─→ Sous-section " Running in Authenticated Mode"
 
 2. ARCHITECTURE_FR.md
-   └─→ Section "🚀 Démarrage Rapide"
+   └─→ Section " Démarrage Rapide"
 ```
 
 ---
@@ -195,7 +195,7 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
        └─→ Testing Authenticated Mode
 
 2. VISUAL_GUIDE.md
-   └─→ Section "🚀 Checklist Développeur"
+   └─→ Section " Checklist Développeur"
 
 3. ARCHITECTURE.md
    └─→ Section "Data Flow Diagrams"
@@ -204,25 +204,25 @@ Ce répertoire contient une documentation complète sur l'architecture dual-mode
 
 ---
 
-## 🎯 Matrice de Décision : Quel Document Lire ?
+## Matrice de Décision : Quel Document Lire ?
 
 | Je veux...                                  | Document Recommandé           | Langue |
 |---------------------------------------------|-------------------------------|--------|
-| Comprendre le concept global                | README.md                     | 🇬🇧 EN  |
-| Référence rapide sur les modes              | MODES.md                      | 🇬🇧 EN  |
-| Spécifications techniques complètes         | ARCHITECTURE.md               | 🇬🇧 EN  |
-| Spécifications techniques en français       | ARCHITECTURE_FR.md            | 🇫🇷 FR  |
-| Visualiser l'architecture                   | VISUAL_GUIDE.md               | 🇫🇷 FR  |
-| Configurer localement                       | README.md (Getting Started)   | 🇬🇧 EN  |
-| Comprendre la sécurité RLS                  | ARCHITECTURE.md ou FR version | 🇬🇧/🇫🇷 |
-| Implémenter un nouveau module               | ARCHITECTURE.md + code source | 🇬🇧 EN  |
-| Tester les deux modes                       | MODES.md                      | 🇬🇧 EN  |
-| Guide visuel avec diagrammes                | VISUAL_GUIDE.md               | 🇫🇷 FR  |
-| Naviguer dans la documentation              | DOCUMENTATION_INDEX.md (ceci) | 🇫🇷 FR  |
+| Comprendre le concept global                | README.md                     | EN  |
+| Référence rapide sur les modes              | MODES.md                      | EN  |
+| Spécifications techniques complètes         | ARCHITECTURE.md               | EN  |
+| Spécifications techniques en français       | ARCHITECTURE_FR.md            | FR  |
+| Visualiser l'architecture                   | VISUAL_GUIDE.md               | FR  |
+| Configurer localement                       | README.md (Getting Started)   | EN  |
+| Comprendre la sécurité RLS                  | ARCHITECTURE.md ou FR version | / |
+| Implémenter un nouveau module               | ARCHITECTURE.md + code source | EN  |
+| Tester les deux modes                       | MODES.md                      | EN  |
+| Guide visuel avec diagrammes                | VISUAL_GUIDE.md               | FR  |
+| Naviguer dans la documentation              | DOCUMENTATION_INDEX.md (ceci) | FR  |
 
 ---
 
-## 📋 Résumé des Concepts Clés
+## Résumé des Concepts Clés
 
 ### Concept 1 : Deux Architectures, Une Interface
 
@@ -260,34 +260,34 @@ WHERE user_id = auth.uid()
 
 ---
 
-## 🗃️ Structure de la Documentation
+## Structure de la Documentation
 
 ```
 STATS_APP/
 │
-├── 📄 README.md                      ← Vue d'ensemble principale (racine)
-├── 📄 CONTRIBUTING.md                ← Guide de contribution
+├──  README.md                      ← Vue d'ensemble principale (racine)
+├──  CONTRIBUTING.md                ← Guide de contribution
 │
-└── 📁 docs/                          ← Documentation technique
-    ├── 📄 DOCUMENTATION_INDEX.md     ← Ce fichier (navigation)
+└──  docs/                          ← Documentation technique
+    ├──  DOCUMENTATION_INDEX.md     ← Ce fichier (navigation)
     │
-    ├── 📁 architecture/              ← Spécifications techniques
-    │   ├── 📄 ARCHITECTURE.md        ← Specs techniques (EN)
-    │   ├── 📄 ARCHITECTURE_FR.md     ← Specs techniques (FR)
-    │   └── 📄 MODES.md               ← Référence rapide dual-mode
+    ├──  architecture/              ← Spécifications techniques
+    │   ├──  ARCHITECTURE.md        ← Specs techniques (EN)
+    │   ├──  ARCHITECTURE_FR.md     ← Specs techniques (FR)
+    │   └──  MODES.md               ← Référence rapide dual-mode
     │
-    ├── 📁 guides/                    ← Guides pratiques
-    │   └── 📄 VISUAL_GUIDE.md        ← Guide visuel avec diagrammes
+    ├──  guides/                    ← Guides pratiques
+    │   └──  VISUAL_GUIDE.md        ← Guide visuel avec diagrammes
     │
-    └── 📁 reference/                 ← Documentation de référence
-        ├── 📄 HOMEVIEW_AUDIT.md      ← Audit du composant HomeView
-        ├── 📄 IOS26_BASE.md          ← Base iOS 26
-        └── 📄 LIQUID_GLASS_SWIFT.md  ← Implémentation Swift Liquid Glass
+    └──  reference/                 ← Documentation de référence
+        ├──  HOMEVIEW_AUDIT.md      ← Audit du composant HomeView
+        ├──  IOS26_BASE.md          ← Base iOS 26
+        └──  LIQUID_GLASS_SWIFT.md  ← Implémentation Swift Liquid Glass
 ```
 
 ---
 
-## ✅ Checklist de Lecture Complète
+## Checklist de Lecture Complète
 
 Pour maîtriser complètement l'architecture dual-mode, lisez dans cet ordre :
 
@@ -306,15 +306,15 @@ Pour maîtriser complètement l'architecture dual-mode, lisez dans cet ordre :
 
 **"Comment l'app sait-elle quel mode utiliser ?"**
 → MODES.md - Section "How Mode Detection Works"
-→ VISUAL_GUIDE.md - Section "🔄 Cycle de Vie de l'Application"
+→ VISUAL_GUIDE.md - Section " Cycle de Vie de l'Application"
 
 **"Quelles sont les différences entre les modes ?"**
 → README.md - Tableau comparatif
-→ VISUAL_GUIDE.md - Section "📊 Comparaison Visuelle"
+→ VISUAL_GUIDE.md - Section " Comparaison Visuelle"
 
 **"Comment fonctionne la sécurité RLS ?"**
 → ARCHITECTURE.md - Section "Row-Level Security (RLS) Policies"
-→ VISUAL_GUIDE.md - Section "🔐 Sécurité Row-Level Security"
+→ VISUAL_GUIDE.md - Section " Sécurité Row-Level Security"
 
 **"Comment implémenter un nouveau module ?"**
 → ARCHITECTURE.md - Section "Data Fetching Hooks (Dual-Mode Pattern)"
@@ -322,33 +322,38 @@ Pour maîtriser complètement l'architecture dual-mode, lisez dans cet ordre :
 
 **"Comment configurer Supabase localement ?"**
 → README.md - Section "Running in Authenticated Mode"
-→ ARCHITECTURE_FR.md - Section "🚀 Démarrage Rapide"
+→ ARCHITECTURE_FR.md - Section " Démarrage Rapide"
 
 **"Pourquoi mes données ne se chargent pas ?"**
 → MODES.md - Section "Testing Both Modes"
-→ VISUAL_GUIDE.md - Section "🚀 Checklist Développeur"
+→ VISUAL_GUIDE.md - Section " Checklist Développeur"
 
 ---
 
-## 🔄 Mise à Jour de la Documentation
+## Mise à Jour de la Documentation
 
-**Dernière mise à jour :** 6 janvier 2026  
-**Version :** 1.0 (Architecture Dual-Mode)
+**Dernière mise à jour :** 20 janvier 2026  
+**Version :** 1.1 (Mise à jour Multilingue & Social)
 
 ### Changelog
 
+- **2026-01-20 :**
+  - Mise à jour README (Support Multilingue, Graphiques Logarithmiques, Système Social 2.0)
+  - Mise à jour ARCHITECTURE (Schéma base de données, Cache IA, Modales)
+  - Mise à jour VISUAL_GUIDE (Date)
+
 - **2026-01-06 :** 
-  - ✅ Création de la documentation complète dual-mode
-  - ✅ README.md mis à jour avec section architecture
-  - ✅ ARCHITECTURE.md créé avec specs complètes
-  - ✅ MODES.md créé comme référence rapide
-  - ✅ ARCHITECTURE_FR.md créé (traduction française)
-  - ✅ VISUAL_GUIDE.md créé avec diagrammes ASCII
-  - ✅ DOCUMENTATION_INDEX.md créé (ce fichier)
+  - Création de la documentation complète dual-mode
+  - README.md mis à jour avec section architecture
+  - ARCHITECTURE.md créé avec specs complètes
+  - MODES.md créé comme référence rapide
+  - ARCHITECTURE_FR.md créé (traduction française)
+  - VISUAL_GUIDE.md créé avec diagrammes ASCII
+  - DOCUMENTATION_INDEX.md créé (ce fichier)
 
 ---
 
-## 📞 Contact & Contributions
+## Contact & Contributions
 
 Pour toute question sur la documentation ou suggestion d'amélioration, consultez les documents dans l'ordre recommandé ci-dessus.
 
@@ -356,4 +361,4 @@ Pour toute question sur la documentation ou suggestion d'amélioration, consulte
 
 ---
 
-**Bonne lecture ! 📖**
+**Bonne lecture ! **

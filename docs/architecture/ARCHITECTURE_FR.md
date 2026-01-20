@@ -1,18 +1,18 @@
 # STATS App - Architecture Dual-Mode
 
-## 🇫🇷 Résumé en Français
+## Résumé en Français
 
 Ce document fournit une vue d'ensemble en français de l'architecture dual-mode de l'application STATS.
 
 ---
 
-## 📌 Vue d'Ensemble
+## Vue d'Ensemble
 
 L'application STATS implémente **deux architectures distinctes** qui partagent la même interface utilisateur mais diffèrent fondamentalement dans leurs sources de données et leurs exigences d'authentification.
 
 ### Les Deux Modes
 
-#### 🌐 **Mode Visiteur** (Expérience Démo)
+#### **Mode Visiteur** (Expérience Démo)
 - **Objectif :** Permettre l'exploration complète de l'application sans compte ni connexion
 - **Données :** Fichiers JSON statiques pré-remplis (persona fictif "Jeffrey")
 - **Backend :** Aucun - fonctionne 100% hors ligne
@@ -23,7 +23,7 @@ L'application STATS implémente **deux architectures distinctes** qui partagent 
   - Tests et développement
   - Usage hors ligne
 
-#### 🔐 **Mode Authentifié** (Expérience Supabase)
+#### **Mode Authentifié** (Expérience Supabase)
 - **Objectif :** Suivi personnalisé à long terme avec persistance des données
 - **Données :** Base PostgreSQL Supabase avec synchronisation cloud
 - **Backend :** Supabase (Auth + Database + Storage + Edge Functions)
@@ -36,7 +36,7 @@ L'application STATS implémente **deux architectures distinctes** qui partagent 
 
 ---
 
-## 🔄 Détection Automatique du Mode
+## Détection Automatique du Mode
 
 L'application détecte automatiquement le mode à utiliser :
 
@@ -44,12 +44,12 @@ L'application détecte automatiquement le mode à utiliser :
 const { user } = useAuth() // Depuis AuthContext
 
 if (user) {
-  // 🔐 MODE AUTHENTIFIÉ
+  //  MODE AUTHENTIFIÉ
   // Requête Supabase : SELECT * FROM sleep_records WHERE user_id = user.id
   // Boutons "Ajouter" activés
   // Affiche le vrai profil utilisateur
 } else {
-  // 🌐 MODE VISITEUR  
+  //  MODE VISITEUR  
   // Charge DEMO_SLEEP_RECORDS depuis /data/demoHealthData.ts
   // Boutons "Ajouter" désactivés (affiche "Connectez-vous pour sauvegarder")
   // Affiche le profil démo (Jeffrey)
@@ -58,9 +58,9 @@ if (user) {
 
 ---
 
-## 🗂️ Sources de Données
+## Sources de Données
 
-### Mode Visiteur 🌐
+### Mode Visiteur 
 
 **Localisation :** `/data/`
 ```
@@ -91,14 +91,14 @@ export const DEMO_SLEEP_RECORDS: SleepRecord[] = [
 
 ---
 
-### Mode Authentifié 🔐
+### Mode Authentifié 
 
 **Localisation :** Base de données Supabase PostgreSQL
 
 **Tables principales :**
 ```
 auth.users               # Géré par Supabase Auth
-public.profiles          # Métadonnées utilisateur (username, avatar)
+public.profiles          # Métadonnées (username, avatar, cache IA)
 public.sleep_records     # Enregistrements de sommeil
 public.sport_sessions    # Séances de sport
 public.body_measurements # Mesures corporelles
@@ -123,7 +123,7 @@ Cela garantit qu'un utilisateur ne peut **jamais** accéder aux données d'un au
 
 ---
 
-## 🏗️ Architecture Technique
+## Architecture Technique
 
 ### Flux de Données - Mode Visiteur
 
@@ -142,15 +142,15 @@ Charge DEMO_SLEEP_RECORDS depuis /data/
       ↓
 Interface affiche les données démo
       ↓
-Badge "👁️ Données de Démonstration"
+Badge " Données de Démonstration"
       ↓
 Boutons "Ajouter" désactivés
 ```
 
 **Avantages :**
-- ⚡ **Chargement instantané** - Pas d'appels réseau
-- 📴 **100% hors ligne** - Aucune dépendance backend
-- 🔒 **Sécurité maximale** - Aucune donnée sensible transmise
+- **Chargement instantané** - Pas d'appels réseau
+- **100% hors ligne** - Aucune dépendance backend
+- **Sécurité maximale** - Aucune donnée sensible transmise
 
 ---
 
@@ -173,7 +173,7 @@ Requête Supabase :
   SELECT * FROM sleep_records 
   WHERE user_id = 'uuid-utilisateur'
       ↓
-Politique RLS vérifie : auth.uid() = user_id ✅
+Politique RLS vérifie : auth.uid() = user_id 
       ↓
 Interface affiche les vraies données utilisateur
       ↓
@@ -183,34 +183,34 @@ Boutons "Ajouter" activés → INSERT, UPDATE, DELETE
 ```
 
 **Avantages :**
-- 🔐 **Sécurité maximale** - RLS garantit l'isolation des données
-- 🔄 **Sync multi-appareils** - Données accessibles partout
-- 💾 **Persistance** - Les données survivent aux sessions
-- 🚀 **Scalabilité** - Supporte des millions d'entrées
+- **Sécurité maximale** - RLS garantit l'isolation des données
+- **Sync multi-appareils** - Données accessibles partout
+- **Persistance** - Les données survivent aux sessions
+- **Scalabilité** - Supporte des millions d'entrées
 
 ---
 
-## 📊 Tableau Comparatif
+## Tableau Comparatif
 
-| Fonctionnalité                 | 🌐 Mode Visiteur           | 🔐 Mode Authentifié              |
+| Fonctionnalité                 | Mode Visiteur           | Mode Authentifié              |
 |--------------------------------|---------------------------|----------------------------------|
-| **Authentification**           | ❌ Non requise             | ✅ Email/mot de passe requis      |
+| **Authentification**           | Non requise             | Email/mot de passe requis      |
 | **Source de données**          | Fichiers JSON locaux      | Base PostgreSQL Supabase         |
-| **Persistance**                | ❌ Aucune (éphémère)       | ✅ Permanente (sync cloud)        |
+| **Persistance**                | Aucune (éphémère)       | Permanente (sync cloud)        |
 | **Propriété des données**      | Persona démo "Jeffrey"    | Données personnelles utilisateur |
-| **Modification des données**   | ❌ Lecture seule           | ✅ CRUD complet                   |
-| **Dépendance internet**        | ✅ Aucune (offline)        | ⚠️ Requise (cache hors ligne à venir) |
-| **Sécurité**                   | N/A (pas de vraies données) | 🛡️ RLS, JWT, HTTPS             |
-| **Analyse IA**                 | ❌ Indisponible            | ✅ Edge Function Groq             |
-| **Fonctionnalités sociales**   | ❌ Contacts démo uniquement | ✅ Recherche amis, connexions     |
-| **Personnalisation profil**    | ❌ Profil fixe             | ✅ Avatar, nom, bio personnalisés |
-| **Export/Suppression données** | N/A                       | ✅ Conforme RGPD                  |
-| **Performance**                | ⚡ Instantané (~200ms)     | ⚠️ Dépend réseau (~400-800ms)     |
+| **Modification des données**   | Lecture seule           | CRUD complet                   |
+| **Dépendance internet**        | Aucune (offline)        | Requise (cache hors ligne à venir) |
+| **Sécurité**                   | N/A (pas de vraies données) | RLS, JWT, HTTPS             |
+| **Analyse IA**                 | Indisponible            | Edge Function Groq (Multilingue FR/EN/ES) |
+| **Fonctionnalités sociales**   | Contacts démo uniquement | Recherche amis, connexions     |
+| **Personnalisation profil**    | Profil fixe             | Avatar, nom, bio personnalisés |
+| **Export/Suppression données** | N/A                       | Conforme RGPD                  |
+| **Performance**                | Instantané (~200ms)     | Dépend réseau (~400-800ms)     |
 | **Coût**                       | Gratuit (pas de backend)  | Gratuit (tier Supabase) ou payant |
 
 ---
 
-## 🛠️ Implémentation Technique
+## Implémentation Technique
 
 ### Hooks de Données (Pattern Dual-Mode)
 
@@ -226,18 +226,18 @@ export function useHealthData(): HealthData {
   const fetchData = useCallback(async () => {
     setIsLoading(true)
     try {
-      // 1️⃣ Vérifier l'état d'authentification
+      // 1⃣ Vérifier l'état d'authentification
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        // 🌐 MODE VISITEUR - Charger données démo
+        //  MODE VISITEUR - Charger données démo
         setSleepRecords(DEMO_SLEEP_RECORDS)
         setIsDemo(true)
         setIsLoading(false)
         return
       }
 
-      // 🔐 MODE AUTHENTIFIÉ - Récupérer depuis Supabase
+      //  MODE AUTHENTIFIÉ - Récupérer depuis Supabase
       setIsDemo(false)
       const { data, error } = await supabase
         .from('sleep_records')
@@ -278,32 +278,32 @@ export function useHealthData(): HealthData {
 ```
 
 **Hooks utilisant ce pattern :**
-- ✅ `useHealthData()` - Sommeil, Sport, Corps, Nutrition
-- ✅ `useSocialData()` - Contacts, Connexions, Classements
-- ✅ `useTravelData()` - Pays, Voyages, Localisations
-- ✅ `useFinancialData()` - Actifs, Objectifs Carrière, Compétences
-- ✅ `useProfileData()` - Profil utilisateur, avatar, nom d'utilisateur
+- `useHealthData()` - Sommeil, Sport, Corps, Nutrition
+- `useSocialData()` - Contacts, Connexions, Classements
+- `useTravelData()` - Pays, Voyages, Localisations
+- `useFinancialData()` - Actifs, Objectifs Carrière, Compétences
+- `useProfileData()` - Profil utilisateur, avatar, nom d'utilisateur
 
 ---
 
-## 🔐 Modèle de Sécurité
+## Modèle de Sécurité
 
 ### Mode Visiteur
-- ✅ **Aucun risque** - Données démo codées en dur
-- ✅ **Aucune PII** - Persona fictif (Jeffrey)
-- ✅ **Aucune transmission** - Zéro appel réseau
+- **Aucun risque** - Données démo codées en dur
+- **Aucune PII** - Persona fictif (Jeffrey)
+- **Aucune transmission** - Zéro appel réseau
 
 ### Mode Authentifié
-- 🔒 **Politiques RLS** - Isolation des données utilisateur
-- 🔒 **Tokens JWT** - Expiration automatique, rafraîchissement auto
-- 🔒 **HTTPS/TLS** - Tous les appels API chiffrés
-- 🔒 **Hachage mot de passe** - Bcrypt (géré par Supabase Auth)
-- 🔒 **Edge Functions** - Validation JWT avant exécution
-- 🔒 **Conformité RGPD** - Export/suppression des données disponibles
+- **Politiques RLS** - Isolation des données utilisateur
+- **Tokens JWT** - Expiration automatique, rafraîchissement auto
+- **HTTPS/TLS** - Tous les appels API chiffrés
+- **Hachage mot de passe** - Bcrypt (géré par Supabase Auth)
+- **Edge Functions** - Validation JWT avant exécution
+- **Conformité RGPD** - Export/suppression des données disponibles
 
 ---
 
-## 🚀 Démarrage Rapide
+## Démarrage Rapide
 
 ### Mode Visiteur (Par Défaut)
 
@@ -321,9 +321,9 @@ npm run dev
 # 4. Ouvrir le navigateur
 # http://localhost:3000
 
-# ✅ L'app démarre automatiquement en mode visiteur
-# ✅ Données démo de Jeffrey s'affichent
-# ✅ Aucune configuration supplémentaire requise
+# L'app démarre automatiquement en mode visiteur
+# Données démo de Jeffrey s'affichent
+# Aucune configuration supplémentaire requise
 ```
 
 ---
@@ -363,12 +363,12 @@ npm run dev
 # Créer un compte avec email/mot de passe
 # Compléter l'onboarding (nom d'utilisateur, avatar)
 
-# ✅ Vos données sont maintenant stockées dans Supabase!
+# Vos données sont maintenant stockées dans Supabase!
 ```
 
 ---
 
-## 🔄 Basculer Entre Les Modes
+## Basculer Entre Les Modes
 
 ### Passer en Mode Visiteur
 ```bash
@@ -390,25 +390,25 @@ localStorage.clear()
 
 ---
 
-## 📈 Performances
+## Performances
 
 ### Mode Visiteur
 - **Chargement initial :** ~200ms
 - **Récupération données :** 0ms (en mémoire)
-- **Support hors ligne :** ✅ Complet
-- **Dépendance réseau :** ❌ Aucune
+- **Support hors ligne :**  Complet
+- **Dépendance réseau :**  Aucune
 - **Impact bundle :** +50KB (données démo)
 
 ### Mode Authentifié
 - **Chargement initial :** ~400-800ms (dépend de la connexion)
 - **Récupération données :** 200-500ms (appels réseau)
-- **Support hors ligne :** ⚠️ Cache uniquement (à implémenter)
-- **Dépendance réseau :** ✅ Requise
+- **Support hors ligne :**  Cache uniquement (à implémenter)
+- **Dépendance réseau :**  Requise
 - **Impact bundle :** +30KB (SDK Supabase)
 
 ---
 
-## 🎯 Cas d'Usage
+## Cas d'Usage
 
 ### Quand Utiliser le Mode Visiteur
 
@@ -457,7 +457,7 @@ localStorage.clear()
 
 ---
 
-## 📚 Documentation Complète
+## Documentation Complète
 
 - **[README.md](./README.md)** - Vue d'ensemble projet, modules, guide démarrage
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Specs techniques complètes, schéma base de données
@@ -465,7 +465,7 @@ localStorage.clear()
 
 ---
 
-## ❓ Questions Fréquentes
+## Questions Fréquentes
 
 ### Q: Puis-je utiliser l'app sans compte Supabase ?
 **R:** Oui ! L'app fonctionne parfaitement en mode visiteur sans aucun backend. Supabase est uniquement nécessaire pour le mode authentifié.

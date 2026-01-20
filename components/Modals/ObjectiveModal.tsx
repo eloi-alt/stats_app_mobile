@@ -3,6 +3,8 @@
 import { useMemo } from 'react'
 import Modal from './Modal'
 import { ThomasMorel } from '@/data/mockData'
+import MetricRadialChart from '../Charts/MetricRadialChart'
+import PerformanceAreaChart from '../Charts/PerformanceAreaChart'
 
 interface ObjectiveModalProps {
   isOpen: boolean
@@ -37,9 +39,15 @@ export default function ObjectiveModal({
   color,
 }: ObjectiveModalProps) {
   const numericValue = parseInt(value) || 0
-  const history = useMemo(() => generateHistory(numericValue), [numericValue])
+  const history = useMemo(() => {
+    const rawHistory = generateHistory(numericValue)
+    return rawHistory.map(h => ({
+      label: h.week,
+      value: h.value
+    }))
+  }, [numericValue])
   const maxValue = Math.max(...history.map(h => h.value))
-  
+
   // Get trend
   const trend = history[history.length - 1].value - history[history.length - 2].value
   const trendText = trend > 0 ? `+${trend}%` : trend < 0 ? `${trend}%` : '='
@@ -85,53 +93,30 @@ export default function ObjectiveModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} id="modal-obj" title={title}>
       {/* Main score */}
-      <div 
+      <div
         className="rounded-2xl p-6 text-center mb-5"
         style={{ background: `${color}08` }}
       >
         <div className="relative inline-block mb-3">
-          {/* Progress ring */}
-          <svg width="120" height="120" className="transform -rotate-90">
-            <circle
-              cx="60"
-              cy="60"
-              r="52"
-              fill="none"
-              stroke="rgba(0, 0, 0, 0.04)"
-              strokeWidth="8"
-            />
-            <circle
-              cx="60"
-              cy="60"
-              r="52"
-              fill="none"
-              stroke={color}
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={`${numericValue * 3.27} 327`}
-              className="transition-all duration-1000 ease-out"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span 
-              className="text-4xl font-light text-display"
-              style={{ color }}
-            >
-              {value}
-            </span>
-          </div>
+          {/* Progress ring using Recharts */}
+          <MetricRadialChart
+            value={numericValue}
+            maxValue={100}
+            color={color}
+            size={140}
+          />
         </div>
-        
-        <p 
+
+        <p
           className="text-sm mb-2"
           style={{ color: 'var(--text-secondary)' }}
         >
           {subtitle}
         </p>
-        
-        <div 
+
+        <div
           className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm"
-          style={{ 
+          style={{
             background: `${trendColor}15`,
             color: trendColor,
           }}
@@ -142,49 +127,32 @@ export default function ObjectiveModal({
       </div>
 
       {/* History chart */}
-      <div 
+      <div
         className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
         Recent Evolution
       </div>
 
-      <div 
+      <div
         className="rounded-2xl p-4 mb-5"
-        style={{ 
+        style={{
           background: 'rgba(255, 255, 255, 0.6)',
           border: '1px solid var(--border-light)',
         }}
       >
-        <div className="h-28 flex items-end justify-between gap-2">
-          {history.map((point, idx) => {
-            const isLast = idx === history.length - 1
-            const height = (point.value / maxValue) * 100
-            
-            return (
-              <div key={point.week} className="flex-1 flex flex-col items-center gap-1">
-                <div 
-                  className="w-full rounded-t-lg transition-all duration-500"
-                  style={{ 
-                    height: `${height}%`,
-                    background: isLast ? color : 'rgba(0, 0, 0, 0.06)',
-                    minHeight: '8px',
-                  }}
-                />
-                <span 
-                  className="text-[9px]"
-                  style={{ color: isLast ? color : 'var(--text-muted)' }}
-                >
-                  {point.week}
-                </span>
-              </div>
-            )
-          })}
-        </div>
+        <PerformanceAreaChart
+          data={history}
+          color={color}
+          height={120}
+          showGrid={true}
+          showXAxis={true}
+          showYAxis={false}
+        />
       </div>
 
       {/* Tips */}
-      <div 
+      <div
         className="text-[10px] uppercase tracking-[0.2em] font-medium mb-3 px-1"
         style={{ color: 'var(--text-tertiary)' }}
       >
@@ -193,21 +161,21 @@ export default function ObjectiveModal({
 
       <div className="space-y-2 mb-5">
         {tips.map((tip, idx) => (
-          <div 
+          <div
             key={idx}
             className="flex items-start gap-3 p-3 rounded-xl"
             style={{ background: 'rgba(0, 0, 0, 0.02)' }}
           >
-            <div 
+            <div
               className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5"
               style={{ background: `${color}15` }}
             >
-              <i 
+              <i
                 className="fa-solid fa-lightbulb text-[10px]"
                 style={{ color }}
               />
             </div>
-            <p 
+            <p
               className="text-sm leading-relaxed"
               style={{ color: 'var(--text-secondary)' }}
             >
@@ -220,7 +188,7 @@ export default function ObjectiveModal({
       {/* Action button */}
       <button
         className="w-full py-3.5 rounded-2xl text-sm font-medium transition-all duration-200"
-        style={{ 
+        style={{
           background: color,
           color: 'white',
           boxShadow: `0 4px 12px ${color}30`,

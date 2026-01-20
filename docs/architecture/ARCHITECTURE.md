@@ -6,19 +6,19 @@
 
 ---
 
-## 🔀 Dual Architecture Overview
+## Dual Architecture Overview
 
 The STATS App implements **two distinct architectural modes** that share the same UI layer but differ fundamentally in their data sources and authentication requirements:
 
-### 🌐 Mode 1: Visitor Mode (Demo/Guest Experience)
+### Mode 1: Visitor Mode (Demo/Guest Experience)
 **Purpose:** Showcase the full application capabilities without requiring user authentication or database connection.
 
 **Characteristics:**
-- ✅ **No authentication required** - Instant access to all features
-- ✅ **Static demo data** - Pre-populated with realistic sample data (e.g., "Jeffrey" persona)
-- ✅ **Read-only experience** - Users cannot modify data
-- ✅ **Zero backend dependency** - Fully functional offline
-- ✅ **Onboarding preview** - Allows exploration before commitment
+- **No authentication required** - Instant access to all features
+- **Static demo data** - Pre-populated with realistic sample data (e.g., "Jeffrey" persona)
+- **Read-only experience** - Users cannot modify data
+- **Zero backend dependency** - Fully functional offline
+- **Onboarding preview** - Allows exploration before commitment
 
 **Use Cases:**
 - First-time visitors exploring the app
@@ -28,16 +28,16 @@ The STATS App implements **two distinct architectural modes** that share the sam
 
 ---
 
-### 🔐 Mode 2: Authenticated Mode (Supabase-Connected Users)
+### Mode 2: Authenticated Mode (Supabase-Connected Users)
 **Purpose:** Provide personalized, persistent data management for registered users.
 
 **Characteristics:**
-- 🔒 **Authentication required** - Email/password login via Supabase Auth
-- 🗄️ **Live database connection** - Real-time sync with Supabase PostgreSQL
-- ✏️ **Full CRUD operations** - Users create, read, update, delete their data
-- 🔄 **Multi-device sync** - Data accessible across devices
-- 🛡️ **Row-Level Security (RLS)** - Users can only access their own data
-- 📊 **Advanced features** - AI analysis, Edge Functions, user search, connections
+- **Authentication required** - Email/password login via Supabase Auth
+- **Live database connection** - Real-time sync with Supabase PostgreSQL
+- **Full CRUD operations** - Users create, read, update, delete their data
+- **Multi-device sync** - Data accessible across devices
+- **Row-Level Security (RLS)** - Users can only access their own data
+- **Advanced features** - AI analysis, Edge Functions, user search, connections
 
 **Use Cases:**
 - Registered users managing their personal data
@@ -47,7 +47,7 @@ The STATS App implements **two distinct architectural modes** that share the sam
 
 ---
 
-## 📂 Directory Structure (Prototype)
+## Directory Structure (Prototype)
 
 ```
 /app
@@ -68,7 +68,12 @@ The STATS App implements **two distinct architectural modes** that share the sam
 ├── Modals/                 # Detail Views (Sheet Presentations)
 │   ├── Modal.tsx           # Reusable accessible modal base
 │   ├── HarmonyHistoryModal.tsx
+│   ├── LogarithmicHistoryChart.tsx
 │   ├── CareerGoalModal.tsx
+│   ├── UserSearchModal.tsx
+│   ├── FriendProfileModal.tsx
+│   ├── CompareWithFriendModal.tsx
+│   ├── PublicCardCreatorModal.tsx
 │   └── CountryDetailModal.tsx
 ├── Cards/                  # Reusable UI Components
 │   ├── PhysioCard.tsx
@@ -80,11 +85,11 @@ The STATS App implements **two distinct architectural modes** that share the sam
     └── BottomSheet.tsx
 
 /contexts
-├── AuthContext.tsx         # 🔑 Authentication state provider (Supabase session)
+├── AuthContext.tsx         # Authentication state provider (Supabase session)
 ├── ThemeContext.tsx        # Dark/Light mode management
 └── LanguageContext.tsx     # i18n (FR/EN)
 
-/hooks                      # 🔀 DUAL-MODE DATA HOOKS
+/hooks                      # DUAL-MODE DATA HOOKS
 ├── useHealthData.ts        # Sleep, Sport, Nutrition data fetching
 ├── useSocialData.ts        # Contacts, Connections, Rankings
 ├── useTravelData.ts        # Countries, Trips
@@ -92,14 +97,14 @@ The STATS App implements **two distinct architectural modes** that share the sam
 └── useProfileData.ts       # User profile and avatar
 
 /data
-├── mockData.ts             # 🌐 VISITOR MODE - Demo data source
+├── mockData.ts             # VISITOR MODE - Demo data source
 ├── demoHealthData.ts       # Demo health records
 ├── demoSocialData.ts       # Demo contacts and social graph
 └── demoTravelData.ts       # Demo trips and countries
 
 /utils
 └── supabase/
-    └── client.ts           # 🔐 Supabase client initialization
+    └── client.ts           # Supabase client initialization
 
 /supabase
 ├── functions/              # Edge Functions
@@ -109,7 +114,7 @@ The STATS App implements **two distinct architectural modes** that share the sam
 
 ---
 
-## 🏗️ Architectural Patterns
+## Architectural Patterns
 
 ### 1. Authentication Flow & Mode Detection
 
@@ -120,12 +125,12 @@ The application automatically detects which mode to operate in based on authenti
 const { user, session, loading } = useAuth()
 
 if (user) {
-  // 🔐 AUTHENTICATED MODE
+  //  AUTHENTICATED MODE
   // - Fetch data from Supabase
   // - Enable write operations
   // - Show user-specific features
 } else {
-  // 🌐 VISITOR MODE
+  //  VISITOR MODE
   // - Load demo data from /data/mockData.ts
   // - Display read-only interface
   // - Show "Login to save changes" prompts
@@ -154,18 +159,18 @@ export function useHealthData(): HealthData {
 
   useEffect(() => {
     async function fetchData() {
-      // 1️⃣ Check authentication status
+      // 1⃣ Check authentication status
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        // 🌐 VISITOR MODE - Load demo data
+        //  VISITOR MODE - Load demo data
         setSleepRecords(DEMO_SLEEP_RECORDS)
         setIsDemo(true)
         setIsLoading(false)
         return
       }
 
-      // 🔐 AUTHENTICATED MODE - Fetch from Supabase
+      //  AUTHENTICATED MODE - Fetch from Supabase
       setIsDemo(false)
       const { data, error } = await supabase
         .from('sleep_records')
@@ -194,11 +199,11 @@ export function useHealthData(): HealthData {
 ```
 
 **Pattern Applied to All Hooks:**
-- ✅ `useHealthData()` - Sleep, Sport, Body, Nutrition
-- ✅ `useSocialData()` - Contacts, Connections, Rankings
-- ✅ `useTravelData()` - Countries, Trips, Locations
-- ✅ `useFinancialData()` - Assets, Career Goals, Skills
-- ✅ `useProfileData()` - User profile, avatar, username
+- `useHealthData()` - Sleep, Sport, Body, Nutrition
+- `useSocialData()` - Contacts, Connections, Rankings
+- `useTravelData()` - Countries, Trips, Locations
+- `useFinancialData()` - Assets, Career Goals, Skills
+- `useProfileData()` - User profile, avatar, username
 
 ---
 
@@ -221,6 +226,9 @@ public.profiles
   - avatar_url (text)
   - bio (text)
   - created_at (timestamp)
+  - harmony_analysis_cache (jsonb) -- AI response cache
+  - harmony_last_analyzed_at (timestamptz)
+  - harmony_data_hash (text)
 
 -- Health module tables
 public.sleep_records
@@ -250,19 +258,18 @@ public.body_measurements
   - muscle_mass (numeric) -- kg
 
 -- Social module tables
-public.contacts
+public.friendships
   - id (uuid, primary key)
   - user_id (uuid, references auth.users)
-  - name (text)
-  - category (text) -- 'intimate', 'close', 'casual', 'acquaintance'
-  - last_interaction (date)
-  - trust_level (integer) -- 1-10
+  - friend_id (uuid, references auth.users)
+  - rank (text) -- 'cercle_proche' | 'amis'
+  - created_at (timestamp)
 
-public.connections
+public.friend_requests
   - id (uuid, primary key)
-  - user_id (uuid, references auth.users)
-  - connected_user_id (uuid, references auth.users)
-  - status (text) -- 'pending', 'accepted', 'blocked'
+  - sender_id (uuid, references auth.users)
+  - receiver_id (uuid, references auth.users)
+  - status (text) -- 'pending', 'accepted', 'rejected'
   - created_at (timestamp)
 
 -- Travel module tables
@@ -319,9 +326,9 @@ CREATE POLICY "Users can only insert their own sleep records"
 ```
 
 **Benefits:**
-- 🛡️ Automatic data isolation - no manual checks needed
-- 🔒 Database-enforced security - impossible to bypass
-- 🚀 Simplified application code - no complex permission logic
+- Automatic data isolation - no manual checks needed
+- Database-enforced security - impossible to bypass
+- Simplified application code - no complex permission logic
 
 ---
 
@@ -348,7 +355,7 @@ CREATE POLICY "Users can only insert their own sleep records"
 
 ---
 
-## 🔄 Data Flow Diagrams
+## Data Flow Diagrams
 
 ### Visitor Mode Flow
 ```
@@ -364,7 +371,7 @@ user === null → Load DEMO_SLEEP_RECORDS
       ↓
 Component Renders with Demo Data
       ↓
-UI shows "👁️ Visitor Mode" indicator
+UI shows " Visitor Mode" indicator
 ```
 
 ### Authenticated Mode Flow
@@ -390,7 +397,7 @@ UI enables Write/Edit buttons
 
 ---
 
-## 🎨 UI Design System
+## UI Design System
 
 - **Styling:** Glassmorphism 2.0 and modern clean UI
 - **Components:**
@@ -403,7 +410,7 @@ UI enables Write/Edit buttons
 
 ---
 
-## 📱 iOS Translation Notes
+## iOS Translation Notes
 
 ### Data Persistence Strategy
 
@@ -448,29 +455,30 @@ if let session = try await supabase.auth.session {
 
 ---
 
-## 🔐 Security & Privacy
+## Security & Privacy
 
 ### Visitor Mode
-- ✅ No personal data stored or transmitted
-- ✅ No authentication credentials required
-- ✅ Safe for public demonstrations
+- No personal data stored or transmitted
+- No authentication credentials required
+- Safe for public demonstrations
 
 ### Authenticated Mode
-- 🔒 **Transport Security:** HTTPS/TLS for all API calls
-- 🔒 **Database Security:** RLS policies enforce user isolation
-- 🔒 **Password Security:** Supabase Auth handles hashing/salting
-- 🔒 **Token Security:** JWT tokens with automatic expiration
-- 🔒 **API Security:** Edge Functions validate JWT before execution
-- 🔒 **Privacy:** User can request data export or deletion (GDPR compliant)
+- **Transport Security:** HTTPS/TLS for all API calls
+- **Database Security:** RLS policies enforce user isolation
+- **Password Security:** Supabase Auth handles hashing/salting
+- **Token Security:** JWT tokens with automatic expiration
+- **API Security:** Edge Functions validate JWT before execution
+- **Privacy:** User can request data export or deletion (GDPR compliant)
 
 ---
 
-## 🚀 Advanced Features (Authenticated Mode Only)
+## Advanced Features (Authenticated Mode Only)
 
 ### Edge Functions
 - **ai-analyst:** Groq-powered AI analysis of user data
   - Analyzes all user metrics (health, social, travel, finance)
   - Returns personalized insights and recommendations
+  - **Multilingual Support:** Generates reports in FR, EN, or ES based on user preference
   - Uses `llama-3.1-8b-instant` model
   - Excludes sensitive PII (name, email, phone) from analysis
 

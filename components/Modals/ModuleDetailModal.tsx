@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import BottomSheet from '../UI/BottomSheet'
 import ModuleChart from '../Cards/ModuleChart'
+import LogarithmicHistoryChart from '../Charts/LogarithmicHistoryChart'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface ModuleDetailModalProps {
@@ -135,16 +136,13 @@ export default function ModuleDetailModal({
                     </span>
                 </div>
 
-                <div style={{ height: '140px' }}>
-                    <ModuleChart
+                <div style={{ height: '220px' }}>
+                    <LogarithmicHistoryChart
                         data={historyData}
                         color={color}
-                        friendsAvg={averages.friends}
-                        nationalAvg={averages.national}
-                        worldwideAvg={averages.worldwide}
-                        height={140}
+                        height={220}
                         weekLabels={weekLabels}
-                        compact={false}
+                        scale="log"
                         showAverages={true}
                     />
                 </div>

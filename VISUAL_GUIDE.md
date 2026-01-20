@@ -1,6 +1,6 @@
-# 🎨 STATS App - Guide Visuel de l'Architecture Dual-Mode
+# STATS App - Guide Visuel de l'Architecture Dual-Mode
 
-## 🔍 Vue d'Ensemble Rapide
+## Vue d'Ensemble Rapide
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -18,7 +18,7 @@
                 │                                 │
                 ▼                                 ▼
     ┏━━━━━━━━━━━━━━━━━━━━┓         ┏━━━━━━━━━━━━━━━━━━━━━┓
-    ┃  🌐 MODE VISITEUR  ┃         ┃ 🔐 MODE AUTHENTIFIÉ ┃
+    ┃   MODE VISITEUR  ┃         ┃  MODE AUTHENTIFIÉ ┃
     ┃   (Demo/Guest)     ┃         ┃   (Supabase Users)  ┃
     ┗━━━━━━━━━━━━━━━━━━━━┛         ┗━━━━━━━━━━━━━━━━━━━━━┛
             │                                   │
@@ -45,21 +45,21 @@
 
 ---
 
-## 📊 Comparaison Visuelle
+## Comparaison Visuelle
 
-### 🌐 MODE VISITEUR
+### MODE VISITEUR
 
 ```
 ┌─────────────────────────────────────────┐
 │         CARACTÉRISTIQUES                │
 ├─────────────────────────────────────────┤
-│ ✅ Aucune authentification requise      │
-│ ✅ Données démo pré-chargées            │
-│ ✅ Fonctionne 100% hors ligne           │
-│ ✅ Chargement instantané (~200ms)       │
-│ ❌ Lecture seule (pas de sauvegarde)    │
-│ ❌ Pas de fonctionnalités IA            │
-│ ❌ Pas de social (recherche, connexions)│
+│  Aucune authentification requise      │
+│  Données démo pré-chargées            │
+│  Fonctionne 100% hors ligne           │
+│  Chargement instantané (~200ms)       │
+│  Lecture seule (pas de sauvegarde)    │
+│  Pas de fonctionnalités IA            │
+│  Pas de social (recherche, connexions)│
 └─────────────────────────────────────────┘
 
 FLUX DE DONNÉES:
@@ -84,26 +84,26 @@ FLUX DE DONNÉES:
 ┌──────────────────┐
 │ Affiche données  │
 │ démo (Jeffrey)   │
-│ Badge "👁️ Demo"  │
+│ Badge " Demo"  │
 └──────────────────┘
 ```
 
 ---
 
-### 🔐 MODE AUTHENTIFIÉ
+### MODE AUTHENTIFIÉ
 
 ```
 ┌─────────────────────────────────────────┐
 │         CARACTÉRISTIQUES                │
 ├─────────────────────────────────────────┤
-│ ✅ Authentification email/password      │
-│ ✅ Base de données PostgreSQL           │
-│ ✅ CRUD complet (Create/Read/Update/Del)│
-│ ✅ Sync multi-appareils                 │
-│ ✅ Sécurité RLS (Row-Level Security)    │
-│ ✅ Analyse IA (Edge Functions)          │
-│ ✅ Social (recherche, connexions)       │
-│ ⚠️  Requiert connexion internet         │
+│  Authentification email/password      │
+│  Base de données PostgreSQL           │
+│  CRUD complet (Create/Read/Update/Del)│
+│  Sync multi-appareils                 │
+│  Sécurité RLS (Row-Level Security)    │
+│  Analyse IA (Edge Functions)          │
+│  Social (recherche, connexions)       │
+│   Requiert connexion internet         │
 └─────────────────────────────────────────┘
 
 FLUX DE DONNÉES:
@@ -131,7 +131,7 @@ FLUX DE DONNÉES:
          │
          ▼
 ┌──────────────────────┐
-│ RLS Policy Check ✅  │
+│ RLS Policy Check   │
 │ auth.uid() = user_id │
 └────────┬─────────────┘
          │
@@ -145,34 +145,34 @@ FLUX DE DONNÉES:
 
 ---
 
-## 🗂️ Sources de Données
+## Sources de Données
 
-### Mode Visiteur 🌐
+### Mode Visiteur 
 
 ```
-📁 /data/
-├── 📄 mockData.ts
+ /data/
+├──  mockData.ts
 │   ├── userProfile (Jeffrey)
 │   ├── harmonyScore
 │   └── achievements
 │
-├── 📄 demoHealthData.ts
+├──  demoHealthData.ts
 │   ├── DEMO_SLEEP_RECORDS (30 jours)
 │   ├── DEMO_SPORT_SESSIONS
 │   ├── DEMO_BODY_MEASUREMENTS
 │   └── DEMO_NUTRITION_LOGS
 │
-├── 📄 demoSocialData.ts
-│   ├── DEMO_CONTACTS (TrueCircle)
+├──  demoSocialData.ts
+│   ├── DEMO_CONTACTS (TrueCircle: Inner Circle + Friends)
 │   ├── DEMO_CONNECTIONS
 │   └── DEMO_RANKINGS
 │
-├── 📄 demoTravelData.ts
+├──  demoTravelData.ts
 │   ├── DEMO_COUNTRIES (visités)
 │   ├── DEMO_TRIPS
 │   └── DEMO_LOCATIONS
 │
-└── 📄 demoFinancialData.ts
+└──  demoFinancialData.ts
     ├── DEMO_ASSETS (patrimoine)
     ├── DEMO_CAREER_GOALS
     └── DEMO_SKILLS
@@ -180,47 +180,47 @@ FLUX DE DONNÉES:
 
 ---
 
-### Mode Authentifié 🔐
+### Mode Authentifié 
 
 ```
-🗄️ Supabase PostgreSQL Database
+ Supabase PostgreSQL Database
 ├── auth.users (Géré par Supabase Auth)
 │   ├── id (uuid)
 │   ├── email
 │   └── encrypted_password
 │
-├── 👤 public.profiles
+├──  public.profiles
 │   ├── user_id → auth.users.id
 │   ├── username (unique)
 │   ├── avatar_url
 │   └── bio
 │
-├── 💤 public.sleep_records
+├──  public.sleep_records
 │   ├── id, user_id, date
 │   ├── duration, quality
 │   └── deep_sleep, rem_sleep
 │
-├── 🏃 public.sport_sessions
+├──  public.sport_sessions
 │   ├── id, user_id, date
 │   ├── activity_type, duration
 │   └── distance, calories
 │
-├── 👥 public.contacts
+├──  public.contacts
 │   ├── id, user_id, name
 │   ├── category (intimate/close/casual)
 │   └── last_interaction
 │
-├── 🔗 public.connections
+├──  public.connections
 │   ├── id, user_id
 │   ├── connected_user_id
 │   └── status (pending/accepted)
 │
-├── 🌍 public.countries
+├──  public.countries
 │   ├── id, user_id
 │   ├── country_code (ISO)
 │   └── visit_count, total_days
 │
-└── 💰 public.assets
+└──  public.assets
     ├── id, user_id
     ├── asset_type
     └── value, currency
@@ -232,19 +232,19 @@ FLUX DE DONNÉES:
 
 ---
 
-## 🔐 Sécurité Row-Level Security (RLS)
+## Sécurité Row-Level Security (RLS)
 
 ### Principe
 
 ```
-Sans RLS (❌ DANGEREUX):
+Sans RLS ( DANGEREUX):
 ┌─────────────────────────────────────┐
 │ SELECT * FROM sleep_records         │
 │ → Renvoie TOUTES les données        │
 │   de TOUS les utilisateurs !!       │
 └─────────────────────────────────────┘
 
-Avec RLS (✅ SÉCURISÉ):
+Avec RLS ( SÉCURISÉ):
 ┌─────────────────────────────────────┐
 │ SELECT * FROM sleep_records         │
 │ WHERE user_id = auth.uid()          │
@@ -296,14 +296,14 @@ CREATE POLICY "Users can delete own records"
 ```
 
 **Résultat:**
-- ✅ User A ne peut voir QUE ses propres enregistrements
-- ✅ User B ne peut voir QUE ses propres enregistrements
-- ❌ User A ne peut PAS voir les données de User B
-- ❌ Impossible de contourner, même en modifiant le code client
+- User A ne peut voir QUE ses propres enregistrements
+- User B ne peut voir QUE ses propres enregistrements
+- User A ne peut PAS voir les données de User B
+- Impossible de contourner, même en modifiant le code client
 
 ---
 
-## 🧬 Pattern de Hook Dual-Mode
+## Pattern de Hook Dual-Mode
 
 Tous les hooks de données suivent ce pattern :
 
@@ -319,21 +319,21 @@ export function useModuleData() {
       setIsLoading(true)
       
       try {
-        // 1️⃣ Vérifier authentification
+        // 1⃣ Vérifier authentification
         const { data: { user } } = await supabase.auth.getUser()
         
         if (!user) {
-          // 🌐 MODE VISITEUR
+          //  MODE VISITEUR
           setData(DEMO_DATA)
           setIsDemo(true)
           setIsLoading(false)
           return // Sortie anticipée
         }
 
-        // 🔐 MODE AUTHENTIFIÉ
+        //  MODE AUTHENTIFIÉ
         setIsDemo(false)
         
-        // 2️⃣ Query Supabase
+        // 2⃣ Query Supabase
         const { data, error } = await supabase
           .from('table_name')
           .select('*')
@@ -370,36 +370,36 @@ export function useModuleData() {
 ### Hooks Implémentés
 
 ```
-✅ useHealthData()     → sleep_records, sport_sessions, body_measurements
-✅ useSocialData()     → contacts, connections, rankings
-✅ useTravelData()     → countries, trips, locations
-✅ useFinancialData()  → assets, career_goals, skills
-✅ useProfileData()    → profiles (username, avatar)
+ useHealthData()     → sleep_records, sport_sessions, body_measurements
+ useSocialData()     → contacts, connections, rankings
+ useTravelData()     → countries, trips, locations
+ useFinancialData()  → assets, career_goals, skills
+ useProfileData()    → profiles (username, avatar)
 ```
 
 ---
 
-## 🎯 Indicateurs UI par Mode
+## Indicateurs UI par Mode
 
-### Mode Visiteur 🌐
+### Mode Visiteur 
 
 ```
 ┌─────────────────────────────────────┐
-│ 🌐 STATS App                  👁️ │ ← Badge "Démo"
+│  STATS App                   │ ← Badge "Démo"
 ├─────────────────────────────────────┤
 │                                     │
-│  📷 Avatar: jeffrey.jpg             │
-│  👤 Nom: Jeffrey                    │
-│  📧 Email: demo@example.com         │
+│   Avatar: jeffrey.jpg             │
+│   Nom: Jeffrey                    │
+│   Email: demo@example.com         │
 │                                     │
 │  ┌───────────────────────────────┐ │
-│  │ 💤 Sommeil (30 jours)         │ │
+│  │  Sommeil (30 jours)         │ │
 │  │ ─────────────────────         │ │
 │  │ Moyenne: 7h 30min             │ │
 │  │ Qualité: 85/100               │ │
 │  │                               │ │
-│  │ [➕ Ajouter] ← DÉSACTIVÉ      │ │ ← Bouton grisé
-│  │ 💡 "Connectez-vous pour       │ │
+│  │ [ Ajouter] ← DÉSACTIVÉ      │ │ ← Bouton grisé
+│  │  "Connectez-vous pour       │ │
 │  │    sauvegarder vos données"   │ │
 │  └───────────────────────────────┘ │
 │                                     │
@@ -408,24 +408,24 @@ export function useModuleData() {
 
 ---
 
-### Mode Authentifié 🔐
+### Mode Authentifié 
 
 ```
 ┌─────────────────────────────────────┐
-│ 🔐 STATS App                  ⚙️  │ ← Pas de badge démo
+│  STATS App                    │ ← Pas de badge démo
 ├─────────────────────────────────────┤
 │                                     │
-│  📷 Avatar: user_avatar.jpg         │ ← Avatar personnalisé
-│  👤 Nom: @votre_username            │ ← Nom choisi
-│  📧 Email: vous@email.com           │ ← Votre email
+│   Avatar: user_avatar.jpg         │ ← Avatar personnalisé
+│   Nom: @votre_username            │ ← Nom choisi
+│   Email: vous@email.com           │ ← Votre email
 │                                     │
 │  ┌───────────────────────────────┐ │
-│  │ 💤 Sommeil (30 jours)         │ │
+│  │  Sommeil (30 jours)         │ │
 │  │ ─────────────────────         │ │
 │  │ Moyenne: 6h 45min             │ │ ← VOS données
 │  │ Qualité: 78/100               │ │
 │  │                               │ │
-│  │ [➕ Ajouter] ← ACTIF ✅       │ │ ← Bouton cliquable
+│  │ [ Ajouter] ← ACTIF        │ │ ← Bouton cliquable
 │  │                               │ │
 │  │ Dernière synchro: Il y a 2min │ │ ← Indicateur sync
 │  └───────────────────────────────┘ │
@@ -435,7 +435,7 @@ export function useModuleData() {
 
 ---
 
-## 🔄 Cycle de Vie de l'Application
+## Cycle de Vie de l'Application
 
 ### Démarrage Initial
 
@@ -469,7 +469,7 @@ export function useModuleData() {
        │                               │
        ▼                               ▼
 ┌──────────────┐              ┌────────────────────┐
-│ 🌐 MODE      │              │ 🔐 MODE            │
+│  MODE      │              │  MODE            │
 │ VISITEUR     │              │ AUTHENTIFIÉ        │
 └──────────────┘              └────────────────────┘
 ```
@@ -479,7 +479,7 @@ export function useModuleData() {
 ### Transition Visiteur → Authentifié
 
 ```
-MODE VISITEUR 🌐
+MODE VISITEUR 
       │
       │ User clique "Login"
       ▼
@@ -523,7 +523,7 @@ MODE VISITEUR 🌐
 └──────┬─────────────────┘
        │
        ▼
-MODE AUTHENTIFIÉ 🔐
+MODE AUTHENTIFIÉ 
 ```
 
 ---
@@ -531,7 +531,7 @@ MODE AUTHENTIFIÉ 🔐
 ### Transition Authentifié → Visiteur
 
 ```
-MODE AUTHENTIFIÉ 🔐
+MODE AUTHENTIFIÉ 
       │
       │ User clique "Sign Out"
       ▼
@@ -562,26 +562,26 @@ MODE AUTHENTIFIÉ 🔐
 └──────┬─────────────────┘
        │
        ▼
-MODE VISITEUR 🌐
+MODE VISITEUR 
 ```
 
 ---
 
-## 📁 Structure Complète du Projet
+## Structure Complète du Projet
 
 ```
 STATS_APP/
 │
-├── 📄 README.md                    # Vue d'ensemble principale
-├── 📄 ARCHITECTURE.md              # Specs techniques complètes (EN)
-├── 📄 ARCHITECTURE_FR.md           # Specs techniques complètes (FR)
-├── 📄 MODES.md                     # Guide rapide dual-mode (EN)
-└── 📄 VISUAL_GUIDE.md              # Ce fichier (guide visuel)
+├──  README.md                    # Vue d'ensemble principale
+├──  ARCHITECTURE.md              # Specs techniques complètes (EN)
+├──  ARCHITECTURE_FR.md           # Specs techniques complètes (FR)
+├──  MODES.md                     # Guide rapide dual-mode (EN)
+└──  VISUAL_GUIDE.md              # Ce fichier (guide visuel)
 │
 ├── /app                            # Next.js App Router
-│   ├── page.tsx                    # 🚦 Point d'entrée (auth router)
-│   ├── login/page.tsx              # 🔐 Page de connexion
-│   ├── onboarding/page.tsx         # 👤 Setup nouveau compte
+│   ├── page.tsx                    # Point d'entrée (auth router)
+│   ├── login/page.tsx              # Page de connexion
+│   ├── onboarding/page.tsx         # Setup nouveau compte
 │   └── auth/callback/route.ts      # OAuth callback
 │
 ├── /components
@@ -597,18 +597,18 @@ STATS_APP/
 │   └── /UI                         # Design system
 │
 ├── /contexts
-│   ├── AuthContext.tsx             # 🔑 Gestion authentification
-│   ├── ThemeContext.tsx            # 🎨 Dark/Light mode
-│   └── LanguageContext.tsx         # 🌐 i18n FR/EN
+│   ├── AuthContext.tsx             # Gestion authentification
+│   ├── ThemeContext.tsx            # Dark/Light mode
+│   └── LanguageContext.tsx         # i18n FR/EN
 │
-├── /hooks                          # 🔀 HOOKS DUAL-MODE
-│   ├── useHealthData.ts            # 💤 Données santé
-│   ├── useSocialData.ts            # 👥 Données social
-│   ├── useTravelData.ts            # 🌍 Données voyages
-│   ├── useFinancialData.ts         # 💰 Données finance
-│   └── useProfileData.ts           # 👤 Profil utilisateur
+├── /hooks                          # HOOKS DUAL-MODE
+│   ├── useHealthData.ts            # Données santé
+│   ├── useSocialData.ts            # Données social
+│   ├── useTravelData.ts            # Données voyages
+│   ├── useFinancialData.ts         # Données finance
+│   └── useProfileData.ts           # Profil utilisateur
 │
-├── /data                           # 🌐 DONNÉES MODE VISITEUR
+├── /data                           # DONNÉES MODE VISITEUR
 │   ├── mockData.ts                 # Profil Jeffrey
 │   ├── demoHealthData.ts           # Sommeil, sport, nutrition
 │   ├── demoSocialData.ts           # Contacts, connexions
@@ -617,9 +617,9 @@ STATS_APP/
 │
 ├── /utils
 │   └── /supabase
-│       └── client.ts               # 🔐 Client Supabase
+│       └── client.ts               # Client Supabase
 │
-└── /supabase                       # 🔐 BACKEND MODE AUTHENTIFIÉ
+└── /supabase                       # BACKEND MODE AUTHENTIFIÉ
     ├── /functions                  # Edge Functions
     │   └── ai-analyst/             # Analyse IA (Groq)
     └── /migrations                 # Schéma DB
@@ -628,17 +628,17 @@ STATS_APP/
 
 ---
 
-## 🎓 Concepts Clés à Retenir
+## Concepts Clés à Retenir
 
 ### 1. Un Seul Codebase, Deux Expériences
 
 ```
-              📱 Interface UI
+               Interface UI
                     │
     ┌───────────────┴───────────────┐
     │                               │
     ▼                               ▼
-🌐 VISITEUR                   🔐 AUTHENTIFIÉ
+ VISITEUR                    AUTHENTIFIÉ
 Données démo                  Données réelles
 Fichiers locaux               Base de données
 Hors ligne                    Cloud sync
@@ -664,9 +664,9 @@ if (user) {
 -- Appliqué automatiquement sur TOUTES les requêtes
 WHERE user_id = auth.uid()
 
--- ✅ User A voit ses données
--- ✅ User B voit ses données
--- ❌ User A ne peut PAS voir données de User B
+-- User A voit ses données
+-- User B voit ses données
+-- User A ne peut PAS voir données de User B
 ```
 
 ### 4. Fallback Gracieux
@@ -683,14 +683,14 @@ try {
 
 ---
 
-## 🚀 Checklist Développeur
+## Checklist Développeur
 
 ### Pour Tester Mode Visiteur
 - [ ] Effacer `localStorage`
 - [ ] Rafraîchir page
 - [ ] Vérifier affichage "Jeffrey"
 - [ ] Vérifier boutons "Ajouter" désactivés
-- [ ] Vérifier badge "👁️ Demo"
+- [ ] Vérifier badge " Demo"
 
 ### Pour Tester Mode Authentifié
 - [ ] Configurer `.env.local` avec credentials Supabase
@@ -709,6 +709,6 @@ try {
 
 ---
 
-**Dernière mise à jour :** 6 janvier 2026  
+**Dernière mise à jour :** 20 janvier 2026  
 **Auteur :** Documentation STATS App  
-**Version :** 1.0 (Architecture Dual-Mode)
+**Version :** 1.1 (Mise à jour Multilingue & Social)
