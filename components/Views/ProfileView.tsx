@@ -102,9 +102,20 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack, userPr
         byModule: { A: 78, B: 65, C: 72, D: 68, E: 82 }
     }
 
-    // Generate QR code URL for profile
+    // Generate QR code URL for profile - use local generation instead of external API
     const profileUrl = `https://statsapp.com/profile/${username || 'user'}`
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(profileUrl)}`
+
+    // QR code state for local generation
+    const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null)
+
+    // Generate QR code when sheet opens
+    useEffect(() => {
+        if (showQRSheet && !qrCodeDataUrl) {
+            import('@/utils/qrcode').then(({ generateQRCode }) => {
+                generateQRCode(profileUrl, 200).then(setQrCodeDataUrl).catch(console.error)
+            })
+        }
+    }, [showQRSheet, profileUrl, qrCodeDataUrl])
 
     // Module colors for the radial chart
     const moduleColors = {
@@ -441,7 +452,16 @@ export default function ProfileView({ onOpenSettings, onNavigate, onBack, userPr
                             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
                         }}
                     >
-                        <img src={qrCodeUrl} alt="Profile QR Code" className="w-44 h-44" style={{ imageRendering: 'crisp-edges' }} />
+                        {qrCodeDataUrl ? (
+                            <img src={qrCodeDataUrl} alt="Profile QR Code" className="w-44 h-44" style={{ imageRendering: 'crisp-edges' }} />
+                        ) : (
+                            <div className="w-44 h-44 flex items-center justify-center">
+                                <div
+                                    className="w-8 h-8 border-2 border-t-transparent rounded-full animate-spin"
+                                    style={{ borderColor: 'var(--accent-gold) transparent transparent transparent' }}
+                                />
+                            </div>
+                        )}
                     </div>
 
                     <p className="text-base font-medium mb-1" style={{ color: 'var(--text-primary)' }}>

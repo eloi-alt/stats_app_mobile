@@ -84,47 +84,71 @@ export default function PublicCardCreatorModal({
         try {
             // Create preview immediately
             const reader = new FileReader()
+
+            reader.onerror = () => {
+                console.error('[PublicCardCreator] FileReader error')
+                setError('Erreur lors de la lecture du fichier')
+                setIsUploading(false)
+            }
+
             reader.onload = (event) => {
                 const img = new Image()
-                img.onload = () => {
-                    // Create canvas for 4:5 crop (800x1000)
-                    const canvas = document.createElement('canvas')
-                    const targetWidth = 800
-                    const targetHeight = 1000
-                    canvas.width = targetWidth
-                    canvas.height = targetHeight
 
-                    const ctx = canvas.getContext('2d')
-                    if (!ctx) return
-
-                    // Calculate crop dimensions
-                    const sourceAspect = img.width / img.height
-                    const targetAspect = targetWidth / targetHeight
-
-                    let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height
-
-                    if (sourceAspect > targetAspect) {
-                        // Image is wider - crop sides
-                        sourceWidth = img.height * targetAspect
-                        sourceX = (img.width - sourceWidth) / 2
-                    } else {
-                        // Image is taller - crop top/bottom
-                        sourceHeight = img.width / targetAspect
-                        sourceY = (img.height - sourceHeight) / 2
-                    }
-
-                    // Draw cropped and resized image
-                    ctx.drawImage(
-                        img,
-                        sourceX, sourceY, sourceWidth, sourceHeight,
-                        0, 0, targetWidth, targetHeight
-                    )
-
-                    // Convert to data URL
-                    const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.85)
-                    setSelectedImage(croppedDataUrl)
-                    setStep(3) // Go to preview
+                img.onerror = () => {
+                    console.error('[PublicCardCreator] Image load error')
+                    setError('Erreur lors du chargement de l\'image')
                     setIsUploading(false)
+                }
+
+                img.onload = () => {
+                    try {
+                        // Create canvas for 4:5 crop (800x1000)
+                        const canvas = document.createElement('canvas')
+                        const targetWidth = 800
+                        const targetHeight = 1000
+                        canvas.width = targetWidth
+                        canvas.height = targetHeight
+
+                        const ctx = canvas.getContext('2d')
+                        if (!ctx) {
+                            setError('Erreur lors du traitement de l\'image')
+                            setIsUploading(false)
+                            return
+                        }
+
+                        // Calculate crop dimensions
+                        const sourceAspect = img.width / img.height
+                        const targetAspect = targetWidth / targetHeight
+
+                        let sourceX = 0, sourceY = 0, sourceWidth = img.width, sourceHeight = img.height
+
+                        if (sourceAspect > targetAspect) {
+                            // Image is wider - crop sides
+                            sourceWidth = img.height * targetAspect
+                            sourceX = (img.width - sourceWidth) / 2
+                        } else {
+                            // Image is taller - crop top/bottom
+                            sourceHeight = img.width / targetAspect
+                            sourceY = (img.height - sourceHeight) / 2
+                        }
+
+                        // Draw cropped and resized image
+                        ctx.drawImage(
+                            img,
+                            sourceX, sourceY, sourceWidth, sourceHeight,
+                            0, 0, targetWidth, targetHeight
+                        )
+
+                        // Convert to data URL
+                        const croppedDataUrl = canvas.toDataURL('image/jpeg', 0.85)
+                        setSelectedImage(croppedDataUrl)
+                        setStep(3) // Go to preview
+                        setIsUploading(false)
+                    } catch (canvasError) {
+                        console.error('[PublicCardCreator] Canvas error:', canvasError)
+                        setError('Erreur lors du traitement de l\'image')
+                        setIsUploading(false)
+                    }
                 }
                 img.src = event.target?.result as string
             }
@@ -147,9 +171,20 @@ export default function PublicCardCreatorModal({
 
             // Upload to Supabase Storage if not demo
             if (!isDemo && userId) {
-                // Convert data URL to blob
-                const response = await fetch(selectedImage)
-                const blob = await response.blob()
+                // Convert data URL to blob without using fetch (to avoid CSP issues)
+                const dataUrlToBlob = (dataUrl: string): Blob => {
+                    const parts = dataUrl.split(',')
+                    const mime = parts[0].match(/:(.*?);/)?.[1] || 'image/jpeg'
+                    const bstr = atob(parts[1])
+                    let n = bstr.length
+                    const u8arr = new Uint8Array(n)
+                    while (n--) {
+                        u8arr[n] = bstr.charCodeAt(n)
+                    }
+                    return new Blob([u8arr], { type: mime })
+                }
+
+                const blob = dataUrlToBlob(selectedImage)
 
                 const fileName = `${userId}/public_card_${Date.now()}.jpg`
                 const { data: uploadData, error: uploadError } = await supabase.storage

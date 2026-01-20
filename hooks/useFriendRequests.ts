@@ -145,43 +145,77 @@ export function useFriendRequests(userId?: string) {
 
     // Send friend request
     const sendFriendRequest = useCallback(async (receiverId: string): Promise<{ success: boolean; error?: string }> => {
-        if (!userId) return { success: false, error: 'Not authenticated' }
+        if (!userId) {
+            console.error('[FriendRequests] sendFriendRequest: No userId')
+            return { success: false, error: 'Not authenticated' }
+        }
+
+        // Check if trying to add yourself
+        if (userId === receiverId) {
+            console.error('[FriendRequests] Cannot add yourself as friend')
+            return { success: false, error: 'Vous ne pouvez pas vous ajouter vous-même' }
+        }
+
+        console.log('[FriendRequests] sendFriendRequest: Starting', { userId, receiverId })
 
         // Check if already friends
-        const { data: existingFriendship } = await supabase
+        const { data: existingFriendship, error: friendshipCheckError } = await supabase
             .from('friendships')
             .select('id')
             .or(`and(user_id.eq.${userId},friend_id.eq.${receiverId}),and(user_id.eq.${receiverId},friend_id.eq.${userId})`)
-            .single()
+            .maybeSingle()
+
+        console.log('[FriendRequests] Existing friendship check:', { existingFriendship, friendshipCheckError })
 
         if (existingFriendship) {
-            return { success: false, error: 'Déjà amis' }
+            return { success: false, error: 'Vous êtes déjà amis' }
         }
 
-        // Check if request already exists
-        const { data: existingRequest } = await supabase
+        // Check if request already exists (in either direction)
+        const { data: existingRequest, error: requestCheckError } = await supabase
             .from('friend_requests')
-            .select('id, status')
+            .select('id, status, sender_id, receiver_id')
             .or(`and(sender_id.eq.${userId},receiver_id.eq.${receiverId}),and(sender_id.eq.${receiverId},receiver_id.eq.${userId})`)
-            .eq('status', 'pending')
-            .single()
+            .maybeSingle()
+
+        console.log('[FriendRequests] Existing request check:', { existingRequest, requestCheckError })
 
         if (existingRequest) {
-            return { success: false, error: 'Demande déjà envoyée' }
+            // If the other person already sent you a request
+            if (existingRequest.sender_id === receiverId && existingRequest.status === 'pending') {
+                return { success: false, error: 'Cette personne vous a déjà envoyé une demande. Acceptez-la dans vos notifications !' }
+            }
+            // If you already sent a request
+            if (existingRequest.sender_id === userId) {
+                if (existingRequest.status === 'pending') {
+                    return { success: false, error: 'Demande déjà envoyée' }
+                } else if (existingRequest.status === 'rejected') {
+                    return { success: false, error: 'Votre demande a été refusée' }
+                }
+            }
         }
 
         // Send request
-        const { error } = await supabase
+        const { data: insertData, error: insertError } = await supabase
             .from('friend_requests')
             .insert({
                 sender_id: userId,
                 receiver_id: receiverId,
                 status: 'pending'
             })
+            .select()
 
-        if (error) {
-            console.error('[FriendRequests] Error sending request:', error)
-            return { success: false, error: 'Erreur lors de l\'envoi' }
+        console.log('[FriendRequests] Insert result:', { insertData, insertError })
+
+        if (insertError) {
+            console.error('[FriendRequests] Error sending request:', insertError)
+
+            // Handle unique constraint violation
+            if (insertError.code === '23505') {
+                return { success: false, error: 'Une demande existe déjà avec cet utilisateur' }
+            }
+
+            return { success: false, error: `Erreur: ${insertError.message}` }
         }
 
         await fetchSentRequests()
@@ -192,7 +226,7 @@ export function useFriendRequests(userId?: string) {
     const acceptFriendRequest = useCallback(async (requestId: string, senderId: string): Promise<{ success: boolean; error?: string }> => {
         if (!userId) return { success: false, error: 'Not authenticated' }
 
-        // Update request status
+        // Update request status - the trigger will automatically create friendships
         const { error: updateError } = await supabase
             .from('friend_requests')
             .update({ status: 'accepted', updated_at: new Date().toISOString() })
@@ -204,19 +238,7 @@ export function useFriendRequests(userId?: string) {
             return { success: false, error: 'Erreur lors de l\'acceptation' }
         }
 
-        // Create friendships (bidirectional)
-        const { error: friendshipError } = await supabase
-            .from('friendships')
-            .insert([
-                { user_id: userId, friend_id: senderId, rank: 'amis' },
-                { user_id: senderId, friend_id: userId, rank: 'amis' }
-            ])
-
-        if (friendshipError) {
-            console.error('[FriendRequests] Error creating friendship:', friendshipError)
-            return { success: false, error: 'Erreur lors de la création de l\'amitié' }
-        }
-
+        // Note: Friendships are created automatically by the trigger
         await fetchPendingRequests()
         await fetchFriendships()
         return { success: true }
@@ -246,19 +268,31 @@ export function useFriendRequests(userId?: string) {
         if (!userId) return { success: false, error: 'Not authenticated' }
 
         // Delete both directions of friendship
-        const { error } = await supabase
+        const { error: friendshipError } = await supabase
             .from('friendships')
             .delete()
             .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`)
 
-        if (error) {
-            console.error('[FriendRequests] Error deleting friendship:', error)
+        if (friendshipError) {
+            console.error('[FriendRequests] Error deleting friendship:', friendshipError)
             return { success: false, error: 'Erreur lors de la suppression' }
         }
 
+        // Also delete the associated friend_request so user can re-add later
+        const { error: requestError } = await supabase
+            .from('friend_requests')
+            .delete()
+            .or(`and(sender_id.eq.${userId},receiver_id.eq.${friendId}),and(sender_id.eq.${friendId},receiver_id.eq.${userId})`)
+
+        if (requestError) {
+            console.error('[FriendRequests] Error deleting friend request:', requestError)
+            // Non-blocking - friendship is already deleted
+        }
+
         await fetchFriendships()
+        await fetchSentRequests()
         return { success: true }
-    }, [userId, fetchFriendships])
+    }, [userId, fetchFriendships, fetchSentRequests])
 
     // Update friend rank (bidirectional)
     const updateFriendRank = useCallback(async (friendId: string, newRank: 'cercle_proche' | 'amis'): Promise<{ success: boolean; error?: string }> => {

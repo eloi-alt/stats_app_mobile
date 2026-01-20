@@ -2,6 +2,8 @@
 
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect } from 'react'
 import { useFriendRequests, Friendship, FriendRequest } from '@/hooks/useFriendRequests'
+import { PrivacySettings, PrivacyCategory } from '@/hooks/usePrivacySettings'
+import { canViewFriendData } from '@/utils/permissions'
 import { supabase } from '@/utils/supabase/client'
 
 interface FriendContextType {
@@ -29,6 +31,11 @@ interface FriendContextType {
 
     // Current user
     currentUserId: string | null
+
+    // Privacy & Permissions
+    friendPrivacySettings: Map<string, PrivacySettings>
+    canViewFriendCategory: (friendId: string, category: PrivacyCategory) => boolean
+    getFriendPrivacySettings: (friendId: string) => PrivacySettings | null
 }
 
 const FriendContext = createContext<FriendContextType | null>(null)
@@ -40,6 +47,7 @@ interface FriendProviderProps {
 export function FriendProvider({ children }: FriendProviderProps) {
     const [currentUserId, setCurrentUserId] = useState<string | null>(null)
     const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null)
+    const [friendPrivacySettings, setFriendPrivacySettings] = useState<Map<string, PrivacySettings>>(new Map())
 
     // Get current user on mount
     useEffect(() => {
@@ -70,8 +78,46 @@ export function FriendProvider({ children }: FriendProviderProps) {
         updateFriendRank,
         getFriendRank,
         getRelationshipStatus,
-        refetch
+        refetch: refetchFriends
     } = useFriendRequests(currentUserId || undefined)
+
+    // Load privacy settings for all friends
+    useEffect(() => {
+        if (friends.length === 0) {
+            setFriendPrivacySettings(new Map())
+            return
+        }
+
+        const loadFriendPrivacySettings = async () => {
+            const friendIds = friends.map(f => f.friendId)
+
+            const { data, error } = await supabase
+                .from('privacy_settings')
+                .select('*')
+                .in('user_id', friendIds)
+
+            if (error) {
+                console.error('[FriendContext] Error loading friend privacy settings:', error)
+                return
+            }
+
+            const settingsMap = new Map<string, PrivacySettings>()
+            data?.forEach((setting: any) => {
+                settingsMap.set(setting.user_id, {
+                    userId: setting.user_id,
+                    financePublic: setting.finance_public,
+                    physioPublic: setting.physio_public,
+                    worldPublic: setting.world_public,
+                    careerPublic: setting.career_public,
+                    socialPublic: setting.social_public
+                })
+            })
+
+            setFriendPrivacySettings(settingsMap)
+        }
+
+        loadFriendPrivacySettings()
+    }, [friends])
 
     // Check if a user is a friend
     const isFriend = useCallback((userId: string): boolean => {
@@ -90,6 +136,23 @@ export function FriendProvider({ children }: FriendProviderProps) {
         setSelectedProfileUserId(null)
     }, [])
 
+    // Get privacy settings for a specific friend
+    const getFriendPrivacySettings = useCallback((friendId: string): PrivacySettings | null => {
+        return friendPrivacySettings.get(friendId) || null
+    }, [friendPrivacySettings])
+
+    // Check if current user can view a friend's category
+    const canViewFriendCategory = useCallback((friendId: string, category: PrivacyCategory): boolean => {
+        const settings = friendPrivacySettings.get(friendId)
+        return canViewFriendData(friendId, category, settings || null, friends)
+    }, [friendPrivacySettings, friends])
+
+    // Refetch both friends and privacy settings
+    const refetch = useCallback(async () => {
+        await refetchFriends()
+        // Privacy settings will be reloaded automatically via the useEffect
+    }, [refetchFriends])
+
     const value: FriendContextType = {
         friends,
         pendingRequests,
@@ -107,7 +170,10 @@ export function FriendProvider({ children }: FriendProviderProps) {
         openFriendProfile,
         closeFriendProfile,
         selectedProfileUserId,
-        currentUserId
+        currentUserId,
+        friendPrivacySettings,
+        canViewFriendCategory,
+        getFriendPrivacySettings
     }
 
     return (

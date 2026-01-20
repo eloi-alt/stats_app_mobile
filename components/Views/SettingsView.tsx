@@ -4,6 +4,8 @@ import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useTheme, ThemeMode } from '@/contexts/ThemeContext'
+import { usePrivacy } from '@/contexts/PrivacyContext'
+import { PrivacyCategory } from '@/hooks/usePrivacySettings'
 import { supabase } from '@/utils/supabase/client'
 
 interface SettingsViewProps {
@@ -14,13 +16,20 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
     const router = useRouter()
     const { language, setLanguage, t } = useLanguage()
     const { theme, setTheme } = useTheme()
+    const { privacySettings, updatePrivacySetting, isLoadingSettings } = usePrivacy()
     const scrollContainerRef = useRef<HTMLDivElement>(null)
     const [notifications, setNotifications] = useState(true)
-    const [privacy, setPrivacy] = useState<'public' | 'friends' | 'private'>('friends')
     const [isSigningOut, setIsSigningOut] = useState(false)
 
     const handleThemeChange = (newTheme: ThemeMode) => {
         setTheme(newTheme)
+    }
+
+    const handlePrivacyToggle = async (category: PrivacyCategory) => {
+        if (!privacySettings) return
+
+        const currentValue = privacySettings[`${category}Public`]
+        await updatePrivacySetting(category, !currentValue)
     }
 
     const handleSignOut = async () => {
@@ -129,7 +138,6 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
                     {/* Notifications */}
                     <div
                         className="flex items-center justify-between p-4"
-                        style={{ borderBottom: '1px solid var(--border-subtle)' }}
                     >
                         <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139, 168, 136, 0.15)' }}>
@@ -151,26 +159,156 @@ export default function SettingsView({ onBack }: SettingsViewProps) {
                             />
                         </button>
                     </div>
+                </div>
+            </div>
 
-                    {/* Privacy */}
-                    <div className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(184, 165, 212, 0.15)' }}>
-                                <i className="fa-solid fa-lock text-sm" style={{ color: 'var(--accent-lavender)' }} />
-                            </div>
-                            <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{t('privacy')}</span>
+            {/* Social Privacy Settings */}
+            <div className="mb-6">
+                <div className="text-xs uppercase tracking-widest mb-3 px-1" style={{ color: 'var(--text-muted)' }}>
+                    {t('socialPrivacy')}
+                </div>
+                <div className="text-xs mb-3 px-1" style={{ color: 'var(--text-secondary)' }}>
+                    {t('socialPrivacyDesc')}
+                </div>
+
+                <div
+                    className="rounded-2xl overflow-hidden"
+                    style={{ background: 'var(--glass-bg)', border: '1px solid var(--border-light)' }}
+                >
+                    {isLoadingSettings ? (
+                        <div className="p-8 text-center">
+                            <div className="inline-block w-6 h-6 border-2 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--accent-gold) transparent transparent transparent' }} />
                         </div>
-                        <select
-                            value={privacy}
-                            onChange={(e) => setPrivacy(e.target.value as 'public' | 'friends' | 'private')}
-                            className="text-sm px-3 py-1.5 rounded-lg appearance-none cursor-pointer"
-                            style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)', border: 'none' }}
-                        >
-                            <option value="public">{t('public')}</option>
-                            <option value="friends">{t('friends')}</option>
-                            <option value="private">{t('private')}</option>
-                        </select>
-                    </div>
+                    ) : (
+                        <>
+                            {/* Finance Data */}
+                            <div
+                                className="flex items-center justify-between p-4"
+                                style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(201, 169, 98, 0.15)' }}>
+                                        <i className="fa-solid fa-coins text-sm" style={{ color: 'var(--accent-gold)' }} />
+                                    </div>
+                                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{t('financeData')}</span>
+                                </div>
+                                <button
+                                    onClick={() => handlePrivacyToggle('finance')}
+                                    className="w-12 h-7 rounded-full relative transition-all"
+                                    style={{ background: privacySettings?.financePublic ? 'var(--accent-gold)' : 'var(--border-light)' }}
+                                >
+                                    <div
+                                        className="absolute top-1 w-5 h-5 rounded-full shadow-sm transition-transform"
+                                        style={{
+                                            background: 'var(--bg-primary)',
+                                            transform: privacySettings?.financePublic ? 'translateX(24px)' : 'translateX(4px)',
+                                        }}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* Physio/Health Data */}
+                            <div
+                                className="flex items-center justify-between p-4"
+                                style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(139, 168, 136, 0.15)' }}>
+                                        <i className="fa-solid fa-heart-pulse text-sm" style={{ color: 'var(--accent-sage)' }} />
+                                    </div>
+                                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{t('physioData')}</span>
+                                </div>
+                                <button
+                                    onClick={() => handlePrivacyToggle('physio')}
+                                    className="w-12 h-7 rounded-full relative transition-all"
+                                    style={{ background: privacySettings?.physioPublic ? 'var(--accent-sage)' : 'var(--border-light)' }}
+                                >
+                                    <div
+                                        className="absolute top-1 w-5 h-5 rounded-full shadow-sm transition-transform"
+                                        style={{
+                                            background: 'var(--bg-primary)',
+                                            transform: privacySettings?.physioPublic ? 'translateX(24px)' : 'translateX(4px)',
+                                        }}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* World/Travel Data */}
+                            <div
+                                className="flex items-center justify-between p-4"
+                                style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(184, 165, 212, 0.15)' }}>
+                                        <i className="fa-solid fa-globe text-sm" style={{ color: 'var(--accent-lavender)' }} />
+                                    </div>
+                                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{t('worldData')}</span>
+                                </div>
+                                <button
+                                    onClick={() => handlePrivacyToggle('world')}
+                                    className="w-12 h-7 rounded-full relative transition-all"
+                                    style={{ background: privacySettings?.worldPublic ? 'var(--accent-lavender)' : 'var(--border-light)' }}
+                                >
+                                    <div
+                                        className="absolute top-1 w-5 h-5 rounded-full shadow-sm transition-transform"
+                                        style={{
+                                            background: 'var(--bg-primary)',
+                                            transform: privacySettings?.worldPublic ? 'translateX(24px)' : 'translateX(4px)',
+                                        }}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* Career/Pro Data */}
+                            <div
+                                className="flex items-center justify-between p-4"
+                                style={{ borderBottom: '1px solid var(--border-subtle)' }}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(165, 196, 212, 0.15)' }}>
+                                        <i className="fa-solid fa-briefcase text-sm" style={{ color: 'var(--accent-sky)' }} />
+                                    </div>
+                                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{t('careerData')}</span>
+                                </div>
+                                <button
+                                    onClick={() => handlePrivacyToggle('career')}
+                                    className="w-12 h-7 rounded-full relative transition-all"
+                                    style={{ background: privacySettings?.careerPublic ? 'var(--accent-sky)' : 'var(--border-light)' }}
+                                >
+                                    <div
+                                        className="absolute top-1 w-5 h-5 rounded-full shadow-sm transition-transform"
+                                        style={{
+                                            background: 'var(--bg-primary)',
+                                            transform: privacySettings?.careerPublic ? 'translateX(24px)' : 'translateX(4px)',
+                                        }}
+                                    />
+                                </button>
+                            </div>
+
+                            {/* Social Data */}
+                            <div className="flex items-center justify-between p-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(212, 165, 165, 0.15)' }}>
+                                        <i className="fa-solid fa-users text-sm" style={{ color: 'var(--accent-rose)' }} />
+                                    </div>
+                                    <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{t('socialData')}</span>
+                                </div>
+                                <button
+                                    onClick={() => handlePrivacyToggle('social')}
+                                    className="w-12 h-7 rounded-full relative transition-all"
+                                    style={{ background: privacySettings?.socialPublic ? 'var(--accent-rose)' : 'var(--border-light)' }}
+                                >
+                                    <div
+                                        className="absolute top-1 w-5 h-5 rounded-full shadow-sm transition-transform"
+                                        style={{
+                                            background: 'var(--bg-primary)',
+                                            transform: privacySettings?.socialPublic ? 'translateX(24px)' : 'translateX(4px)',
+                                        }}
+                                    />
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 

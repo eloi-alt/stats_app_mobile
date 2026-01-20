@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import PublicCardDisplay, { PublicCardCategory, PublicCardStats } from '../Cards/PublicCardDisplay'
 import { supabase } from '@/utils/supabase/client'
 import { useFriendContextOptional } from '@/contexts/FriendContext'
+import { generateUserProfileQR, shareUserProfile } from '@/utils/qrcode'
 import haptics from '@/utils/haptics'
 import { useLanguage } from '@/contexts/LanguageContext'
 
@@ -36,6 +37,8 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
     const [isLoading, setIsLoading] = useState(false)
     const [requestStatus, setRequestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
     const [requestError, setRequestError] = useState<string | null>(null)
+    const [showQRModal, setShowQRModal] = useState(false)
+    const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null)
     const { t } = useLanguage()
 
     const friendContext = useFriendContextOptional()
@@ -140,7 +143,44 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
         }
     }
 
+    const handleShare = async () => {
+        if (!userProfile) return
+
+        haptics.medium()
+        const result = await shareUserProfile(
+            userProfile.id,
+            userProfile.username,
+            getDisplayName(userProfile)
+        )
+
+        if (result.success) {
+            haptics.success()
+            if (result.method === 'clipboard') {
+                // Show a toast or feedback that link was copied
+                setRequestError(null)
+            }
+        } else {
+            haptics.error()
+        }
+    }
+
+    const handleShowQR = async () => {
+        if (!userProfile) return
+
+        haptics.medium()
+        try {
+            const qrDataUrl = await generateUserProfileQR(userProfile.id, userProfile.username || undefined)
+            setQrCodeDataUrl(qrDataUrl)
+            setShowQRModal(true)
+        } catch (error) {
+            console.error('[FriendProfileModal] Error generating QR code:', error)
+            haptics.error()
+        }
+    }
+
     const handleClose = useCallback(() => {
+        setShowQRModal(false)
+        setQrCodeDataUrl(null)
         onClose()
     }, [onClose])
 
@@ -376,6 +416,44 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                             </div>
                         )}
 
+                        {/* Share Buttons */}
+                        {relationshipStatus === 'friends' && (
+                            <div className="mb-6">
+                                <div
+                                    className="text-[10px] uppercase tracking-[0.2em] font-medium mb-2 text-center"
+                                    style={{ color: 'var(--text-tertiary)' }}
+                                >
+                                    {t('shareProfile')}
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleShare}
+                                        className="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all active:scale-95 flex items-center justify-center gap-2"
+                                        style={{
+                                            background: 'var(--glass-bg)',
+                                            color: 'var(--text-primary)',
+                                            border: '1px solid var(--border-light)'
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-share-nodes" />
+                                        {t('share')}
+                                    </button>
+                                    <button
+                                        onClick={handleShowQR}
+                                        className="flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all active:scale-95 flex items-center justify-center gap-2"
+                                        style={{
+                                            background: 'var(--glass-bg)',
+                                            color: 'var(--text-primary)',
+                                            border: '1px solid var(--border-light)'
+                                        }}
+                                    >
+                                        <i className="fa-solid fa-qrcode" />
+                                        QR Code
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Error message */}
                         {requestError && (
                             <div
@@ -510,6 +588,52 @@ export default function FriendProfileModal({ isOpen, userId, onClose }: FriendPr
                     animation: slide-up 0.3s ease-out;
                 }
             `}</style>
+
+            {/* QR Code Modal */}
+            {showQRModal && qrCodeDataUrl && createPortal(
+                <div
+                    className="fixed inset-0 z-[100000] flex items-center justify-center p-4"
+                    onClick={() => setShowQRModal(false)}
+                >
+                    <div
+                        className="absolute inset-0 backdrop-blur-md"
+                        style={{ background: 'rgba(0, 0, 0, 0.5)' }}
+                    />
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="relative bg-white dark:bg-gray-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl"
+                        style={{ background: 'var(--bg-elevated)' }}
+                    >
+                        <div className="text-center mb-4">
+                            <h3 className="text-lg font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
+                                {getDisplayName(userProfile!)}
+                            </h3>
+                            <p className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
+                                {t('scanToView')}
+                            </p>
+                        </div>
+                        <div className="flex justify-center mb-4">
+                            <img
+                                src={qrCodeDataUrl}
+                                alt="QR Code"
+                                className="w-64 h-64 rounded-2xl"
+                                style={{ background: 'white' }}
+                            />
+                        </div>
+                        <button
+                            onClick={() => setShowQRModal(false)}
+                            className="w-full py-3 rounded-xl text-sm font-medium transition-all active:scale-95"
+                            style={{
+                                background: 'var(--accent-lavender)',
+                                color: 'white'
+                            }}
+                        >
+                            {t('close')}
+                        </button>
+                    </div>
+                </div>,
+                document.body
+            )}
         </div>,
         document.body
     )

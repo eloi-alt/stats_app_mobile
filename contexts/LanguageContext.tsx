@@ -62,6 +62,13 @@ const translations: Translations = {
   'private': { en: 'Private', fr: 'Privé', es: 'Privado' },
   'publicStats': { en: 'Public Stats', fr: 'Stats publiques', es: 'Estadísticas públicas' },
   'privateStats': { en: 'Private Stats', fr: 'Stats privées', es: 'Estadísticas privadas' },
+  'socialPrivacy': { en: 'Social Privacy', fr: 'Confidentialité Sociale', es: 'Privacidad Social' },
+  'socialPrivacyDesc': { en: 'Control what your friends can see', fr: 'Contrôlez ce que vos amis peuvent voir', es: 'Controla lo que tus amigos pueden ver' },
+  'financeData': { en: 'Finance Data', fr: 'Données Financières', es: 'Datos Financieros' },
+  'physioData': { en: 'Health Data', fr: 'Données Santé', es: 'Datos de Salud' },
+  'worldData': { en: 'Travel Data', fr: 'Données Voyages', es: 'Datos de Viajes' },
+  'careerData': { en: 'Career Data', fr: 'Données Carrière', es: 'Datos de Carrera' },
+  'socialData': { en: 'Social Data', fr: 'Données Sociales', es: 'Datos Sociales' },
 
   // UI Controls
   'save': { en: 'Save', fr: 'Enregistrer', es: 'Guardar' },

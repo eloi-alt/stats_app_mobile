@@ -121,11 +121,19 @@ export default function SocialView({ comparisonData, onObjectiveClick, initialCo
     return ThomasMorel.moduleE.contacts.find(c => c.id === contactId) || null
   }
 
+  // Handle contact click - open the full FriendProfileModal via FriendContext
   const handleContactClick = (contact: DisplayContact) => {
-    setSelectedContact({
-      contact,
-      fullContact: null, // Real friends don't have mock fullContact data
-    })
+    // If the contact has a userId, open the full profile modal
+    if (contact.userId && friendContext) {
+      haptics.light()
+      friendContext.openFriendProfile(contact.userId)
+    } else {
+      // Fallback to the simple modal for demo contacts
+      setSelectedContact({
+        contact,
+        fullContact: null,
+      })
+    }
   }
 
   const handleAction = (action: string, contactName: string) => {
@@ -708,8 +716,8 @@ export default function SocialView({ comparisonData, onObjectiveClick, initialCo
       <CompareWithFriendModal
         isOpen={showCompareModal}
         onClose={() => setShowCompareModal(false)}
-        currentContact={selectedContact?.contact || null}
-        allContacts={displayContacts}
+        initialFriendId={selectedContact?.contact?.userId || undefined}
+        focusCategory="all"
       />
 
       {/* User Search Modal */}
