@@ -30,7 +30,14 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsImpl": "mapbox",
+          "RNMapboxMapsDownloadToken": "YOUR_SECRET_MAPBOX_ACCESS_TOKEN"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
