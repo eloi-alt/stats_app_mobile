@@ -10,20 +10,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
         storage: AsyncStorage,
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: false, // Désactivé pour mobile (pas de deep links OAuth par défaut)
+        detectSessionInUrl: false,
     },
 })
-
-/**
- * Helper pour créer un nouveau client (useful pour des cas spécifiques)
- */
-export function createSupabaseClient() {
-    return createClient(supabaseUrl, supabaseAnonKey, {
-        auth: {
-            storage: AsyncStorage,
-            autoRefreshToken: true,
-            persistSession: true,
-            detectSessionInUrl: false,
-        },
-    })
-}
