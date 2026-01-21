@@ -1,11 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-    content: ["./app/**/*.{js,jsx,ts,tsx}", "./components/**/*.{js,jsx,ts,tsx}"],
+    // NOTE: Content paths match user request to bundle everything in app and components
+    content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
     presets: [require("nativewind/preset")],
     theme: {
         extend: {
             colors: {
-                // iOS System Colors (identiques au Web)
+                // iOS System Colors
                 'accent-blue': '#0A84FF',
                 'accent-cyan': '#64D2FF',
                 'accent-green': '#30D158',

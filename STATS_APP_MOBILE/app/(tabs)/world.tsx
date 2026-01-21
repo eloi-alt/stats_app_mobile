@@ -100,14 +100,14 @@ export default function WorldScreen() {
                             {safeTrips.length > 0 ? (
                                 safeTrips.map((trip) => (
                                     <View key={trip.id} className="bg-bg-card rounded-xl p-4 mb-3 border-l-4 border-accent-orange">
-                                        <div className="flex-row justify-between mb-1">
+                                        <View className="flex-row justify-between mb-1">
                                             <Text className="font-semibold text-text-primary text-lg">
                                                 {trip.country_code} {trip.city_name ? `- ${trip.city_name}` : ''}
                                             </Text>
                                             <Text className="text-accent-orange font-bold">
                                                 {trip.year}
                                             </Text>
-                                        </div>
+                                        </View>
                                         <Text className="text-text-secondary" numberOfLines={2}>
                                             {trip.description || 'No notes'}
                                         </Text>

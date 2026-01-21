@@ -32,6 +32,7 @@ export interface TravelData {
     hasAnyData: boolean
     totalCountries: number
     totalTrips: number
+    addTrip: (countryCode: string, year: number, city?: string) => Promise<boolean>
     refetch: () => void
 }
 
@@ -120,6 +121,30 @@ export function useTravelData(): TravelData {
         }
     }, [])
 
+    const addTrip = async (countryCode: string, year: number, city?: string) => {
+        try {
+            const { data: { user } } = await supabase.auth.getUser()
+            if (!user) return false
+
+            const { error: tripError } = await supabase.from('user_trips').insert({
+                user_id: user.id,
+                country_code: countryCode,
+                city_name: city,
+                year: year,
+                created_at: new Date().toISOString()
+            })
+
+            if (tripError) throw tripError
+
+            // Optionally update user_countries too, but for now we refetch
+            await fetchData()
+            return true
+        } catch (error) {
+            console.error('Error adding trip:', error)
+            return false
+        }
+    }
+
     useEffect(() => {
         fetchData()
     }, [fetchData])
@@ -136,6 +161,7 @@ export function useTravelData(): TravelData {
         hasAnyData,
         totalCountries,
         totalTrips,
+        addTrip,
         refetch: fetchData
     }
 }

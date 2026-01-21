@@ -1,21 +1,21 @@
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { useRouter } from 'expo-router'
-import { useAuth } from '@/contexts/AuthContext'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { useTheme } from '@/contexts/ThemeContext'
-import { useHealthData } from '@/hooks/useHealthData'
-import { Ionicons } from '@expo/vector-icons'
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useHealthData } from '@/hooks/useHealthData';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
-    const { user, loading: authLoading } = useAuth()
-    const { t } = useLanguage()
-    const { isDark } = useTheme()
-    const router = useRouter()
-    const { sleepRecords, sportSessions, isLoading, isDemo, hasSleepData, hasSportData } = useHealthData()
+    const { user, loading: authLoading } = useAuth();
+    const { t } = useLanguage();
+    const { isDark } = useTheme();
+    const router = useRouter();
+    const { sleepData, sportSessions, isLoading, isDemo, hasSleepData, hasSportData } = useHealthData();
 
-    const isLoaded = !authLoading && !isLoading
-    const iconColor = isDark ? '#FFFFFF' : '#1C1C1E'
+    const isLoaded = !authLoading && !isLoading;
+    const iconColor = isDark ? '#FFFFFF' : '#1C1C1E';
 
     return (
         <SafeAreaView className="flex-1 bg-bg-primary" edges={['top']}>
@@ -84,7 +84,7 @@ export default function HomeScreen() {
                             <View className="mb-3">
                                 <Text className="text-sm text-text-tertiary">{t('sleep')}</Text>
                                 <Text className="text-base text-text-primary">
-                                    {sleepRecords.length} records • Last: {sleepRecords[0]?.duration} min
+                                    {sleepData.length} records • Last: {sleepData[0]?.duration} min
                                 </Text>
                             </View>
                         )}
@@ -105,5 +105,5 @@ export default function HomeScreen() {
                 )}
             </ScrollView>
         </SafeAreaView>
-    )
+    );
 }

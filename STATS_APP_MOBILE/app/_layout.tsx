@@ -1,13 +1,13 @@
-import { Stack } from 'expo-router'
-import { StatusBar } from 'expo-status-bar'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { VisitorProvider } from '@/contexts/VisitorContext'
-import { ThemeProvider, useTheme } from '@/contexts/ThemeContext'
-import { LanguageProvider } from '@/contexts/LanguageContext'
-import '../global.css'
+import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { VisitorProvider } from '@/contexts/VisitorContext';
+import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import '../global.css';
 
 function RootLayoutNav() {
-    const { isDark } = useTheme()
+    const { isDark } = useTheme();
 
     return (
         <>
@@ -21,7 +21,7 @@ function RootLayoutNav() {
                 }}
             />
         </>
-    )
+    );
 }
 
 export default function RootLayout() {
@@ -35,5 +35,5 @@ export default function RootLayout() {
                 </ThemeProvider>
             </VisitorProvider>
         </AuthProvider>
-    )
+    );
 }
